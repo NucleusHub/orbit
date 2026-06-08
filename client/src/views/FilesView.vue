@@ -419,8 +419,8 @@ async function executeDelete() {
     />
     <CreateFolderModal
       :show="!!renamingItem"
-      :title="`Rename &quot;${renamingItem?.type === 'file' ? renamingItem.item.filename : renamingItem.item.name}&quot;`"
-      :initial-value="renamingItem?.type === 'file' ? renamingItem.item.filename : renamingItem.item.name"
+      :title="`Rename &quot;${renamingItem?.type === 'file' ? renamingItem?.item?.filename : renamingItem?.item?.name}&quot;`"
+      :initial-value="renamingItem?.type === 'file' ? renamingItem?.item?.filename : renamingItem?.item?.name"
       confirm-label="Rename"
       @create="onRenameSubmit"
       @cancel="renamingItem = null"
