@@ -1,0 +1,46 @@
+services:
+  orbit-server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/nucleus
+      PORT: 3003
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-nucleusadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-nucleuschangeme}
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost}
+      MINIO_BUCKET: ${MINIO_BUCKET:-orbit-uploads}
+    volumes:
+      - ./server:/app
+      - orbit_server_modules:/app/node_modules
+    depends_on:
+      mongo:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3003/api/orbit/health',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  orbit-client:
+    build:
+      context: ./client
+    restart: unless-stopped
+    environment:
+      API_TARGET: http://orbit-server:3003
+    volumes:
+      - ./client/src:/app/src
+      - ./client/index.html:/app/index.html
+      - ./client/vite.config.js:/app/vite.config.js
+      - ../../core:/app/core:ro
+    depends_on:
+      orbit-server:
+        condition: service_healthy
+
+volumes:
+  orbit_server_modules:

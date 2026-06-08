@@ -1,0 +1,27 @@
+import 'dotenv/config'
+import express from 'express'
+import cors from 'cors'
+import mongoose from 'mongoose'
+import filesRouter from './routes/files.js'
+import foldersRouter from './routes/folders.js'
+
+const app = express()
+const PORT = process.env.PORT || 3003
+
+app.use(cors())
+app.use(express.json())
+
+app.get('/api/orbit/health', (req, res) => res.json({ status: 'ok' }))
+app.use('/api/orbit/files', filesRouter)
+app.use('/api/orbit/folders', foldersRouter)
+
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('Connected to MongoDB')
+    app.listen(PORT, () => console.log(`Orbit server on port ${PORT}`))
+  })
+  .catch(err => {
+    console.error('MongoDB connection error:', err)
+    process.exit(1)
+  })

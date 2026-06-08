@@ -1,0 +1,132 @@
+<script setup>
+import { ref, nextTick } from 'vue'
+
+const props = defineProps({
+  folder: { type: Object, required: true },
+  viewMode: { type: String, default: 'grid' },
+})
+const emit = defineEmits(['open', 'rename', 'delete'])
+
+const menuOpen = ref(false)
+const editing = ref(false)
+const editName = ref('')
+const editInput = ref(null)
+
+function startEdit() {
+  menuOpen.value = false
+  editing.value = true
+  editName.value = props.folder.name
+  nextTick(() => {
+    editInput.value?.focus()
+    editInput.value?.select()
+  })
+}
+
+function commitEdit() {
+  const name = editName.value.trim()
+  if (name && name !== props.folder.name) emit('rename', props.folder._id, name)
+  editing.value = false
+}
+
+function cancelEdit() {
+  editing.value = false
+}
+</script>
+
+<template>
+  <!-- List mode -->
+  <div
+    v-if="viewMode === 'list'"
+    class="group flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-white/60 dark:hover:bg-white/6 transition-colors cursor-pointer"
+    @click="!editing && !menuOpen && $emit('open', folder._id)"
+  >
+    <div class="w-8 h-8 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center shrink-0">
+      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
+      </svg>
+    </div>
+    <input
+      v-if="editing"
+      ref="editInput"
+      v-model="editName"
+      class="flex-1 text-sm font-medium bg-white dark:bg-white/10 text-slate-900 dark:text-white border border-indigo-500 rounded px-2 py-0.5 focus:outline-none"
+      @keydown.enter="commitEdit"
+      @keydown.escape="cancelEdit"
+      @blur="commitEdit"
+      @click.stop
+    />
+    <span v-else class="flex-1 text-sm font-medium text-slate-900 dark:text-white truncate">{{ folder.name }}</span>
+    <div class="relative shrink-0" @click.stop>
+      <button
+        @click="menuOpen = !menuOpen"
+        class="cursor-pointer opacity-0 group-hover:opacity-100 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition-all"
+      >
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" />
+        </svg>
+      </button>
+      <div v-if="menuOpen" class="absolute right-0 top-full mt-1 z-20 w-36 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-lg shadow-black/10 overflow-hidden">
+        <button @click="startEdit" class="cursor-pointer w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/8 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931zm0 0L19.5 7.125" /></svg>
+          Rename
+        </button>
+        <button @click="menuOpen = false; $emit('delete', folder)" class="cursor-pointer w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+          Delete
+        </button>
+      </div>
+    </div>
+    <div v-if="menuOpen" class="fixed inset-0 z-10" @click="menuOpen = false" />
+  </div>
+
+  <!-- Grid mode -->
+  <div
+    v-else
+    class="group relative flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6 transition-all cursor-pointer select-none"
+    @click="!editing && !menuOpen && $emit('open', folder._id)"
+    @dblclick="!editing && $emit('open', folder._id)"
+  >
+    <!-- Actions -->
+    <div class="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
+      <div v-if="menuOpen" class="fixed inset-0 z-10" @click.stop="menuOpen = false" />
+      <button
+        @click="menuOpen = !menuOpen"
+        class="cursor-pointer p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+      >
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" />
+        </svg>
+      </button>
+      <div v-if="menuOpen" class="absolute right-0 top-full mt-1 z-20 w-36 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-lg shadow-black/10 overflow-hidden">
+        <button @click="startEdit" class="cursor-pointer w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/8 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931zm0 0L19.5 7.125" /></svg>
+          Rename
+        </button>
+        <button @click="menuOpen = false; $emit('delete', folder)" class="cursor-pointer w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Folder icon -->
+    <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center">
+      <svg class="w-7 h-7 text-indigo-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
+      </svg>
+    </div>
+
+    <!-- Name -->
+    <input
+      v-if="editing"
+      ref="editInput"
+      v-model="editName"
+      class="w-full text-center text-xs font-medium bg-white dark:bg-white/10 text-slate-900 dark:text-white border border-indigo-500 rounded px-2 py-0.5 focus:outline-none"
+      @keydown.enter="commitEdit"
+      @keydown.escape="cancelEdit"
+      @blur="commitEdit"
+      @click.stop
+    />
+    <span v-else class="text-xs font-medium text-slate-700 dark:text-slate-300 text-center leading-tight line-clamp-2 px-1">{{ folder.name }}</span>
+  </div>
+</template>
