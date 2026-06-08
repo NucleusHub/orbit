@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import AppSidebar from '@core/AppSidebar.vue'
 import ConfirmModal from '@core/ConfirmModal.vue'
 import FileBrowser from '../components/FileBrowser.vue'
@@ -13,7 +13,8 @@ import { useFiles } from '../composables/useFiles.js'
 import { useUpload } from '../composables/useUpload.js'
 
 const sidebarOpen = ref(false)
-const viewMode = ref('grid')
+const viewMode = ref(localStorage.getItem('orbit:viewMode') || 'grid')
+watch(viewMode, v => localStorage.setItem('orbit:viewMode', v))
 const search = ref('')
 const dragOver = ref(false)
 const showCreateFolder = ref(false)
