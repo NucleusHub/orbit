@@ -37,6 +37,8 @@ export const api = {
     req('PATCH', `/folders/${id}/move`, { parentId }),
   moveFile: (id, folderId) =>
     req('PATCH', `/files/${id}/move`, { folderId }),
+  verifyFolder: (id, password) =>
+    req('POST', `/folders/${id}/verify`, { password }),
   setFolderPassword: (id, password) =>
     req('PATCH', `/folders/${id}/password`, { password }),
   setFilePassword: (id, password) =>

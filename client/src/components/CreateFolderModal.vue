@@ -1,7 +1,12 @@
 <script setup>
 import { ref, watch, nextTick, onUnmounted } from 'vue'
 
-const props = defineProps({ show: { type: Boolean, default: false } })
+const props = defineProps({
+  show:         { type: Boolean, default: false },
+  title:        { type: String, default: 'New folder' },
+  initialValue: { type: String, default: '' },
+  confirmLabel: { type: String, default: 'Create' },
+})
 const emit = defineEmits(['create', 'cancel'])
 
 const name = ref('')
@@ -10,9 +15,9 @@ const input = ref(null)
 function onKeydown(e) { if (e.key === 'Escape') emit('cancel') }
 watch(() => props.show, val => {
   if (val) {
-    name.value = ''
+    name.value = props.initialValue
     window.addEventListener('keydown', onKeydown)
-    nextTick(() => input.value?.focus())
+    nextTick(() => { input.value?.focus(); input.value?.select() })
   } else {
     window.removeEventListener('keydown', onKeydown)
   }
@@ -33,7 +38,7 @@ function submit() {
       <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/20 backdrop-blur-xl" @click="$emit('cancel')" />
         <div class="relative bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-5">
-          <h2 class="text-base font-semibold text-slate-900 dark:text-white">New folder</h2>
+          <h2 class="text-base font-semibold text-slate-900 dark:text-white">{{ title }}</h2>
           <input
             ref="input"
             v-model="name"
@@ -56,7 +61,7 @@ function submit() {
               :disabled="!name.trim()"
               class="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
             >
-              Create
+              {{ confirmLabel }}
             </button>
           </div>
         </div>

@@ -6,7 +6,7 @@ const props = defineProps({
   folder: { type: Object, required: true },
   viewMode: { type: String, default: 'grid' },
 })
-const emit = defineEmits(['open', 'rename', 'delete', 'set-password', 'move'])
+const emit = defineEmits(['open', 'rename', 'delete', 'set-password', 'move', 'rename-request'])
 
 const editing = ref(false)
 const editName = ref('')
@@ -28,7 +28,7 @@ const ctxItems = computed(() => [
   { label: 'Open', icon: ICONS.open, action: () => emit('open', props.folder._id) },
   { divider: true },
   { label: 'Move', icon: ICONS.move, action: () => emit('move', props.folder) },
-  { label: 'Rename', icon: ICONS.rename, action: startEdit },
+  { label: 'Rename', icon: ICONS.rename, action: props.folder.protected ? () => emit('rename-request', props.folder) : startEdit },
   { label: props.folder.protected ? 'Change password' : 'Set password', icon: ICONS.lock, action: () => emit('set-password', props.folder) },
   { label: 'Delete', icon: ICONS.delete, action: () => emit('delete', props.folder), danger: true },
 ])

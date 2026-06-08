@@ -11,7 +11,7 @@ defineProps({
   uploadable: { type: Boolean, default: true },
 })
 
-defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-folder', 'move-folder', 'rename-file', 'delete-file', 'preview-file', 'unlock-file', 'set-password-file', 'move-file', 'upload'])
+defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-folder', 'set-password-folder', 'move-folder', 'rename-file', 'rename-file-request', 'delete-file', 'preview-file', 'unlock-file', 'set-password-file', 'move-file', 'upload'])
 </script>
 
 <template>
@@ -46,6 +46,7 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-fold
           view-mode="grid"
           @open="$emit('open-folder', $event)"
           @rename="(id, name) => $emit('rename-folder', id, name)"
+          @rename-request="$emit('rename-folder-request', $event)"
           @delete="$emit('delete-folder', $event)"
           @set-password="$emit('set-password-folder', $event)"
           @move="$emit('move-folder', $event)"
@@ -74,6 +75,7 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-fold
           view-mode="list"
           @open="$emit('open-folder', $event)"
           @rename="(id, name) => $emit('rename-folder', id, name)"
+          @rename-request="$emit('rename-folder-request', $event)"
           @delete="$emit('delete-folder', $event)"
           @set-password="$emit('set-password-folder', $event)"
           @move="$emit('move-folder', $event)"
@@ -104,6 +106,7 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-fold
             :file="file"
             view-mode="grid"
             @rename="(id, name) => $emit('rename-file', id, name)"
+            @rename-request="$emit('rename-file-request', $event)"
             @delete="$emit('delete-file', $event)"
             @preview="$emit('preview-file', $event)"
             @unlock="$emit('unlock-file', $event)"
@@ -127,6 +130,7 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-fold
             :file="file"
             view-mode="list"
             @rename="(id, name) => $emit('rename-file', id, name)"
+            @rename-request="$emit('rename-file-request', $event)"
             @delete="$emit('delete-file', $event)"
             @preview="$emit('preview-file', $event)"
             @unlock="$emit('unlock-file', $event)"

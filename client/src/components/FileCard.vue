@@ -7,7 +7,7 @@ const props = defineProps({
   file: { type: Object, required: true },
   viewMode: { type: String, default: 'grid' },
 })
-const emit = defineEmits(['rename', 'delete', 'preview', 'unlock', 'set-password', 'move'])
+const emit = defineEmits(['rename', 'delete', 'preview', 'unlock', 'set-password', 'move', 'rename-request'])
 
 const editing = ref(false)
 const editName = ref('')
@@ -34,16 +34,13 @@ const ICONS = {
 const isLocked = computed(() => props.file.protected && !props.file.url)
 
 const ctxItems = computed(() => [
-  ...(isLocked.value
-    ? [{ label: 'Unlock', icon: ICONS.lock, action: () => emit('unlock', props.file) }]
-    : [
-        { label: 'Preview', icon: ICONS.preview, action: () => emit('preview', props.file) },
-        { label: 'Download', icon: ICONS.download, href: props.file.url, download: props.file.filename },
-      ]
-  ),
+  isLocked.value
+    ? { label: 'Unlock', icon: ICONS.lock, action: () => emit('unlock', props.file) }
+    : { label: 'Preview', icon: ICONS.preview, action: () => emit('preview', props.file) },
+  ...(!isLocked.value ? [{ label: 'Download', icon: ICONS.download, href: props.file.url, download: props.file.filename }] : []),
   { divider: true },
   { label: 'Move', icon: ICONS.move, action: () => emit('move', props.file) },
-  { label: 'Rename', icon: ICONS.rename, action: startEdit },
+  { label: 'Rename', icon: ICONS.rename, action: props.file.protected ? () => emit('rename-request', props.file) : startEdit },
   { label: props.file.protected ? 'Change password' : 'Set password', icon: ICONS.lock, action: () => emit('set-password', props.file) },
   { label: 'Delete', icon: ICONS.delete, action: () => emit('delete', props.file), danger: true },
 ])

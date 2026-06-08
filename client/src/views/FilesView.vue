@@ -129,6 +129,46 @@ async function onSetPassword(password) {
   }
 }
 
+// Action auth gate — verifies password before executing sensitive actions on protected items
+const pendingAuth = ref(null) // { type: 'file'|'folder', item, action }
+const pendingAuthError = ref(null)
+const renamingItem = ref(null) // { type, item } — rename modal shown after auth
+
+function withAuth(type, item, action) {
+  const verified = type === 'file'
+    ? (!item.protected || !!item.url)
+    : (!item.protected || !!sessionStorage.getItem(`orbit:verified:folder:${item._id}`))
+  if (verified) { action(); return }
+  pendingAuth.value = { type, item, action }
+  pendingAuthError.value = null
+}
+
+async function onPendingAuth(password) {
+  const { type, item, action } = pendingAuth.value
+  pendingAuthError.value = null
+  try {
+    if (type === 'file') {
+      const { url } = await api.unlockFile(item._id, password)
+      unlockFileInList(item._id, url)
+    } else {
+      await api.verifyFolder(item._id, password)
+      sessionStorage.setItem(`orbit:verified:folder:${item._id}`, '1')
+    }
+    pendingAuth.value = null
+    action()
+  } catch (e) {
+    pendingAuthError.value = e.status === 401 ? 'Wrong password' : 'Verification failed'
+  }
+}
+
+async function onRenameSubmit(newName) {
+  if (!renamingItem.value) return
+  const { type, item } = renamingItem.value
+  renamingItem.value = null
+  if (type === 'file') await renameFile(item._id, newName)
+  else await renameFolder(item._id, newName)
+}
+
 const { uploads, uploadFiles, dismiss } = useUpload(onUploadDone)
 
 onMounted(() => browse(null))
@@ -341,15 +381,17 @@ async function executeDelete() {
         :uploadable="!search"
         @open-folder="navigate"
         @rename-folder="renameFolder"
-        @delete-folder="f => promptDelete('folder', f)"
-        @set-password-folder="f => { settingPasswordFor = { type: 'folder', item: f } }"
-        @move-folder="f => { movingItem = { type: 'folder', item: f } }"
+        @rename-folder-request="f => withAuth('folder', f, () => { renamingItem = { type: 'folder', item: f } })"
+        @delete-folder="f => withAuth('folder', f, () => promptDelete('folder', f))"
+        @set-password-folder="f => withAuth('folder', f, () => { settingPasswordFor = { type: 'folder', item: f } })"
+        @move-folder="f => withAuth('folder', f, () => { movingItem = { type: 'folder', item: f } })"
         @rename-file="renameFile"
-        @delete-file="f => promptDelete('file', f)"
+        @rename-file-request="f => withAuth('file', f, () => { renamingItem = { type: 'file', item: f } })"
+        @delete-file="f => withAuth('file', f, () => promptDelete('file', f))"
         @preview-file="previewFile = $event"
         @unlock-file="f => { unlockingFile = f; filePwdError = null }"
-        @set-password-file="f => { settingPasswordFor = { type: 'file', item: f } }"
-        @move-file="f => { movingItem = { type: 'file', item: f } }"
+        @set-password-file="f => withAuth('file', f, () => { settingPasswordFor = { type: 'file', item: f } })"
+        @move-file="f => withAuth('file', f, () => { movingItem = { type: 'file', item: f } })"
         @upload="files => uploadFiles(files, currentFolderId)"
       />
     </main>
@@ -374,6 +416,21 @@ async function executeDelete() {
       :show="showCreateFolder"
       @create="handleCreateFolder"
       @cancel="showCreateFolder = false"
+    />
+    <CreateFolderModal
+      :show="!!renamingItem"
+      :title="`Rename &quot;${renamingItem?.type === 'file' ? renamingItem.item.filename : renamingItem.item.name}&quot;`"
+      :initial-value="renamingItem?.type === 'file' ? renamingItem.item.filename : renamingItem.item.name"
+      confirm-label="Rename"
+      @create="onRenameSubmit"
+      @cancel="renamingItem = null"
+    />
+    <PasswordPromptModal
+      :show="!!pendingAuth"
+      :title="`&quot;${pendingAuth?.type === 'file' ? pendingAuth?.item?.filename : pendingAuth?.item?.name}&quot; is protected`"
+      :error="pendingAuthError"
+      @submit="onPendingAuth"
+      @cancel="pendingAuth = null"
     />
     <ConfirmModal
       :show="!!confirmTarget"

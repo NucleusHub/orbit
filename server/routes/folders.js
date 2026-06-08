@@ -35,6 +35,20 @@ async function buildBreadcrumbs(folderId) {
   return crumbs
 }
 
+// POST /api/orbit/folders/:id/verify — verify password without side effects
+router.post('/:id/verify', async (req, res) => {
+  try {
+    const folder = await Folder.findById(req.params.id)
+    if (!folder) return res.status(404).json({ error: 'Not found' })
+    if (!folder.passwordHash) return res.json({ ok: true })
+    if (!verifyPassword(req.body.password, folder.passwordHash))
+      return res.status(401).json({ error: 'Wrong password' })
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // GET /api/orbit/folders/browse?parentId=
 router.get('/browse', async (req, res) => {
   try {
