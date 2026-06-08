@@ -31,6 +31,8 @@ export const api = {
     req('DELETE', `/folders/${id}`),
   getAllFolders: () =>
     req('GET', '/folders/all'),
+  search: (q) =>
+    req('GET', `/folders/search?q=${encodeURIComponent(q)}`),
   moveFolder: (id, parentId) =>
     req('PATCH', `/folders/${id}/move`, { parentId }),
   moveFile: (id, folderId) =>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onUnmounted } from 'vue'
 
 const props = defineProps({ show: { type: Boolean, default: false } })
 const emit = defineEmits(['create', 'cancel'])
@@ -7,12 +7,17 @@ const emit = defineEmits(['create', 'cancel'])
 const name = ref('')
 const input = ref(null)
 
+function onKeydown(e) { if (e.key === 'Escape') emit('cancel') }
 watch(() => props.show, val => {
   if (val) {
     name.value = ''
+    window.addEventListener('keydown', onKeydown)
     nextTick(() => input.value?.focus())
+  } else {
+    window.removeEventListener('keydown', onKeydown)
   }
 })
+onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 function submit() {
   const trimmed = name.value.trim()
@@ -27,7 +32,7 @@ function submit() {
     <Transition name="fade">
       <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/20 backdrop-blur-xl" @click="$emit('cancel')" />
-        <div class="relative bg-white/80 dark:bg-white/8 border border-slate-200/80 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-5 backdrop-blur-xl">
+        <div class="relative bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-5">
           <h2 class="text-base font-semibold text-slate-900 dark:text-white">New folder</h2>
           <input
             ref="input"

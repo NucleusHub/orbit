@@ -1,15 +1,17 @@
 <script setup>
 import FolderCard from './FolderCard.vue'
 import FileCard from './FileCard.vue'
+import UploadZone from './UploadZone.vue'
 
 defineProps({
   folders: { type: Array, default: () => [] },
   files: { type: Array, default: () => [] },
   viewMode: { type: String, default: 'grid' },
   parentFolderId: { type: [String, null], default: undefined },
+  uploadable: { type: Boolean, default: true },
 })
 
-defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-folder', 'move-folder', 'rename-file', 'delete-file', 'preview-file', 'unlock-file', 'set-password-file', 'move-file'])
+defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-folder', 'move-folder', 'rename-file', 'delete-file', 'preview-file', 'unlock-file', 'set-password-file', 'move-file', 'upload'])
 </script>
 
 <template>
@@ -80,50 +82,59 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-fold
     </section>
 
     <!-- Files section -->
-    <section v-if="files.length">
+    <section v-if="files.length || uploadable">
       <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Files</h2>
-      <!-- Grid -->
-      <div
-        v-if="viewMode === 'grid'"
-        class="grid gap-3"
-        style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr))"
-      >
-        <FileCard
-          v-for="file in files"
-          :key="file._id"
-          :file="file"
-          view-mode="grid"
-          @rename="(id, name) => $emit('rename-file', id, name)"
-          @delete="$emit('delete-file', $event)"
-          @preview="$emit('preview-file', $event)"
-          @unlock="$emit('unlock-file', $event)"
-          @set-password="$emit('set-password-file', $event)"
-          @move="$emit('move-file', $event)"
-        />
-      </div>
-      <!-- List -->
-      <div v-else class="flex flex-col">
-        <!-- Header row -->
-        <div class="flex items-center gap-3 px-4 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/8 mb-1">
-          <div class="w-8 shrink-0" />
-          <span class="flex-1">Name</span>
-          <span class="hidden sm:block w-16 text-right">Size</span>
-          <span class="hidden md:block w-20 text-right">Modified</span>
-          <div class="w-8 shrink-0" />
+
+      <!-- Upload zone when no files -->
+      <UploadZone
+        v-if="!files.length && uploadable"
+        @files="$emit('upload', $event)"
+      />
+
+      <template v-else-if="files.length">
+        <!-- Grid -->
+        <div
+          v-if="viewMode === 'grid'"
+          class="grid gap-3"
+          style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr))"
+        >
+          <FileCard
+            v-for="file in files"
+            :key="file._id"
+            :file="file"
+            view-mode="grid"
+            @rename="(id, name) => $emit('rename-file', id, name)"
+            @delete="$emit('delete-file', $event)"
+            @preview="$emit('preview-file', $event)"
+            @unlock="$emit('unlock-file', $event)"
+            @set-password="$emit('set-password-file', $event)"
+            @move="$emit('move-file', $event)"
+          />
         </div>
-        <FileCard
-          v-for="file in files"
-          :key="file._id"
-          :file="file"
-          view-mode="list"
-          @rename="(id, name) => $emit('rename-file', id, name)"
-          @delete="$emit('delete-file', $event)"
-          @preview="$emit('preview-file', $event)"
-          @unlock="$emit('unlock-file', $event)"
-          @set-password="$emit('set-password-file', $event)"
-          @move="$emit('move-file', $event)"
-        />
-      </div>
+        <!-- List -->
+        <div v-else class="flex flex-col">
+          <!-- Header row -->
+          <div class="flex items-center gap-3 px-4 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/8 mb-1">
+            <div class="w-8 shrink-0" />
+            <span class="flex-1">Name</span>
+            <span class="hidden sm:block w-16 text-right">Size</span>
+            <span class="hidden md:block w-20 text-right">Modified</span>
+            <div class="w-8 shrink-0" />
+          </div>
+          <FileCard
+            v-for="file in files"
+            :key="file._id"
+            :file="file"
+            view-mode="list"
+            @rename="(id, name) => $emit('rename-file', id, name)"
+            @delete="$emit('delete-file', $event)"
+            @preview="$emit('preview-file', $event)"
+            @unlock="$emit('unlock-file', $event)"
+            @set-password="$emit('set-password-file', $event)"
+            @move="$emit('move-file', $event)"
+          />
+        </div>
+      </template>
     </section>
   </div>
 </template>

@@ -12,6 +12,7 @@ import FilePreviewModal from '../components/FilePreviewModal.vue'
 import PasswordPromptModal from '../components/PasswordPromptModal.vue'
 import SetPasswordModal from '../components/SetPasswordModal.vue'
 import MoveModal from '../components/MoveModal.vue'
+import ContextMenu from '../components/ContextMenu.vue'
 import { useFiles } from '../composables/useFiles.js'
 import { useUpload } from '../composables/useUpload.js'
 import { api } from '../api/orbit.js'
@@ -25,6 +26,44 @@ const showCreateFolder = ref(false)
 const confirmTarget = ref(null) // { type, id, name }
 const previewFile = ref(null)
 const fileInput = ref(null)
+
+// Background context menu
+const bgCtxOpen = ref(false)
+const bgCtxX = ref(0)
+const bgCtxY = ref(0)
+const bgCtxItems = computed(() => [
+  {
+    label: 'New Folder',
+    icon: 'M12 10.5v6m3-3H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z',
+    action: () => { showCreateFolder.value = true },
+  },
+  {
+    label: 'Upload Files',
+    icon: 'M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5',
+    action: () => { fileInput.value?.click() },
+  },
+  { divider: true },
+  {
+    label: viewMode.value === 'grid' ? 'List View' : 'Grid View',
+    icon: viewMode.value === 'grid'
+      ? 'M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z'
+      : 'M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25zM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25z',
+    action: () => { viewMode.value = viewMode.value === 'grid' ? 'list' : 'grid' },
+  },
+  { divider: true },
+  {
+    label: 'Refresh',
+    icon: 'M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99',
+    action: () => { browse(currentFolderId.value) },
+  },
+])
+
+function onBgContextMenu(e) {
+  e.preventDefault()
+  bgCtxX.value = e.clientX
+  bgCtxY.value = e.clientY
+  bgCtxOpen.value = true
+}
 
 const {
   folders, files, breadcrumbs, loading, error, currentFolderId, lockedFolderId,
@@ -61,21 +100,33 @@ async function onFileUnlock(password) {
 const movingItem = ref(null) // { type: 'file'|'folder', item }
 async function handleMove(targetFolderId) {
   const { type, item } = movingItem.value
-  if (type === 'file') await api.moveFile(item._id, targetFolderId)
-  else await api.moveFolder(item._id, targetFolderId)
-  movingItem.value = null
-  browse(currentFolderId.value)
+  try {
+    if (type === 'file') await api.moveFile(item._id, targetFolderId)
+    else await api.moveFolder(item._id, targetFolderId)
+    browse(currentFolderId.value)
+  } catch (e) {
+    console.error('Move failed:', e)
+  } finally {
+    movingItem.value = null
+  }
 }
 
 // Set password
 const settingPasswordFor = ref(null) // { type: 'file'|'folder', item }
 async function onSetPassword(password) {
   const { type, item } = settingPasswordFor.value
-  const updated = type === 'folder'
-    ? await api.setFolderPassword(item._id, password)
-    : await api.setFilePassword(item._id, password)
-  updateItem(type, updated)
-  settingPasswordFor.value = null
+  try {
+    if (type === 'folder') await api.setFolderPassword(item._id, password)
+    else {
+      await api.setFilePassword(item._id, password)
+      sessionStorage.removeItem(`orbit:url:file:${item._id}`)
+    }
+    browse(currentFolderId.value)
+  } catch (e) {
+    console.error('Set password failed:', e)
+  } finally {
+    settingPasswordFor.value = null
+  }
 }
 
 const { uploads, uploadFiles, dismiss } = useUpload(onUploadDone)
@@ -86,18 +137,29 @@ function onUploadDone() {
   browse(currentFolderId.value)
 }
 
-const filteredFolders = computed(() =>
-  search.value
-    ? folders.value.filter(f => f.name.toLowerCase().includes(search.value.toLowerCase()))
-    : folders.value
-)
-const filteredFiles = computed(() =>
-  search.value
-    ? files.value.filter(f => f.filename.toLowerCase().includes(search.value.toLowerCase()))
-    : files.value
-)
+const searchResults = ref({ folders: [], files: [] })
+const searchLoading = ref(false)
+let searchTimer = null
+watch(search, (val) => {
+  clearTimeout(searchTimer)
+  if (!val.trim()) { searchResults.value = { folders: [], files: [] }; return }
+  searchTimer = setTimeout(async () => {
+    try {
+      searchLoading.value = true
+      searchResults.value = await api.search(val.trim())
+    } catch (e) {
+      console.error('Search failed:', e)
+    } finally {
+      searchLoading.value = false
+    }
+  }, 300)
+})
+
+const filteredFolders = computed(() => search.value ? searchResults.value.folders : folders.value)
+const filteredFiles = computed(() => search.value ? searchResults.value.files : files.value)
 const isEmpty = computed(() => !filteredFolders.value.length && !filteredFiles.value.length)
 const parentFolderId = computed(() => {
+  if (search.value) return undefined
   if (currentFolderId.value === null) return undefined
   return breadcrumbs.value.length >= 2
     ? (breadcrumbs.value[breadcrumbs.value.length - 2]._id ?? null)
@@ -155,6 +217,7 @@ async function executeDelete() {
     @dragover="onDragover"
     @dragleave="onDragleave"
     @drop="onDrop"
+    @contextmenu="onBgContextMenu"
   >
     <AppSidebar :open="sidebarOpen" @close="sidebarOpen = false" />
     <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileInput" />
@@ -228,7 +291,7 @@ async function executeDelete() {
     <!-- Main content -->
     <main class="px-4 md:px-6 pt-6 pb-24">
       <!-- Loading -->
-      <div v-if="loading" class="flex items-center justify-center py-20">
+      <div v-if="loading || searchLoading" class="flex items-center justify-center py-20">
         <svg class="w-8 h-8 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -275,6 +338,7 @@ async function executeDelete() {
         :files="filteredFiles"
         :view-mode="viewMode"
         :parent-folder-id="parentFolderId"
+        :uploadable="!search"
         @open-folder="navigate"
         @rename-folder="renameFolder"
         @delete-folder="f => promptDelete('folder', f)"
@@ -286,6 +350,7 @@ async function executeDelete() {
         @unlock-file="f => { unlockingFile = f; filePwdError = null }"
         @set-password-file="f => { settingPasswordFor = { type: 'file', item: f } }"
         @move-file="f => { movingItem = { type: 'file', item: f } }"
+        @upload="files => uploadFiles(files, currentFolderId)"
       />
     </main>
 
@@ -347,6 +412,7 @@ async function executeDelete() {
       @save="onSetPassword"
       @cancel="settingPasswordFor = null"
     />
+    <ContextMenu :show="bgCtxOpen" :x="bgCtxX" :y="bgCtxY" :items="bgCtxItems" @close="bgCtxOpen = false" />
   </div>
 </template>
 

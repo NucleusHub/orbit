@@ -67,6 +67,22 @@ router.get('/browse', async (req, res) => {
   }
 })
 
+// GET /api/orbit/folders/search?q= — global search across all folders and files
+router.get('/search', async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim()
+    if (!q) return res.json({ folders: [], files: [] })
+    const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+    const [folders, files] = await Promise.all([
+      Folder.find({ userId: 'default', name: regex }),
+      File.find({ userId: 'default', filename: regex }),
+    ])
+    res.json({ folders: folders.map(serializeFolder), files: files.map(serializeFile) })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // GET /api/orbit/folders/all — flat list of every folder (for folder picker)
 router.get('/all', async (req, res) => {
   try {

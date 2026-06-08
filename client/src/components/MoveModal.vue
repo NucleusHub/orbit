@@ -1,11 +1,11 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { api } from '../api/orbit.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
   item: { type: Object, default: null }, // { _id, filename|name, type: 'file'|'folder' }
-  currentFolderId: { type: [String, null], default: null },
+  currentFolderId: { type: String, default: null },
 })
 const emit = defineEmits(['move', 'cancel'])
 
@@ -17,8 +17,13 @@ const error = ref(null)
 
 const itemName = computed(() => props.item?.filename || props.item?.name || '')
 
+function onKeydown(e) { if (e.key === 'Escape') emit('cancel') }
 watch(() => props.show, async (val) => {
-  if (!val) return
+  if (!val) {
+    window.removeEventListener('keydown', onKeydown)
+    return
+  }
+  window.addEventListener('keydown', onKeydown)
   selected.value = undefined
   collapsed.value = new Set()
   error.value = null
@@ -31,6 +36,7 @@ watch(() => props.show, async (val) => {
     loading.value = false
   }
 })
+onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 // Flat list with depth, excluding the moving folder and its descendants
 const flatTree = computed(() => {
@@ -82,11 +88,12 @@ function submit() {
 <template>
   <Teleport to="body">
     <Transition name="modal-fade">
-      <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @click.self="$emit('cancel')">
-        <div class="bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col backdrop-blur-xl overflow-hidden" style="max-height: 80vh" @click.stop>
+      <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/20 backdrop-blur-xl" @click="$emit('cancel')" />
+        <div class="relative bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden" style="max-height: 80vh">
 
           <!-- Header -->
-          <div class="px-5 pt-5 pb-4 border-b border-slate-100 dark:border-white/8 shrink-0">
+          <div class="px-5 pt-5 pb-4 border-b border-white/30 dark:border-white/8 shrink-0">
             <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Move</h2>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">"{{ itemName }}"</p>
           </div>
@@ -99,6 +106,8 @@ function submit() {
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             </div>
+
+            <div v-else-if="error" class="px-5 py-4 text-sm text-red-500">Failed to load folders: {{ error }}</div>
 
             <template v-else>
               <!-- Root option -->
@@ -156,15 +165,15 @@ function submit() {
           </div>
 
           <!-- Footer -->
-          <div class="px-5 py-4 border-t border-slate-100 dark:border-white/8 flex gap-2 justify-end shrink-0">
+          <div class="px-5 py-4 border-t border-white/30 dark:border-white/8 flex gap-2 justify-end shrink-0">
             <button
               @click="$emit('cancel')"
-              class="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              class="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
             >Cancel</button>
             <button
               @click="submit"
               :disabled="isSameLocation"
-              class="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl transition-colors"
+              class="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
             >Move here</button>
           </div>
         </div>
