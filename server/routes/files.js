@@ -17,7 +17,6 @@ const router = express.Router()
 
 const BUCKET = process.env.MINIO_BUCKET || 'orbit-uploads'
 const MINIO_INTERNAL = `http://${process.env.MINIO_ENDPOINT || 'minio'}:${process.env.MINIO_PORT || '9000'}`
-const MINIO_PUBLIC_URL = (process.env.MINIO_PUBLIC_URL || 'http://localhost').replace(/\/$/, '')
 
 const s3 = new S3Client({
   region: 'us-east-1',
@@ -32,7 +31,7 @@ const s3 = new S3Client({
 })
 
 function fileUrl(objectKey) {
-  return `${MINIO_PUBLIC_URL}/${BUCKET}/${objectKey}`
+  return `/${BUCKET}/${objectKey}`
 }
 
 const upload = multer({ dest: '/tmp/orbit-uploads' })

@@ -5,9 +5,8 @@ import File from '../models/File.js'
 const router = express.Router()
 
 function fileUrl(objectKey) {
-  const base = (process.env.MINIO_PUBLIC_URL || 'http://localhost').replace(/\/$/, '')
   const bucket = process.env.MINIO_BUCKET || 'orbit-uploads'
-  return `${base}/${bucket}/${objectKey}`
+  return `/${bucket}/${objectKey}`
 }
 
 async function buildBreadcrumbs(folderId) {
