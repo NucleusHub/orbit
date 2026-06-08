@@ -9,8 +9,11 @@ import UploadZone from '../components/UploadZone.vue'
 import UploadProgress from '../components/UploadProgress.vue'
 import CreateFolderModal from '../components/CreateFolderModal.vue'
 import FilePreviewModal from '../components/FilePreviewModal.vue'
+import PasswordPromptModal from '../components/PasswordPromptModal.vue'
+import SetPasswordModal from '../components/SetPasswordModal.vue'
 import { useFiles } from '../composables/useFiles.js'
 import { useUpload } from '../composables/useUpload.js'
+import { api } from '../api/orbit.js'
 
 const sidebarOpen = ref(false)
 const viewMode = ref(localStorage.getItem('orbit:viewMode') || 'grid')
@@ -23,9 +26,46 @@ const previewFile = ref(null)
 const fileInput = ref(null)
 
 const {
-  folders, files, breadcrumbs, loading, error, currentFolderId,
-  browse, createFolder, renameFolder, deleteFolder, renameFile, deleteFile,
+  folders, files, breadcrumbs, loading, error, currentFolderId, lockedFolderId,
+  browse, unlockFolder, unlockFileInList, updateItem,
+  createFolder, renameFolder, deleteFolder, renameFile, deleteFile,
 } = useFiles()
+
+// Password prompt for locked folders
+const folderPwdError = ref(null)
+async function onFolderUnlock(password) {
+  folderPwdError.value = null
+  try {
+    unlockFolder(lockedFolderId.value, password)
+  } catch {
+    folderPwdError.value = 'Wrong password'
+  }
+}
+
+// File unlock
+const unlockingFile = ref(null)
+const filePwdError = ref(null)
+async function onFileUnlock(password) {
+  filePwdError.value = null
+  try {
+    const { url } = await api.unlockFile(unlockingFile.value._id, password)
+    unlockFileInList(unlockingFile.value._id, url)
+    unlockingFile.value = null
+  } catch {
+    filePwdError.value = 'Wrong password'
+  }
+}
+
+// Set password
+const settingPasswordFor = ref(null) // { type: 'file'|'folder', item }
+async function onSetPassword(password) {
+  const { type, item } = settingPasswordFor.value
+  const updated = type === 'folder'
+    ? await api.setFolderPassword(item._id, password)
+    : await api.setFilePassword(item._id, password)
+  updateItem(type, updated)
+  settingPasswordFor.value = null
+}
 
 const { uploads, uploadFiles, dismiss } = useUpload(onUploadDone)
 
@@ -227,9 +267,12 @@ async function executeDelete() {
         @open-folder="navigate"
         @rename-folder="renameFolder"
         @delete-folder="f => promptDelete('folder', f)"
+        @set-password-folder="f => { settingPasswordFor = { type: 'folder', item: f } }"
         @rename-file="renameFile"
         @delete-file="f => promptDelete('file', f)"
         @preview-file="previewFile = $event"
+        @unlock-file="f => { unlockingFile = f; filePwdError = null }"
+        @set-password-file="f => { settingPasswordFor = { type: 'file', item: f } }"
       />
     </main>
 
@@ -263,6 +306,27 @@ async function executeDelete() {
       @cancel="confirmTarget = null"
     />
     <FilePreviewModal :file="previewFile" @close="previewFile = null" />
+    <PasswordPromptModal
+      :show="!!lockedFolderId"
+      title="Folder is protected"
+      :error="folderPwdError"
+      @submit="onFolderUnlock"
+      @cancel="browse(currentFolderId)"
+    />
+    <PasswordPromptModal
+      :show="!!unlockingFile"
+      :title="`&quot;${unlockingFile?.filename}&quot; is protected`"
+      :error="filePwdError"
+      @submit="onFileUnlock"
+      @cancel="unlockingFile = null"
+    />
+    <SetPasswordModal
+      :show="!!settingPasswordFor"
+      :name="settingPasswordFor?.item?.filename || settingPasswordFor?.item?.name || ''"
+      :is-protected="!!settingPasswordFor?.item?.protected"
+      @save="onSetPassword"
+      @cancel="settingPasswordFor = null"
+    />
   </div>
 </template>
 

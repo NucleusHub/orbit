@@ -7,6 +7,7 @@ const fileSchema = new mongoose.Schema({
   size: { type: Number, required: true },
   folderId: { type: mongoose.Schema.Types.ObjectId, ref: 'OrbitFolder', default: null },
   userId: { type: String, default: 'default' },
+  passwordHash: { type: String, default: null },
 }, { timestamps: true })
 
 fileSchema.index({ userId: 1, folderId: 1 })

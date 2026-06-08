@@ -12,6 +12,7 @@ import {
   PutBucketPolicyCommand,
 } from '@aws-sdk/client-s3'
 import File from '../models/File.js'
+import { hashPassword, verifyPassword } from '../utils/password.js'
 
 const router = express.Router()
 
@@ -32,6 +33,13 @@ const s3 = new S3Client({
 
 function fileUrl(objectKey) {
   return `/${BUCKET}/${objectKey}`
+}
+
+function serializeFile(f) {
+  const obj = f.toObject ? f.toObject() : { ...f }
+  const { passwordHash, ...rest } = obj
+  if (passwordHash) return { ...rest, protected: true }
+  return { ...rest, url: fileUrl(obj.objectKey) }
 }
 
 const upload = multer({ dest: '/tmp/orbit-uploads' })
@@ -67,7 +75,7 @@ router.get('/', async (req, res) => {
     const query = { userId: 'default', folderId: folderId || null }
     if (search) query.filename = { $regex: search, $options: 'i' }
     const files = await File.find(query).sort({ createdAt: -1 })
-    res.json(files.map(f => ({ ...f.toObject(), url: fileUrl(f.objectKey) })))
+    res.json(files.map(serializeFile))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -98,7 +106,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       userId: 'default',
     })
 
-    res.status(201).json({ ...doc.toObject(), url: fileUrl(objectKey) })
+    res.status(201).json(serializeFile(doc))
   } catch (err) {
     res.status(500).json({ error: err.message })
   } finally {
@@ -115,7 +123,35 @@ router.patch('/:id/rename', async (req, res) => {
       { new: true }
     )
     if (!file) return res.status(404).json({ error: 'Not found' })
-    res.json({ ...file.toObject(), url: fileUrl(file.objectKey) })
+    res.json(serializeFile(file))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// PATCH /api/orbit/files/:id/password — set or remove password
+router.patch('/:id/password', async (req, res) => {
+  try {
+    const { password } = req.body
+    const hash = password ? hashPassword(password) : null
+    const file = await File.findByIdAndUpdate(req.params.id, { passwordHash: hash }, { new: true })
+    if (!file) return res.status(404).json({ error: 'Not found' })
+    res.json(serializeFile(file))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// POST /api/orbit/files/:id/unlock — verify password, return URL
+router.post('/:id/unlock', async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id)
+    if (!file) return res.status(404).json({ error: 'Not found' })
+    if (!file.passwordHash) return res.json({ url: fileUrl(file.objectKey) })
+    if (!verifyPassword(req.body.password || '', file.passwordHash)) {
+      return res.status(401).json({ error: 'Wrong password' })
+    }
+    res.json({ url: fileUrl(file.objectKey) })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

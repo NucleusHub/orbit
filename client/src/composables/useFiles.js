@@ -8,20 +8,54 @@ export function useFiles() {
   const loading = ref(false)
   const error = ref(null)
   const currentFolderId = ref(null)
+  const lockedFolderId = ref(null)
 
   async function browse(folderId = null) {
     loading.value = true
     error.value = null
+    lockedFolderId.value = null
     currentFolderId.value = folderId
     try {
-      const data = await api.browse(folderId)
+      const password = folderId ? sessionStorage.getItem(`orbit:pwd:folder:${folderId}`) : null
+      const data = await api.browse(folderId, password)
       folders.value = data.folders
-      files.value = data.files
+      files.value = data.files.map(f => {
+        if (f.protected && !f.url) {
+          const cached = sessionStorage.getItem(`orbit:url:file:${f._id}`)
+          if (cached) return { ...f, url: cached }
+        }
+        return f
+      })
       breadcrumbs.value = data.breadcrumbs
     } catch (e) {
+      if (e.status === 401 && e.data?.locked) {
+        lockedFolderId.value = folderId
+        return
+      }
       error.value = e.message
     } finally {
       loading.value = false
+    }
+  }
+
+  function unlockFolder(folderId, password) {
+    sessionStorage.setItem(`orbit:pwd:folder:${folderId}`, password)
+    lockedFolderId.value = null
+    browse(folderId)
+  }
+
+  function unlockFileInList(fileId, url) {
+    sessionStorage.setItem(`orbit:url:file:${fileId}`, url)
+    files.value = files.value.map(f => f._id === fileId ? { ...f, url } : f)
+  }
+
+  function updateItem(type, updated) {
+    if (type === 'folder') {
+      const idx = folders.value.findIndex(f => f._id === updated._id)
+      if (idx !== -1) folders.value[idx] = updated
+    } else {
+      const idx = files.value.findIndex(f => f._id === updated._id)
+      if (idx !== -1) files.value[idx] = updated
     }
   }
 
@@ -44,16 +78,18 @@ export function useFiles() {
   async function renameFile(id, filename) {
     const updated = await api.renameFile(id, filename)
     const idx = files.value.findIndex(f => f._id === id)
-    if (idx !== -1) files.value[idx] = updated
+    if (idx !== -1) files.value[idx] = { ...updated, url: files.value[idx].url }
   }
 
   async function deleteFile(id) {
     await api.deleteFile(id)
     files.value = files.value.filter(f => f._id !== id)
+    sessionStorage.removeItem(`orbit:url:file:${id}`)
   }
 
   return {
-    folders, files, breadcrumbs, loading, error, currentFolderId,
-    browse, createFolder, renameFolder, deleteFolder, renameFile, deleteFile,
+    folders, files, breadcrumbs, loading, error, currentFolderId, lockedFolderId,
+    browse, unlockFolder, unlockFileInList, updateItem,
+    createFolder, renameFolder, deleteFolder, renameFile, deleteFile,
   }
 }

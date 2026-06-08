@@ -1,28 +1,40 @@
 const BASE = '/api/orbit'
 
-async function req(method, path, body) {
-  const opts = { method, headers: {} }
+async function req(method, path, body, extraHeaders = {}) {
+  const opts = { method, headers: { ...extraHeaders } }
   if (body !== undefined) {
     opts.headers['Content-Type'] = 'application/json'
     opts.body = JSON.stringify(body)
   }
   const res = await fetch(`${BASE}${path}`, opts)
   if (!res.ok) {
-    const text = await res.text()
-    throw new Error(text || `HTTP ${res.status}`)
+    let data = {}
+    try { data = await res.json() } catch {}
+    const err = new Error(data.error || `HTTP ${res.status}`)
+    err.status = res.status
+    err.data = data
+    throw err
   }
   return res.json()
 }
 
 export const api = {
-  browse: (parentId) =>
-    req('GET', `/folders/browse${parentId ? `?parentId=${parentId}` : ''}`),
+  browse: (parentId, password) => {
+    const headers = password ? { 'X-Folder-Password': password } : {}
+    return req('GET', `/folders/browse${parentId ? `?parentId=${parentId}` : ''}`, undefined, headers)
+  },
   createFolder: (name, parentId) =>
     req('POST', '/folders', { name, parentId }),
   renameFolder: (id, name) =>
     req('PATCH', `/folders/${id}/rename`, { name }),
   deleteFolder: (id) =>
     req('DELETE', `/folders/${id}`),
+  setFolderPassword: (id, password) =>
+    req('PATCH', `/folders/${id}/password`, { password }),
+  setFilePassword: (id, password) =>
+    req('PATCH', `/files/${id}/password`, { password }),
+  unlockFile: (id, password) =>
+    req('POST', `/files/${id}/unlock`, { password }),
   upload: (file, folderId, onProgress) =>
     new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest()
