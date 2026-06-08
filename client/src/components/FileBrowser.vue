@@ -9,7 +9,7 @@ defineProps({
   parentFolderId: { type: [String, null], default: undefined },
 })
 
-defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-folder', 'rename-file', 'delete-file', 'preview-file', 'unlock-file', 'set-password-file'])
+defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-folder', 'move-folder', 'rename-file', 'delete-file', 'preview-file', 'unlock-file', 'set-password-file', 'move-file'])
 </script>
 
 <template>
@@ -46,6 +46,7 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-fold
           @rename="(id, name) => $emit('rename-folder', id, name)"
           @delete="$emit('delete-folder', $event)"
           @set-password="$emit('set-password-folder', $event)"
+          @move="$emit('move-folder', $event)"
         />
       </div>
       <!-- List -->
@@ -73,6 +74,7 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-fold
           @rename="(id, name) => $emit('rename-folder', id, name)"
           @delete="$emit('delete-folder', $event)"
           @set-password="$emit('set-password-folder', $event)"
+          @move="$emit('move-folder', $event)"
         />
       </div>
     </section>
@@ -96,6 +98,7 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-fold
           @preview="$emit('preview-file', $event)"
           @unlock="$emit('unlock-file', $event)"
           @set-password="$emit('set-password-file', $event)"
+          @move="$emit('move-file', $event)"
         />
       </div>
       <!-- List -->
@@ -118,6 +121,7 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'set-password-fold
           @preview="$emit('preview-file', $event)"
           @unlock="$emit('unlock-file', $event)"
           @set-password="$emit('set-password-file', $event)"
+          @move="$emit('move-file', $event)"
         />
       </div>
     </section>

@@ -129,6 +129,21 @@ router.patch('/:id/rename', async (req, res) => {
   }
 })
 
+// PATCH /api/orbit/files/:id/move
+router.patch('/:id/move', async (req, res) => {
+  try {
+    const file = await File.findByIdAndUpdate(
+      req.params.id,
+      { folderId: req.body.folderId || null },
+      { new: true }
+    )
+    if (!file) return res.status(404).json({ error: 'Not found' })
+    res.json(serializeFile(file))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // PATCH /api/orbit/files/:id/password — set or remove password
 router.patch('/:id/password', async (req, res) => {
   try {

@@ -29,6 +29,12 @@ export const api = {
     req('PATCH', `/folders/${id}/rename`, { name }),
   deleteFolder: (id) =>
     req('DELETE', `/folders/${id}`),
+  getAllFolders: () =>
+    req('GET', '/folders/all'),
+  moveFolder: (id, parentId) =>
+    req('PATCH', `/folders/${id}/move`, { parentId }),
+  moveFile: (id, folderId) =>
+    req('PATCH', `/files/${id}/move`, { folderId }),
   setFolderPassword: (id, password) =>
     req('PATCH', `/folders/${id}/password`, { password }),
   setFilePassword: (id, password) =>

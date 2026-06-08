@@ -67,6 +67,16 @@ router.get('/browse', async (req, res) => {
   }
 })
 
+// GET /api/orbit/folders/all — flat list of every folder (for folder picker)
+router.get('/all', async (req, res) => {
+  try {
+    const folders = await Folder.find({ userId: 'default' }).sort({ name: 1 })
+    res.json(folders.map(serializeFolder))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // POST /api/orbit/folders
 router.post('/', async (req, res) => {
   try {
@@ -95,6 +105,29 @@ router.patch('/:id/password', async (req, res) => {
     const { password } = req.body
     const hash = password ? hashPassword(password) : null
     const folder = await Folder.findByIdAndUpdate(req.params.id, { passwordHash: hash }, { new: true })
+    if (!folder) return res.status(404).json({ error: 'Not found' })
+    res.json(serializeFolder(folder))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// PATCH /api/orbit/folders/:id/move
+router.patch('/:id/move', async (req, res) => {
+  try {
+    const { parentId } = req.body
+    const target = parentId || null
+    if (target === req.params.id) return res.status(400).json({ error: 'Cannot move folder into itself' })
+    if (target) {
+      // Walk up from target to make sure we're not moving into a descendant
+      let cur = await Folder.findById(target)
+      while (cur) {
+        if (String(cur._id) === req.params.id) return res.status(400).json({ error: 'Cannot move folder into its own descendant' })
+        if (!cur.parentId) break
+        cur = await Folder.findById(cur.parentId)
+      }
+    }
+    const folder = await Folder.findByIdAndUpdate(req.params.id, { parentId: target }, { new: true })
     if (!folder) return res.status(404).json({ error: 'Not found' })
     res.json(serializeFolder(folder))
   } catch (err) {

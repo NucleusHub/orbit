@@ -11,6 +11,7 @@ import CreateFolderModal from '../components/CreateFolderModal.vue'
 import FilePreviewModal from '../components/FilePreviewModal.vue'
 import PasswordPromptModal from '../components/PasswordPromptModal.vue'
 import SetPasswordModal from '../components/SetPasswordModal.vue'
+import MoveModal from '../components/MoveModal.vue'
 import { useFiles } from '../composables/useFiles.js'
 import { useUpload } from '../composables/useUpload.js'
 import { api } from '../api/orbit.js'
@@ -54,6 +55,16 @@ async function onFileUnlock(password) {
   } catch {
     filePwdError.value = 'Wrong password'
   }
+}
+
+// Move
+const movingItem = ref(null) // { type: 'file'|'folder', item }
+async function handleMove(targetFolderId) {
+  const { type, item } = movingItem.value
+  if (type === 'file') await api.moveFile(item._id, targetFolderId)
+  else await api.moveFolder(item._id, targetFolderId)
+  movingItem.value = null
+  browse(currentFolderId.value)
 }
 
 // Set password
@@ -268,11 +279,13 @@ async function executeDelete() {
         @rename-folder="renameFolder"
         @delete-folder="f => promptDelete('folder', f)"
         @set-password-folder="f => { settingPasswordFor = { type: 'folder', item: f } }"
+        @move-folder="f => { movingItem = { type: 'folder', item: f } }"
         @rename-file="renameFile"
         @delete-file="f => promptDelete('file', f)"
         @preview-file="previewFile = $event"
         @unlock-file="f => { unlockingFile = f; filePwdError = null }"
         @set-password-file="f => { settingPasswordFor = { type: 'file', item: f } }"
+        @move-file="f => { movingItem = { type: 'file', item: f } }"
       />
     </main>
 
@@ -319,6 +332,13 @@ async function executeDelete() {
       :error="filePwdError"
       @submit="onFileUnlock"
       @cancel="unlockingFile = null"
+    />
+    <MoveModal
+      :show="!!movingItem"
+      :item="movingItem ? { ...movingItem.item, type: movingItem.type } : null"
+      :current-folder-id="currentFolderId"
+      @move="handleMove"
+      @cancel="movingItem = null"
     />
     <SetPasswordModal
       :show="!!settingPasswordFor"
