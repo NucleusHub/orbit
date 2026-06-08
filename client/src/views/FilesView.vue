@@ -8,6 +8,7 @@ import SearchBar from '../components/SearchBar.vue'
 import UploadZone from '../components/UploadZone.vue'
 import UploadProgress from '../components/UploadProgress.vue'
 import CreateFolderModal from '../components/CreateFolderModal.vue'
+import FilePreviewModal from '../components/FilePreviewModal.vue'
 import { useFiles } from '../composables/useFiles.js'
 import { useUpload } from '../composables/useUpload.js'
 
@@ -17,6 +18,7 @@ const search = ref('')
 const dragOver = ref(false)
 const showCreateFolder = ref(false)
 const confirmTarget = ref(null) // { type, id, name }
+const previewFile = ref(null)
 const fileInput = ref(null)
 
 const {
@@ -91,7 +93,7 @@ async function executeDelete() {
 
 <template>
   <div
-    class="min-h-screen bg-slate-50 dark:bg-slate-950"
+    class="min-h-screen"
     @dragover="onDragover"
     @dragleave="onDragleave"
     @drop="onDrop"
@@ -100,7 +102,7 @@ async function executeDelete() {
     <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileInput" />
 
     <!-- Header -->
-    <header class="sticky top-0 z-30 flex items-center gap-3 px-4 h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/8">
+    <header class="sticky top-0 z-30 flex items-center gap-3 px-4 h-14 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl border-b border-slate-200/80 dark:border-white/8">
       <!-- Sidebar toggle -->
       <button
         @click="sidebarOpen = true"
@@ -111,16 +113,6 @@ async function executeDelete() {
           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
         </svg>
       </button>
-
-      <!-- App icon + name -->
-      <div class="flex items-center gap-2 mr-2">
-        <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75z" />
-          </svg>
-        </div>
-        <span class="text-sm font-semibold text-slate-900 dark:text-white">Orbit</span>
-      </div>
 
       <div class="flex-1" />
 
@@ -176,7 +168,7 @@ async function executeDelete() {
     <Breadcrumbs :crumbs="breadcrumbs" @navigate="navigate" />
 
     <!-- Main content -->
-    <main class="px-4 md:px-6 pb-24">
+    <main class="px-4 md:px-6 pt-6 pb-24">
       <!-- Loading -->
       <div v-if="loading" class="flex items-center justify-center py-20">
         <svg class="w-8 h-8 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -229,6 +221,7 @@ async function executeDelete() {
         @delete-folder="f => promptDelete('folder', f)"
         @rename-file="renameFile"
         @delete-file="f => promptDelete('file', f)"
+        @preview-file="previewFile = $event"
       />
     </main>
 
@@ -261,6 +254,7 @@ async function executeDelete() {
       @confirm="executeDelete"
       @cancel="confirmTarget = null"
     />
+    <FilePreviewModal :file="previewFile" @close="previewFile = null" />
   </div>
 </template>
 

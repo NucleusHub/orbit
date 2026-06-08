@@ -6,7 +6,7 @@ const props = defineProps({
   file: { type: Object, required: true },
   viewMode: { type: String, default: 'grid' },
 })
-const emit = defineEmits(['rename', 'delete'])
+const emit = defineEmits(['rename', 'delete', 'preview'])
 
 const menuOpen = ref(false)
 const editing = ref(false)
@@ -43,7 +43,8 @@ function cancelEdit() {
   <!-- List mode -->
   <div
     v-if="viewMode === 'list'"
-    class="group flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-white/60 dark:hover:bg-white/6 transition-colors"
+    class="group flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-white/60 dark:hover:bg-white/6 transition-colors cursor-pointer"
+    @click="!editing && $emit('preview', file)"
   >
     <!-- Icon or thumb -->
     <div class="w-8 h-8 rounded-lg overflow-hidden shrink-0 flex items-center justify-center" :class="!showThumb ? typeInfo.bg : ''">
@@ -74,7 +75,7 @@ function cancelEdit() {
     <div class="relative shrink-0" @click.stop>
       <button
         @click="menuOpen = !menuOpen"
-        class="cursor-pointer opacity-0 group-hover:opacity-100 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition-all"
+        class="cursor-pointer opacity-0 group-hover:opacity-100 p-1 rounded-lg text-slate-900 dark:text-slate-400 hover:text-black dark:hover:text-slate-300 dark:hover:bg-white/10 transition-all"
       >
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
           <path d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" />
@@ -101,7 +102,8 @@ function cancelEdit() {
   <!-- Grid mode -->
   <div
     v-else
-    class="group relative flex flex-col rounded-2xl border border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6 transition-all overflow-hidden cursor-default select-none"
+    class="group relative flex flex-col rounded-2xl border border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6 transition-all cursor-pointer select-none"
+    @click="!editing && $emit('preview', file)"
   >
     <!-- Thumbnail / icon area -->
     <div class="aspect-square w-full overflow-hidden flex items-center justify-center" :class="!showThumb ? `${typeInfo.bg} rounded-t-2xl` : ''">

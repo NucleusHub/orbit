@@ -4,7 +4,7 @@ defineEmits(['navigate'])
 </script>
 
 <template>
-  <div class="flex items-center gap-1 px-4 md:px-6 py-2.5 text-sm overflow-x-auto">
+  <div class="flex items-center gap-1 px-4 md:px-6 py-3 text-sm overflow-x-auto border-b border-slate-200 dark:border-white/8">
     <button
       @click="$emit('navigate', null)"
       class="cursor-pointer flex items-center gap-1.5 shrink-0 font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"

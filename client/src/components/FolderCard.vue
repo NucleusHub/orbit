@@ -59,12 +59,13 @@ function cancelEdit() {
     <div class="relative shrink-0" @click.stop>
       <button
         @click="menuOpen = !menuOpen"
-        class="cursor-pointer opacity-0 group-hover:opacity-100 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition-all"
+        class="cursor-pointer opacity-0 group-hover:opacity-100 p-1 rounded-lg text-slate-900 dark:text-slate-400 hover:text-black dark:hover:text-slate-300 dark:hover:bg-white/10 transition-all"
       >
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
           <path d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" />
         </svg>
       </button>
+      <div v-if="menuOpen" class="fixed inset-0 z-10" @click="menuOpen = false" />
       <div v-if="menuOpen" class="absolute right-0 top-full mt-1 z-20 w-36 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-lg shadow-black/10 overflow-hidden">
         <button @click="startEdit" class="cursor-pointer w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/8 transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931zm0 0L19.5 7.125" /></svg>
@@ -76,7 +77,6 @@ function cancelEdit() {
         </button>
       </div>
     </div>
-    <div v-if="menuOpen" class="fixed inset-0 z-10" @click="menuOpen = false" />
   </div>
 
   <!-- Grid mode -->
@@ -91,7 +91,7 @@ function cancelEdit() {
       <div v-if="menuOpen" class="fixed inset-0 z-10" @click.stop="menuOpen = false" />
       <button
         @click="menuOpen = !menuOpen"
-        class="cursor-pointer p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+        class="cursor-pointer p-1 rounded-lg text-slate-900 dark:text-slate-400 hover:text-black dark:hover:text-slate-300 dark:hover:bg-white/10 transition-colors"
       >
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
           <path d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" />

@@ -27,7 +27,7 @@ function submit() {
     <Transition name="fade">
       <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/20 backdrop-blur-xl" @click="$emit('cancel')" />
-        <div class="relative bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-5">
+        <div class="relative bg-white/80 dark:bg-white/8 border border-slate-200/80 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-5 backdrop-blur-xl">
           <h2 class="text-base font-semibold text-slate-900 dark:text-white">New folder</h2>
           <input
             ref="input"

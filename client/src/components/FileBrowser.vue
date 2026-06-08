@@ -8,7 +8,7 @@ defineProps({
   viewMode: { type: String, default: 'grid' },
 })
 
-defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'rename-file', 'delete-file'])
+defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'rename-file', 'delete-file', 'preview-file'])
 </script>
 
 <template>
@@ -62,6 +62,7 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'rename-file', 'de
           view-mode="grid"
           @rename="(id, name) => $emit('rename-file', id, name)"
           @delete="$emit('delete-file', $event)"
+          @preview="$emit('preview-file', $event)"
         />
       </div>
       <!-- List -->
@@ -81,6 +82,7 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'rename-file', 'de
           view-mode="list"
           @rename="(id, name) => $emit('rename-file', id, name)"
           @delete="$emit('delete-file', $event)"
+          @preview="$emit('preview-file', $event)"
         />
       </div>
     </section>
