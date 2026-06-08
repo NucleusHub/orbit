@@ -217,7 +217,6 @@ async function executeDelete() {
     @dragover="onDragover"
     @dragleave="onDragleave"
     @drop="onDrop"
-    @contextmenu="onBgContextMenu"
   >
     <AppSidebar :open="sidebarOpen" @close="sidebarOpen = false" />
     <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileInput" />
@@ -289,7 +288,7 @@ async function executeDelete() {
     <Breadcrumbs :crumbs="breadcrumbs" @navigate="navigate" />
 
     <!-- Main content -->
-    <main class="px-4 md:px-6 pt-6 pb-24">
+    <main class="px-4 md:px-6 pt-6 pb-24" @contextmenu="onBgContextMenu">
       <!-- Loading -->
       <div v-if="loading || searchLoading" class="flex items-center justify-center py-20">
         <svg class="w-8 h-8 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
