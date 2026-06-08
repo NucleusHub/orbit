@@ -47,8 +47,10 @@ const filteredFiles = computed(() =>
 )
 const isEmpty = computed(() => !filteredFolders.value.length && !filteredFiles.value.length)
 const parentFolderId = computed(() => {
-  if (breadcrumbs.value.length < 2) return undefined
-  return breadcrumbs.value[breadcrumbs.value.length - 2].id ?? null
+  if (currentFolderId.value === null) return undefined
+  return breadcrumbs.value.length >= 2
+    ? (breadcrumbs.value[breadcrumbs.value.length - 2].id ?? null)
+    : null
 })
 
 function navigate(folderId) {
