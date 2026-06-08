@@ -6,6 +6,7 @@ defineProps({
   folders: { type: Array, default: () => [] },
   files: { type: Array, default: () => [] },
   viewMode: { type: String, default: 'grid' },
+  parentFolderId: { type: [String, null], default: undefined },
 })
 
 defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'rename-file', 'delete-file', 'preview-file'])
@@ -14,7 +15,7 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'rename-file', 'de
 <template>
   <div class="flex flex-col gap-8">
     <!-- Folders section -->
-    <section v-if="folders.length">
+    <section v-if="folders.length || parentFolderId !== undefined">
       <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Folders</h2>
       <!-- Grid -->
       <div
@@ -22,6 +23,20 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'rename-file', 'de
         class="grid gap-2"
         style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr))"
       >
+        <!-- .. up one level -->
+        <div
+          v-if="parentFolderId !== undefined"
+          class="group flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6 transition-all cursor-pointer select-none"
+          @click="$emit('open-folder', parentFolderId)"
+          title="Go up"
+        >
+          <div class="w-14 h-14 rounded-2xl bg-slate-200/60 dark:bg-white/8 flex items-center justify-center">
+            <svg class="w-7 h-7 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 11.25l-3-3m0 0l3-3m-3 3h12.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+            </svg>
+          </div>
+          <span class="text-xs font-medium text-slate-400 dark:text-slate-500">..</span>
+        </div>
         <FolderCard
           v-for="folder in folders"
           :key="folder._id"
@@ -34,6 +49,20 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'rename-file', 'de
       </div>
       <!-- List -->
       <div v-else class="flex flex-col">
+        <!-- .. up one level -->
+        <div
+          v-if="parentFolderId !== undefined"
+          class="flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-white/60 dark:hover:bg-white/6 transition-colors cursor-pointer select-none"
+          @click="$emit('open-folder', parentFolderId)"
+          title="Go up"
+        >
+          <div class="w-8 h-8 rounded-lg bg-slate-200/60 dark:bg-white/8 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 11.25l-3-3m0 0l3-3m-3 3h12.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+            </svg>
+          </div>
+          <span class="text-sm font-medium text-slate-400 dark:text-slate-500">..</span>
+        </div>
         <FolderCard
           v-for="folder in folders"
           :key="folder._id"

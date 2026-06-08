@@ -46,6 +46,10 @@ const filteredFiles = computed(() =>
     : files.value
 )
 const isEmpty = computed(() => !filteredFolders.value.length && !filteredFiles.value.length)
+const parentFolderId = computed(() => {
+  if (breadcrumbs.value.length < 2) return undefined
+  return breadcrumbs.value[breadcrumbs.value.length - 2].id ?? null
+})
 
 function navigate(folderId) {
   search.value = ''
@@ -217,6 +221,7 @@ async function executeDelete() {
         :folders="filteredFolders"
         :files="filteredFiles"
         :view-mode="viewMode"
+        :parent-folder-id="parentFolderId"
         @open-folder="navigate"
         @rename-folder="renameFolder"
         @delete-folder="f => promptDelete('folder', f)"
