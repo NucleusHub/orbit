@@ -8,7 +8,7 @@ defineEmits(['dismiss'])
     <Transition name="slide-up">
       <div
         v-if="uploads.length"
-        class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 w-72"
+        class="fixed bottom-4 right-3 left-3 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex flex-col gap-2 sm:w-72"
       >
         <div
           v-for="u in uploads"

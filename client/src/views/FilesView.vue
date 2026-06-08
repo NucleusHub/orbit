@@ -103,11 +103,11 @@ async function executeDelete() {
     <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileInput" />
 
     <!-- Header -->
-    <header class="sticky top-0 z-30 flex items-center gap-3 px-4 h-14 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl border-b border-slate-200/80 dark:border-white/8">
+    <header class="sticky top-0 z-30 flex items-center gap-2 sm:gap-3 px-4 h-14 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl border-b border-slate-200/80 dark:border-white/8">
       <!-- Sidebar toggle -->
       <button
         @click="sidebarOpen = true"
-        class="cursor-pointer p-2 -ml-1 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
+        class="cursor-pointer p-2 -ml-1 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/8 transition-colors shrink-0"
         aria-label="Open navigation"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -121,7 +121,7 @@ async function executeDelete() {
       <SearchBar v-model="search" />
 
       <!-- View toggle -->
-      <div class="hidden sm:flex gap-0.5 bg-black/5 dark:bg-white/8 rounded-lg p-0.5">
+      <div class="flex gap-0.5 bg-black/5 dark:bg-white/8 rounded-lg p-0.5 shrink-0">
         <button
           @click="viewMode = 'grid'"
           :class="['cursor-pointer p-1.5 rounded-md transition-colors', viewMode === 'grid' ? 'bg-white dark:bg-white/20 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300']"
@@ -156,12 +156,12 @@ async function executeDelete() {
       <!-- Upload -->
       <button
         @click="fileInput.click()"
-        class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-colors"
+        class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-colors shrink-0"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
         </svg>
-        Upload
+        <span class="hidden sm:inline">Upload</span>
       </button>
     </header>
 
