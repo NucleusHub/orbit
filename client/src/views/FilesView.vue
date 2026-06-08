@@ -49,7 +49,7 @@ const isEmpty = computed(() => !filteredFolders.value.length && !filteredFiles.v
 const parentFolderId = computed(() => {
   if (currentFolderId.value === null) return undefined
   return breadcrumbs.value.length >= 2
-    ? (breadcrumbs.value[breadcrumbs.value.length - 2].id ?? null)
+    ? (breadcrumbs.value[breadcrumbs.value.length - 2]._id ?? null)
     : null
 })
 

@@ -32,7 +32,7 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'rename-file', 'de
         >
           <div class="w-14 h-14 rounded-2xl bg-slate-200/60 dark:bg-white/8 flex items-center justify-center">
             <svg class="w-7 h-7 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 11.25l-3-3m0 0l3-3m-3 3h12.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
             </svg>
           </div>
           <span class="text-xs font-medium text-slate-400 dark:text-slate-500">..</span>
@@ -58,7 +58,7 @@ defineEmits(['open-folder', 'rename-folder', 'delete-folder', 'rename-file', 'de
         >
           <div class="w-8 h-8 rounded-lg bg-slate-200/60 dark:bg-white/8 flex items-center justify-center shrink-0">
             <svg class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 11.25l-3-3m0 0l3-3m-3 3h12.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
             </svg>
           </div>
           <span class="text-sm font-medium text-slate-400 dark:text-slate-500">..</span>
