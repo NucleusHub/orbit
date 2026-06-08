@@ -59,7 +59,7 @@ function cancelEdit() {
     <div class="relative shrink-0" @click.stop>
       <button
         @click="menuOpen = !menuOpen"
-        class="cursor-pointer p-1 rounded-lg text-slate-900 dark:text-slate-400 hover:text-black dark:hover:text-slate-300 dark:hover:bg-white/10 transition-all sm:opacity-0 sm:group-hover:opacity-100"
+        class="cursor-pointer p-1 rounded-lg text-slate-900 dark:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-all sm:opacity-0 sm:group-hover:opacity-100"
       >
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
           <path d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" />
@@ -91,7 +91,7 @@ function cancelEdit() {
       <div v-if="menuOpen" class="fixed inset-0 z-10" @click.stop="menuOpen = false" />
       <button
         @click="menuOpen = !menuOpen"
-        class="cursor-pointer p-1 rounded-lg text-slate-900 dark:text-slate-400 hover:text-black dark:hover:text-slate-300 dark:hover:bg-white/10 transition-colors"
+        class="cursor-pointer p-1 rounded-lg text-slate-900 dark:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
       >
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
           <path d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" />
