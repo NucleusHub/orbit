@@ -217,12 +217,13 @@ async function executeDelete() {
     @dragover="onDragover"
     @dragleave="onDragleave"
     @drop="onDrop"
+    @contextmenu="onBgContextMenu"
   >
     <AppSidebar :open="sidebarOpen" @close="sidebarOpen = false" />
     <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileInput" />
 
     <!-- Header -->
-    <header class="sticky top-0 z-30 flex items-center gap-2 sm:gap-3 px-4 h-14 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl border-b border-slate-200/80 dark:border-white/8">
+    <header class="sticky top-0 z-30 flex items-center gap-2 sm:gap-3 px-4 h-14 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl border-b border-slate-200/80 dark:border-white/8" @contextmenu.stop>
       <!-- Sidebar toggle -->
       <button
         @click="sidebarOpen = true"
@@ -285,10 +286,10 @@ async function executeDelete() {
     </header>
 
     <!-- Breadcrumbs -->
-    <Breadcrumbs :crumbs="breadcrumbs" @navigate="navigate" />
+    <Breadcrumbs :crumbs="breadcrumbs" @navigate="navigate" @contextmenu.stop />
 
     <!-- Main content -->
-    <main class="px-4 md:px-6 pt-6 pb-24" @contextmenu="onBgContextMenu">
+    <main class="px-4 md:px-6 pt-6 pb-24">
       <!-- Loading -->
       <div v-if="loading || searchLoading" class="flex items-center justify-center py-20">
         <svg class="w-8 h-8 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
