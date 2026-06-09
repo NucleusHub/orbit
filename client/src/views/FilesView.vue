@@ -23,9 +23,87 @@ watch(viewMode, v => localStorage.setItem('orbit:viewMode', v))
 const search = ref('')
 const dragOver = ref(false)
 const showCreateFolder = ref(false)
-const confirmTarget = ref(null) // { type, id, name }
+const confirmTarget = ref(null) // { type, id, name } or { bulk: true, count, items }
 const previewFile = ref(null)
 const fileInput = ref(null)
+
+// Multi-select
+const selection = ref([]) // [{ type: 'file'|'folder', item }]
+
+function toggleSelect(type, item) {
+  const idx = selection.value.findIndex(s => s.type === type && s.item._id === item._id)
+  if (idx === -1) selection.value = [...selection.value, { type, item }]
+  else selection.value = selection.value.filter((_, i) => i !== idx)
+}
+
+function clearSelection() {
+  selection.value = []
+}
+
+// Selection context menu (right-click on selected item when 2+ selected)
+const selCtxOpen = ref(false)
+const selCtxX = ref(0)
+const selCtxY = ref(0)
+
+const ICONS_SEL = {
+  move: 'M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5',
+  delete: 'm14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0',
+  lock: 'M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z',
+}
+
+const selCtxItems = computed(() => {
+  const n = selection.value.length
+  return [
+    { label: `Move ${n} items`, icon: ICONS_SEL.move, action: () => { movingSelection.value = true } },
+    { label: `Set password`, icon: ICONS_SEL.lock, action: () => { settingPasswordForSelection.value = true } },
+    { divider: true },
+    { label: `Delete ${n} items`, icon: ICONS_SEL.delete, action: promptDeleteSelection, danger: true },
+  ]
+})
+
+function openSelCtx(x, y) {
+  selCtxX.value = x
+  selCtxY.value = y
+  selCtxOpen.value = true
+}
+
+// Bulk move
+const movingSelection = ref(false)
+async function handleMoveSelection(targetFolderId) {
+  try {
+    await Promise.all(selection.value.map(({ type, item }) =>
+      type === 'file' ? api.moveFile(item._id, targetFolderId) : api.moveFolder(item._id, targetFolderId)
+    ))
+    clearSelection()
+    browse(currentFolderId.value)
+  } catch (e) {
+    console.error('Bulk move failed:', e)
+  } finally {
+    movingSelection.value = false
+  }
+}
+
+// Bulk password
+const settingPasswordForSelection = ref(false)
+async function onSetPasswordForSelection(password) {
+  try {
+    await Promise.all(selection.value.map(({ type, item }) =>
+      type === 'folder' ? api.setFolderPassword(item._id, password) : api.setFilePassword(item._id, password)
+    ))
+    selection.value.filter(s => s.type === 'file').forEach(s => sessionStorage.removeItem(`orbit:url:file:${s.item._id}`))
+    clearSelection()
+    browse(currentFolderId.value)
+  } catch (e) {
+    console.error('Bulk set password failed:', e)
+  } finally {
+    settingPasswordForSelection.value = false
+  }
+}
+
+// Bulk delete
+function promptDeleteSelection() {
+  confirmTarget.value = { bulk: true, count: selection.value.length, items: [...selection.value] }
+}
 
 // Background context menu
 const bgCtxOpen = ref(false)
@@ -67,7 +145,7 @@ function onBgContextMenu(e) {
 
 const {
   folders, files, breadcrumbs, loading, error, currentFolderId, lockedFolderId,
-  browse, unlockFolder, unlockFileInList, updateItem,
+  browse, unlockFolder, cancelFolderUnlock, unlockFileInList, updateItem,
   createFolder, renameFolder, deleteFolder, renameFile, deleteFile,
 } = useFiles()
 
@@ -208,8 +286,11 @@ const parentFolderId = computed(() => {
 
 function navigate(folderId) {
   search.value = ''
+  clearSelection()
   browse(folderId)
 }
+
+watch(search, () => { if (selection.value.length) clearSelection() })
 
 function onDragover(e) {
   e.preventDefault()
@@ -221,6 +302,7 @@ function onDragleave(e) {
 function onDrop(e) {
   e.preventDefault()
   dragOver.value = false
+  if (e.target.closest('[data-upload-zone]')) return
   if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files, currentFolderId.value)
 }
 
@@ -244,9 +326,23 @@ function promptDelete(type, item) {
 
 async function executeDelete() {
   if (!confirmTarget.value) return
-  const { type, id } = confirmTarget.value
-  if (type === 'file') await deleteFile(id)
-  else await deleteFolder(id)
+  if (confirmTarget.value.bulk) {
+    const { items } = confirmTarget.value
+    try {
+      await Promise.all(items.map(({ type, item }) =>
+        type === 'file' ? api.deleteFile(item._id) : api.deleteFolder(item._id)
+      ))
+      items.filter(s => s.type === 'file').forEach(s => sessionStorage.removeItem(`orbit:url:file:${s.item._id}`))
+      clearSelection()
+      browse(currentFolderId.value)
+    } catch (e) {
+      console.error('Bulk delete failed:', e)
+    }
+  } else {
+    const { type, id } = confirmTarget.value
+    if (type === 'file') await deleteFile(id)
+    else await deleteFolder(id)
+  }
   confirmTarget.value = null
 }
 </script>
@@ -379,6 +475,7 @@ async function executeDelete() {
         :view-mode="viewMode"
         :parent-folder-id="parentFolderId"
         :uploadable="!search"
+        :selection="selection"
         @open-folder="navigate"
         @rename-folder="renameFolder"
         @rename-folder-request="f => withAuth('folder', f, () => { renamingItem = { type: 'folder', item: f } })"
@@ -393,6 +490,8 @@ async function executeDelete() {
         @set-password-file="f => withAuth('file', f, () => { settingPasswordFor = { type: 'file', item: f } })"
         @move-file="f => withAuth('file', f, () => { movingItem = { type: 'file', item: f } })"
         @upload="files => uploadFiles(files, currentFolderId)"
+        @toggle-select="toggleSelect"
+        @open-selection-ctx="openSelCtx"
       />
     </main>
 
@@ -405,6 +504,54 @@ async function executeDelete() {
           </svg>
           <p class="text-lg font-semibold text-indigo-600 dark:text-indigo-400">Drop to upload</p>
         </div>
+      </div>
+    </Transition>
+
+    <!-- Selection toolbar -->
+    <Transition name="fade">
+      <div
+        v-if="selection.length > 0"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 px-2 py-1.5 bg-slate-900 dark:bg-slate-800 rounded-2xl shadow-2xl border border-white/10"
+        @contextmenu.stop
+      >
+        <span class="pl-2 pr-3 text-sm font-medium text-slate-200 whitespace-nowrap">{{ selection.length }} selected</span>
+        <button
+          @click="movingSelection = true"
+          class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
+        >
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+          </svg>
+          Move
+        </button>
+        <button
+          @click="settingPasswordForSelection = true"
+          class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
+        >
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
+          </svg>
+          Password
+        </button>
+        <button
+          @click="promptDeleteSelection"
+          class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-white/10 rounded-xl transition-colors"
+        >
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+          </svg>
+          Delete
+        </button>
+        <div class="w-px h-5 bg-white/20 mx-1" />
+        <button
+          @click="clearSelection"
+          title="Clear selection"
+          class="cursor-pointer p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
     </Transition>
 
@@ -434,8 +581,10 @@ async function executeDelete() {
     />
     <ConfirmModal
       :show="!!confirmTarget"
-      :title="`Delete ${confirmTarget?.type === 'file' ? 'file' : 'folder'}?`"
-      :message="confirmTarget ? `Permanently delete &quot;${confirmTarget.name}&quot;? This cannot be undone.` : ''"
+      :title="confirmTarget?.bulk ? `Delete ${confirmTarget.count} items?` : `Delete ${confirmTarget?.type === 'file' ? 'file' : 'folder'}?`"
+      :message="confirmTarget?.bulk
+        ? `Permanently delete ${confirmTarget.count} selected items? This cannot be undone.`
+        : (confirmTarget ? `Permanently delete &quot;${confirmTarget.name}&quot;? This cannot be undone.` : '')"
       confirm-label="Delete"
       @confirm="executeDelete"
       @cancel="confirmTarget = null"
@@ -446,7 +595,7 @@ async function executeDelete() {
       title="Folder is protected"
       :error="folderPwdError"
       @submit="onFolderUnlock"
-      @cancel="browse(currentFolderId)"
+      @cancel="cancelFolderUnlock"
     />
     <PasswordPromptModal
       :show="!!unlockingFile"
@@ -462,6 +611,13 @@ async function executeDelete() {
       @move="handleMove"
       @cancel="movingItem = null"
     />
+    <MoveModal
+      :show="movingSelection"
+      :item="{ name: `${selection.length} items`, type: 'selection' }"
+      :current-folder-id="currentFolderId"
+      @move="handleMoveSelection"
+      @cancel="movingSelection = false"
+    />
     <SetPasswordModal
       :show="!!settingPasswordFor"
       :name="settingPasswordFor?.item?.filename || settingPasswordFor?.item?.name || ''"
@@ -469,7 +625,15 @@ async function executeDelete() {
       @save="onSetPassword"
       @cancel="settingPasswordFor = null"
     />
+    <SetPasswordModal
+      :show="settingPasswordForSelection"
+      :name="`${selection.length} items`"
+      :is-protected="false"
+      @save="onSetPasswordForSelection"
+      @cancel="settingPasswordForSelection = false"
+    />
     <ContextMenu :show="bgCtxOpen" :x="bgCtxX" :y="bgCtxY" :items="bgCtxItems" @close="bgCtxOpen = false" />
+    <ContextMenu :show="selCtxOpen" :x="selCtxX" :y="selCtxY" :items="selCtxItems" @close="selCtxOpen = false" />
   </div>
 </template>
 

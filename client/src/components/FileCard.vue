@@ -6,8 +6,10 @@ import ContextMenu from './ContextMenu.vue'
 const props = defineProps({
   file: { type: Object, required: true },
   viewMode: { type: String, default: 'grid' },
+  selected: { type: Boolean, default: false },
+  selectionSize: { type: Number, default: 0 },
 })
-const emit = defineEmits(['rename', 'delete', 'preview', 'unlock', 'set-password', 'move', 'rename-request'])
+const emit = defineEmits(['rename', 'delete', 'preview', 'unlock', 'set-password', 'move', 'rename-request', 'toggle-select', 'open-selection-ctx'])
 
 const editing = ref(false)
 const editName = ref('')
@@ -48,6 +50,10 @@ const ctxItems = computed(() => [
 function openCtx(e) {
   e.preventDefault()
   e.stopPropagation()
+  if (props.selected && props.selectionSize > 1) {
+    emit('open-selection-ctx', e.clientX, e.clientY)
+    return
+  }
   ctxX.value = e.clientX
   ctxY.value = e.clientY
   ctxOpen.value = true
@@ -85,19 +91,43 @@ function cancelEdit() {
   <!-- List mode -->
   <div
     v-if="viewMode === 'list'"
-    class="group flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-white/60 dark:hover:bg-white/6 transition-colors cursor-pointer"
+    class="group flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
+    :class="selected ? 'bg-indigo-50/60 dark:bg-indigo-500/10' : 'hover:bg-white/60 dark:hover:bg-white/6'"
     @click="!editing && (isLocked ? $emit('unlock', file) : $emit('preview', file))"
     @contextmenu="openCtx"
   >
-    <!-- Icon or thumb -->
-    <div class="w-8 h-8 rounded-lg overflow-hidden shrink-0 flex items-center justify-center" :class="isLocked ? 'bg-slate-100 dark:bg-white/8' : (!showThumb ? typeInfo.bg : '')">
-      <svg v-if="isLocked" class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
-      </svg>
-      <img v-else-if="showThumb" :src="file.url" :alt="file.filename" class="w-full h-full object-cover" @error="imgError = true" />
-      <svg v-else class="w-4 h-4" :class="typeInfo.color" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" :d="typeInfo.icon" />
-      </svg>
+    <!-- Icon / Checkbox -->
+    <div class="relative w-8 h-8 shrink-0" @click.stop="$emit('toggle-select')">
+      <!-- Icon layer -->
+      <div
+        class="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center transition-opacity"
+        :class="[
+          isLocked ? 'bg-slate-100 dark:bg-white/8' : (!showThumb ? typeInfo.bg : ''),
+          selectionSize > 0 ? 'opacity-0' : 'group-hover:opacity-0'
+        ]"
+      >
+        <svg v-if="isLocked" class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
+        </svg>
+        <img v-else-if="showThumb" :src="file.url" :alt="file.filename" class="w-full h-full object-cover" @error="imgError = true" />
+        <svg v-else class="w-4 h-4" :class="typeInfo.color" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" :d="typeInfo.icon" />
+        </svg>
+      </div>
+      <!-- Checkbox layer -->
+      <div
+        class="absolute inset-0 flex items-center justify-center transition-opacity"
+        :class="selectionSize > 0 || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+      >
+        <div
+          class="w-5 h-5 rounded-[4px] border-2 flex items-center justify-center transition-colors cursor-pointer"
+          :class="selected ? 'bg-indigo-600 border-indigo-600' : 'bg-white/80 dark:bg-slate-800/80 border-slate-300 dark:border-white/30'"
+        >
+          <svg v-if="selected" class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+        </div>
+      </div>
     </div>
 
     <!-- Name -->
@@ -133,10 +163,29 @@ function cancelEdit() {
   <!-- Grid mode -->
   <div
     v-else
-    class="group relative flex flex-col rounded-2xl border border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6 transition-all cursor-pointer select-none"
+    class="group relative flex flex-col rounded-2xl border transition-all cursor-pointer select-none"
+    :class="selected
+      ? 'border-indigo-300 dark:border-indigo-500/40 bg-indigo-50/50 dark:bg-indigo-500/10'
+      : 'border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6'"
     @click="!editing && (isLocked ? $emit('unlock', file) : $emit('preview', file))"
     @contextmenu="openCtx"
   >
+    <!-- Checkbox top-left -->
+    <div
+      class="absolute top-2 left-2 z-10 transition-opacity"
+      :class="selectionSize > 0 || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+      @click.stop="$emit('toggle-select')"
+    >
+      <div
+        class="w-5 h-5 rounded-[5px] border-2 flex items-center justify-center cursor-pointer transition-colors"
+        :class="selected ? 'bg-indigo-600 border-indigo-600' : 'bg-white/80 dark:bg-slate-800/80 border-slate-300 dark:border-white/30'"
+      >
+        <svg v-if="selected" class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+        </svg>
+      </div>
+    </div>
+
     <!-- Thumbnail / icon area -->
     <div class="aspect-square w-full overflow-hidden flex items-center justify-center rounded-t-2xl" :class="isLocked ? 'bg-slate-100 dark:bg-white/6' : (!showThumb ? typeInfo.bg : '')">
       <svg v-if="isLocked" class="w-10 h-10 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -169,7 +218,7 @@ function cancelEdit() {
       <span class="text-xs text-slate-400 dark:text-slate-500">{{ formatSize(file.size) }}</span>
     </div>
 
-    <!-- Actions button -->
+    <!-- Actions button top-right -->
     <div class="absolute top-2 right-2 transition-opacity sm:opacity-0 sm:group-hover:opacity-100" @click.stop>
       <button
         @click="openCtxFromBtn"

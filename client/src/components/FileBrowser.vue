@@ -1,17 +1,23 @@
 <script setup>
+import { computed } from 'vue'
 import FolderCard from './FolderCard.vue'
 import FileCard from './FileCard.vue'
 import UploadZone from './UploadZone.vue'
 
-defineProps({
+const props = defineProps({
   folders: { type: Array, default: () => [] },
   files: { type: Array, default: () => [] },
   viewMode: { type: String, default: 'grid' },
   parentFolderId: { type: [String, null], default: undefined },
   uploadable: { type: Boolean, default: true },
+  selection: { type: Array, default: () => [] },
 })
 
-defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-folder', 'set-password-folder', 'move-folder', 'rename-file', 'rename-file-request', 'delete-file', 'preview-file', 'unlock-file', 'set-password-file', 'move-file', 'upload'])
+defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-folder', 'set-password-folder', 'move-folder', 'rename-file', 'rename-file-request', 'delete-file', 'preview-file', 'unlock-file', 'set-password-file', 'move-file', 'upload', 'toggle-select', 'open-selection-ctx'])
+
+const selectionKeys = computed(() => new Set(props.selection.map(s => `${s.type}:${s.item._id}`)))
+const selectionSize = computed(() => props.selection.length)
+const isSelected = (type, id) => selectionKeys.value.has(`${type}:${id}`)
 </script>
 
 <template>
@@ -44,12 +50,16 @@ defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-fo
           :key="folder._id"
           :folder="folder"
           view-mode="grid"
+          :selected="isSelected('folder', folder._id)"
+          :selection-size="selectionSize"
           @open="$emit('open-folder', $event)"
           @rename="(id, name) => $emit('rename-folder', id, name)"
           @rename-request="$emit('rename-folder-request', $event)"
           @delete="$emit('delete-folder', $event)"
           @set-password="$emit('set-password-folder', $event)"
           @move="$emit('move-folder', $event)"
+          @toggle-select="$emit('toggle-select', 'folder', folder)"
+          @open-selection-ctx="(x, y) => $emit('open-selection-ctx', x, y)"
         />
       </div>
       <!-- List -->
@@ -73,12 +83,16 @@ defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-fo
           :key="folder._id"
           :folder="folder"
           view-mode="list"
+          :selected="isSelected('folder', folder._id)"
+          :selection-size="selectionSize"
           @open="$emit('open-folder', $event)"
           @rename="(id, name) => $emit('rename-folder', id, name)"
           @rename-request="$emit('rename-folder-request', $event)"
           @delete="$emit('delete-folder', $event)"
           @set-password="$emit('set-password-folder', $event)"
           @move="$emit('move-folder', $event)"
+          @toggle-select="$emit('toggle-select', 'folder', folder)"
+          @open-selection-ctx="(x, y) => $emit('open-selection-ctx', x, y)"
         />
       </div>
     </section>
@@ -105,6 +119,8 @@ defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-fo
             :key="file._id"
             :file="file"
             view-mode="grid"
+            :selected="isSelected('file', file._id)"
+            :selection-size="selectionSize"
             @rename="(id, name) => $emit('rename-file', id, name)"
             @rename-request="$emit('rename-file-request', $event)"
             @delete="$emit('delete-file', $event)"
@@ -112,6 +128,8 @@ defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-fo
             @unlock="$emit('unlock-file', $event)"
             @set-password="$emit('set-password-file', $event)"
             @move="$emit('move-file', $event)"
+            @toggle-select="$emit('toggle-select', 'file', file)"
+            @open-selection-ctx="(x, y) => $emit('open-selection-ctx', x, y)"
           />
         </div>
         <!-- List -->
@@ -129,6 +147,8 @@ defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-fo
             :key="file._id"
             :file="file"
             view-mode="list"
+            :selected="isSelected('file', file._id)"
+            :selection-size="selectionSize"
             @rename="(id, name) => $emit('rename-file', id, name)"
             @rename-request="$emit('rename-file-request', $event)"
             @delete="$emit('delete-file', $event)"
@@ -136,6 +156,8 @@ defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-fo
             @unlock="$emit('unlock-file', $event)"
             @set-password="$emit('set-password-file', $event)"
             @move="$emit('move-file', $event)"
+            @toggle-select="$emit('toggle-select', 'file', file)"
+            @open-selection-ctx="(x, y) => $emit('open-selection-ctx', x, y)"
           />
         </div>
       </template>

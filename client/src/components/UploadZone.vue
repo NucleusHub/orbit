@@ -19,6 +19,7 @@ function onInput(e) {
 
 <template>
   <div
+    data-upload-zone
     class="flex flex-col items-center justify-center gap-4 py-16 px-8 rounded-2xl border-2 border-dashed transition-colors"
     :class="isDragging
       ? 'border-indigo-500 bg-indigo-500/5 dark:bg-indigo-500/10'

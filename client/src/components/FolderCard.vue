@@ -5,8 +5,10 @@ import ContextMenu from './ContextMenu.vue'
 const props = defineProps({
   folder: { type: Object, required: true },
   viewMode: { type: String, default: 'grid' },
+  selected: { type: Boolean, default: false },
+  selectionSize: { type: Number, default: 0 },
 })
-const emit = defineEmits(['open', 'rename', 'delete', 'set-password', 'move', 'rename-request'])
+const emit = defineEmits(['open', 'rename', 'delete', 'set-password', 'move', 'rename-request', 'toggle-select', 'open-selection-ctx'])
 
 const editing = ref(false)
 const editName = ref('')
@@ -36,6 +38,10 @@ const ctxItems = computed(() => [
 function openCtx(e) {
   e.preventDefault()
   e.stopPropagation()
+  if (props.selected && props.selectionSize > 1) {
+    emit('open-selection-ctx', e.clientX, e.clientY)
+    return
+  }
   ctxX.value = e.clientX
   ctxY.value = e.clientY
   ctxOpen.value = true
@@ -73,18 +79,41 @@ function cancelEdit() {
   <!-- List mode -->
   <div
     v-if="viewMode === 'list'"
-    class="group flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-white/60 dark:hover:bg-white/6 transition-colors cursor-pointer"
+    class="group flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
+    :class="selected ? 'bg-indigo-50/60 dark:bg-indigo-500/10' : 'hover:bg-white/60 dark:hover:bg-white/6'"
     @click="!editing && $emit('open', folder._id)"
     @contextmenu="openCtx"
   >
-    <div class="relative w-8 h-8 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center shrink-0">
-      <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
-      </svg>
-      <svg v-if="folder.protected" class="absolute -bottom-1 -right-1 w-3.5 h-3.5 text-amber-500 bg-white dark:bg-slate-900 rounded-full p-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
-      </svg>
+    <!-- Icon / Checkbox -->
+    <div class="relative w-8 h-8 shrink-0" @click.stop="$emit('toggle-select')">
+      <!-- Icon layer -->
+      <div
+        class="absolute inset-0 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center transition-opacity"
+        :class="selectionSize > 0 ? 'opacity-0' : 'group-hover:opacity-0'"
+      >
+        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
+        </svg>
+        <svg v-if="folder.protected" class="absolute -bottom-1 -right-1 w-3.5 h-3.5 text-amber-500 bg-white dark:bg-slate-900 rounded-full p-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
+        </svg>
+      </div>
+      <!-- Checkbox layer -->
+      <div
+        class="absolute inset-0 flex items-center justify-center transition-opacity"
+        :class="selectionSize > 0 || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+      >
+        <div
+          class="w-5 h-5 rounded-[4px] border-2 flex items-center justify-center transition-colors cursor-pointer"
+          :class="selected ? 'bg-indigo-600 border-indigo-600' : 'bg-white/80 dark:bg-slate-800/80 border-slate-300 dark:border-white/30'"
+        >
+          <svg v-if="selected" class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+        </div>
+      </div>
     </div>
+
     <input
       v-if="editing"
       ref="editInput"
@@ -111,11 +140,30 @@ function cancelEdit() {
   <!-- Grid mode -->
   <div
     v-else
-    class="group relative flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6 transition-all cursor-pointer select-none"
+    class="group relative flex flex-col items-center gap-2.5 p-4 rounded-2xl border transition-all cursor-pointer select-none"
+    :class="selected
+      ? 'border-indigo-300 dark:border-indigo-500/40 bg-indigo-50/50 dark:bg-indigo-500/10'
+      : 'border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6'"
     @click="!editing && $emit('open', folder._id)"
     @dblclick="!editing && $emit('open', folder._id)"
     @contextmenu="openCtx"
   >
+    <!-- Checkbox top-left -->
+    <div
+      class="absolute top-2 left-2 z-10 transition-opacity"
+      :class="selectionSize > 0 || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+      @click.stop="$emit('toggle-select')"
+    >
+      <div
+        class="w-5 h-5 rounded-[5px] border-2 flex items-center justify-center cursor-pointer transition-colors"
+        :class="selected ? 'bg-indigo-600 border-indigo-600' : 'bg-white/80 dark:bg-slate-800/80 border-slate-300 dark:border-white/30'"
+      >
+        <svg v-if="selected" class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+        </svg>
+      </div>
+    </div>
+
     <!-- Actions -->
     <div class="absolute top-2.5 right-2.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100" @click.stop>
       <button

@@ -44,6 +44,13 @@ export function useFiles() {
     browse(folderId)
   }
 
+  function cancelFolderUnlock() {
+    // Revert to the parent — breadcrumbs still reflect the last successful browse
+    const parentId = breadcrumbs.value[breadcrumbs.value.length - 1]?._id ?? null
+    lockedFolderId.value = null
+    currentFolderId.value = parentId
+  }
+
   function unlockFileInList(fileId, url) {
     sessionStorage.setItem(`orbit:url:file:${fileId}`, url)
     files.value = files.value.map(f => f._id === fileId ? { ...f, url } : f)
@@ -89,7 +96,7 @@ export function useFiles() {
 
   return {
     folders, files, breadcrumbs, loading, error, currentFolderId, lockedFolderId,
-    browse, unlockFolder, unlockFileInList, updateItem,
+    browse, unlockFolder, cancelFolderUnlock, unlockFileInList, updateItem,
     createFolder, renameFolder, deleteFolder, renameFile, deleteFile,
   }
 }
