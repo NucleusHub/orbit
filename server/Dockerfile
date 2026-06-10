@@ -4,4 +4,4 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 EXPOSE 3003
-CMD ["node", "--watch", "index.js"]
+CMD ["sh", "-c", "npm install && node --watch index.js"]

@@ -1,8 +1,11 @@
 <script setup>
 import BackgroundBlobs from '@core/BackgroundBlobs.vue'
+import AuthGuard from '@core/auth/AuthGuard.vue'
 </script>
 
 <template>
   <BackgroundBlobs />
-  <RouterView />
+  <AuthGuard>
+    <RouterView />
+  </AuthGuard>
 </template>

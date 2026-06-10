@@ -2,8 +2,10 @@ import express from 'express'
 import Folder from '../models/Folder.js'
 import File from '../models/File.js'
 import { hashPassword, verifyPassword } from '../utils/password.js'
+import { requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
+router.use(requireAuth)
 
 function fileUrl(objectKey) {
   const bucket = process.env.MINIO_BUCKET || 'orbit-uploads'
@@ -35,10 +37,9 @@ async function buildBreadcrumbs(folderId) {
   return crumbs
 }
 
-// POST /api/orbit/folders/:id/verify — verify password without side effects
 router.post('/:id/verify', async (req, res) => {
   try {
-    const folder = await Folder.findById(req.params.id)
+    const folder = await Folder.findOne({ _id: req.params.id, profileId: req.profile.profileId })
     if (!folder) return res.status(404).json({ error: 'Not found' })
     if (!folder.passwordHash) return res.json({ ok: true })
     if (!verifyPassword(req.body.password, folder.passwordHash))
@@ -49,14 +50,14 @@ router.post('/:id/verify', async (req, res) => {
   }
 })
 
-// GET /api/orbit/folders/browse?parentId=
 router.get('/browse', async (req, res) => {
   try {
     const { parentId } = req.query
     const folderId = parentId || null
+    const pid = req.profile.profileId
 
     if (folderId) {
-      const target = await Folder.findById(folderId)
+      const target = await Folder.findOne({ _id: folderId, profileId: pid })
       if (target?.passwordHash) {
         const pwd = req.headers['x-folder-password']
         if (!pwd || !verifyPassword(pwd, target.passwordHash)) {
@@ -66,8 +67,8 @@ router.get('/browse', async (req, res) => {
     }
 
     const [folders, rawFiles, breadcrumbs] = await Promise.all([
-      Folder.find({ userId: 'default', parentId: folderId }).sort({ name: 1 }),
-      File.find({ userId: 'default', folderId }).sort({ createdAt: -1 }),
+      Folder.find({ profileId: pid, parentId: folderId }).sort({ name: 1 }),
+      File.find({ profileId: pid, folderId }).sort({ createdAt: -1 }),
       buildBreadcrumbs(parentId),
     ])
 
@@ -81,15 +82,15 @@ router.get('/browse', async (req, res) => {
   }
 })
 
-// GET /api/orbit/folders/search?q= — global search across all folders and files
 router.get('/search', async (req, res) => {
   try {
     const q = (req.query.q || '').trim()
     if (!q) return res.json({ folders: [], files: [] })
     const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+    const pid = req.profile.profileId
     const [folders, files] = await Promise.all([
-      Folder.find({ userId: 'default', name: regex }),
-      File.find({ userId: 'default', filename: regex }),
+      Folder.find({ profileId: pid, name: regex }),
+      File.find({ profileId: pid, filename: regex }),
     ])
     res.json({ folders: folders.map(serializeFolder), files: files.map(serializeFile) })
   } catch (err) {
@@ -97,31 +98,36 @@ router.get('/search', async (req, res) => {
   }
 })
 
-// GET /api/orbit/folders/all — flat list of every folder (for folder picker)
 router.get('/all', async (req, res) => {
   try {
-    const folders = await Folder.find({ userId: 'default' }).sort({ name: 1 })
+    const folders = await Folder.find({ profileId: req.profile.profileId }).sort({ name: 1 })
     res.json(folders.map(serializeFolder))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-// POST /api/orbit/folders
 router.post('/', async (req, res) => {
   try {
     const { name, parentId } = req.body
-    const folder = await Folder.create({ name, parentId: parentId || null, userId: 'default' })
+    const folder = await Folder.create({
+      profileId: req.profile.profileId,
+      name,
+      parentId: parentId || null,
+    })
     res.status(201).json(serializeFolder(folder))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-// PATCH /api/orbit/folders/:id/rename
 router.patch('/:id/rename', async (req, res) => {
   try {
-    const folder = await Folder.findByIdAndUpdate(req.params.id, { name: req.body.name }, { new: true })
+    const folder = await Folder.findOneAndUpdate(
+      { _id: req.params.id, profileId: req.profile.profileId },
+      { name: req.body.name },
+      { new: true }
+    )
     if (!folder) return res.status(404).json({ error: 'Not found' })
     res.json(serializeFolder(folder))
   } catch (err) {
@@ -129,12 +135,15 @@ router.patch('/:id/rename', async (req, res) => {
   }
 })
 
-// PATCH /api/orbit/folders/:id/password — set or remove password
 router.patch('/:id/password', async (req, res) => {
   try {
     const { password } = req.body
     const hash = password ? hashPassword(password) : null
-    const folder = await Folder.findByIdAndUpdate(req.params.id, { passwordHash: hash }, { new: true })
+    const folder = await Folder.findOneAndUpdate(
+      { _id: req.params.id, profileId: req.profile.profileId },
+      { passwordHash: hash },
+      { new: true }
+    )
     if (!folder) return res.status(404).json({ error: 'Not found' })
     res.json(serializeFolder(folder))
   } catch (err) {
@@ -142,14 +151,12 @@ router.patch('/:id/password', async (req, res) => {
   }
 })
 
-// PATCH /api/orbit/folders/:id/move
 router.patch('/:id/move', async (req, res) => {
   try {
     const { parentId } = req.body
     const target = parentId || null
     if (target === req.params.id) return res.status(400).json({ error: 'Cannot move folder into itself' })
     if (target) {
-      // Walk up from target to make sure we're not moving into a descendant
       let cur = await Folder.findById(target)
       while (cur) {
         if (String(cur._id) === req.params.id) return res.status(400).json({ error: 'Cannot move folder into its own descendant' })
@@ -157,7 +164,11 @@ router.patch('/:id/move', async (req, res) => {
         cur = await Folder.findById(cur.parentId)
       }
     }
-    const folder = await Folder.findByIdAndUpdate(req.params.id, { parentId: target }, { new: true })
+    const folder = await Folder.findOneAndUpdate(
+      { _id: req.params.id, profileId: req.profile.profileId },
+      { parentId: target },
+      { new: true }
+    )
     if (!folder) return res.status(404).json({ error: 'Not found' })
     res.json(serializeFolder(folder))
   } catch (err) {
@@ -165,21 +176,20 @@ router.patch('/:id/move', async (req, res) => {
   }
 })
 
-// DELETE /api/orbit/folders/:id
 router.delete('/:id', async (req, res) => {
   try {
-    await deleteFolderRecursive(req.params.id)
+    await deleteFolderRecursive(req.params.id, req.profile.profileId)
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-async function deleteFolderRecursive(folderId) {
-  const subfolders = await Folder.find({ parentId: folderId })
-  await Promise.all(subfolders.map(sf => deleteFolderRecursive(sf._id.toString())))
-  await File.deleteMany({ folderId })
-  await Folder.findByIdAndDelete(folderId)
+async function deleteFolderRecursive(folderId, profileId) {
+  const subfolders = await Folder.find({ parentId: folderId, profileId })
+  await Promise.all(subfolders.map(sf => deleteFolderRecursive(sf._id.toString(), profileId)))
+  await File.deleteMany({ folderId, profileId })
+  await Folder.findOneAndDelete({ _id: folderId, profileId })
 }
 
 export default router

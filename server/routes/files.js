@@ -13,8 +13,10 @@ import {
 } from '@aws-sdk/client-s3'
 import File from '../models/File.js'
 import { hashPassword, verifyPassword } from '../utils/password.js'
+import { requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
+router.use(requireAuth)
 
 const BUCKET = process.env.MINIO_BUCKET || 'orbit-uploads'
 const MINIO_INTERNAL = `http://${process.env.MINIO_ENDPOINT || 'minio'}:${process.env.MINIO_PORT || '9000'}`
@@ -68,11 +70,10 @@ async function ensureBucket() {
 
 ensureBucket().catch(err => console.error('MinIO init error:', err.message))
 
-// GET /api/orbit/files
 router.get('/', async (req, res) => {
   try {
     const { folderId, search } = req.query
-    const query = { userId: 'default', folderId: folderId || null }
+    const query = { profileId: req.profile.profileId, folderId: folderId || null }
     if (search) query.filename = { $regex: search, $options: 'i' }
     const files = await File.find(query).sort({ createdAt: -1 })
     res.json(files.map(serializeFile))
@@ -81,13 +82,13 @@ router.get('/', async (req, res) => {
   }
 })
 
-// POST /api/orbit/files/upload — multipart upload, streamed to MinIO
 router.post('/upload', upload.single('file'), async (req, res) => {
   const tmpPath = req.file?.path
   try {
     const { folderId } = req.body
     const ext = path.extname(req.file.originalname)
-    const objectKey = `uploads/default/${randomUUID()}${ext}`
+    const profileId = String(req.profile.profileId)
+    const objectKey = `uploads/${profileId}/${randomUUID()}${ext}`
 
     await s3.send(new PutObjectCommand({
       Bucket: BUCKET,
@@ -98,12 +99,12 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     }))
 
     const doc = await File.create({
+      profileId: req.profile.profileId,
       filename: req.file.originalname,
       objectKey,
       mimeType: req.file.mimetype,
       size: req.file.size,
       folderId: folderId || null,
-      userId: 'default',
     })
 
     res.status(201).json(serializeFile(doc))
@@ -114,11 +115,10 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 })
 
-// PATCH /api/orbit/files/:id/rename
 router.patch('/:id/rename', async (req, res) => {
   try {
-    const file = await File.findByIdAndUpdate(
-      req.params.id,
+    const file = await File.findOneAndUpdate(
+      { _id: req.params.id, profileId: req.profile.profileId },
       { filename: req.body.filename },
       { new: true }
     )
@@ -129,11 +129,10 @@ router.patch('/:id/rename', async (req, res) => {
   }
 })
 
-// PATCH /api/orbit/files/:id/move
 router.patch('/:id/move', async (req, res) => {
   try {
-    const file = await File.findByIdAndUpdate(
-      req.params.id,
+    const file = await File.findOneAndUpdate(
+      { _id: req.params.id, profileId: req.profile.profileId },
       { folderId: req.body.folderId || null },
       { new: true }
     )
@@ -144,12 +143,15 @@ router.patch('/:id/move', async (req, res) => {
   }
 })
 
-// PATCH /api/orbit/files/:id/password — set or remove password
 router.patch('/:id/password', async (req, res) => {
   try {
     const { password } = req.body
     const hash = password ? hashPassword(password) : null
-    const file = await File.findByIdAndUpdate(req.params.id, { passwordHash: hash }, { new: true })
+    const file = await File.findOneAndUpdate(
+      { _id: req.params.id, profileId: req.profile.profileId },
+      { passwordHash: hash },
+      { new: true }
+    )
     if (!file) return res.status(404).json({ error: 'Not found' })
     res.json(serializeFile(file))
   } catch (err) {
@@ -157,10 +159,9 @@ router.patch('/:id/password', async (req, res) => {
   }
 })
 
-// POST /api/orbit/files/:id/unlock — verify password, return URL
 router.post('/:id/unlock', async (req, res) => {
   try {
-    const file = await File.findById(req.params.id)
+    const file = await File.findOne({ _id: req.params.id, profileId: req.profile.profileId })
     if (!file) return res.status(404).json({ error: 'Not found' })
     if (!file.passwordHash) return res.json({ url: fileUrl(file.objectKey) })
     if (!verifyPassword(req.body.password || '', file.passwordHash)) {
@@ -172,10 +173,9 @@ router.post('/:id/unlock', async (req, res) => {
   }
 })
 
-// DELETE /api/orbit/files/:id
 router.delete('/:id', async (req, res) => {
   try {
-    const file = await File.findByIdAndDelete(req.params.id)
+    const file = await File.findOneAndDelete({ _id: req.params.id, profileId: req.profile.profileId })
     if (!file) return res.status(404).json({ error: 'Not found' })
     await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: file.objectKey }))
     res.json({ ok: true })

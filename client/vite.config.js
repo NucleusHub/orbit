@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => ({
   base: '/orbit/',
   plugins: [vue(), mode !== 'production' && vueDevTools(), tailwindcss()].filter(Boolean),
   resolve: {
+    preserveSymlinks: true,
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@core': fileURLToPath(new URL('./core', import.meta.url)),
