@@ -12,5 +12,21 @@
       { "path": "/orbit", "upstream": "orbit-client:5177", "websocket": true },
       { "path": "/api/orbit", "upstream": "orbit-server:3003", "maxBodySize": "0" }
     ]
+  },
+  "server": {
+    "service": "orbit-server",
+    "port": 3003,
+    "env": {
+      "MONGODB_URI": "mongodb://mongo:27017/nucleus",
+      "MINIO_ENDPOINT": "minio",
+      "MINIO_PORT": "9000",
+      "MINIO_ACCESS_KEY": "${MINIO_ACCESS_KEY:-nucleusadmin}",
+      "MINIO_SECRET_KEY": "${MINIO_SECRET_KEY:-nucleuschangeme}",
+      "MINIO_PUBLIC_URL": "${MINIO_PUBLIC_URL:-http://localhost}",
+      "MINIO_BUCKET": "${MINIO_BUCKET:-orbit-uploads}"
+    },
+    "depends": ["mongo", "minio"],
+    "healthEndpoint": "/api/orbit/health",
+    "startPeriod": "15s"
   }
 }
