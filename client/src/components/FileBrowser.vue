@@ -11,6 +11,7 @@ const props = defineProps({
   parentFolderId: { type: [String, null], default: undefined },
   uploadable: { type: Boolean, default: true },
   selection: { type: Array, default: () => [] },
+  highlightId: { type: String, default: null },
 })
 
 defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-folder', 'set-password-folder', 'move-folder', 'rename-file', 'rename-file-request', 'delete-file', 'preview-file', 'unlock-file', 'set-password-file', 'move-file', 'upload', 'toggle-select', 'open-selection-ctx'])
@@ -121,6 +122,7 @@ const isSelected = (type, id) => selectionKeys.value.has(`${type}:${id}`)
             view-mode="grid"
             :selected="isSelected('file', file._id)"
             :selection-size="selectionSize"
+            :highlight-id="highlightId"
             @rename="(id, name) => $emit('rename-file', id, name)"
             @rename-request="$emit('rename-file-request', $event)"
             @delete="$emit('delete-file', $event)"
@@ -149,6 +151,7 @@ const isSelected = (type, id) => selectionKeys.value.has(`${type}:${id}`)
             view-mode="list"
             :selected="isSelected('file', file._id)"
             :selection-size="selectionSize"
+            :highlight-id="highlightId"
             @rename="(id, name) => $emit('rename-file', id, name)"
             @rename-request="$emit('rename-file-request', $event)"
             @delete="$emit('delete-file', $event)"

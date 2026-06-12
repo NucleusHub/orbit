@@ -12,6 +12,7 @@ import {
   PutBucketPolicyCommand,
 } from '@aws-sdk/client-s3'
 import File from '../models/File.js'
+import Folder from '../models/Folder.js'
 import { hashPassword, verifyPassword } from '../utils/password.js'
 import { requireAuth } from '../middleware/auth.js'
 
@@ -77,6 +78,39 @@ router.get('/', async (req, res) => {
     if (search) query.filename = { $regex: search, $options: 'i' }
     const files = await File.find(query).sort({ createdAt: -1 })
     res.json(files.map(serializeFile))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Most-recent files across every folder, newest upload first. Each file is
+// returned with its folder `path` (array of folder names) so dashboard widgets
+// (e.g. the Orbit hub widget) can show where the file lives. Used by the
+// widget's "Recent files" mode.
+router.get('/recent', async (req, res) => {
+  try {
+    const pid = req.profile.profileId
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 8, 1), 50)
+    const [files, folders] = await Promise.all([
+      File.find({ profileId: pid }).sort({ createdAt: -1 }).limit(limit),
+      Folder.find({ profileId: pid }).select('name parentId'),
+    ])
+    const byId = new Map(folders.map(f => [String(f._id), f]))
+    const pathOf = (fid) => {
+      const parts = []
+      let cur = fid ? byId.get(String(fid)) : null
+      let guard = 0
+      while (cur && guard++ < 50) {
+        parts.unshift(cur.name)
+        cur = cur.parentId ? byId.get(String(cur.parentId)) : null
+      }
+      return parts
+    }
+    res.json(files.map(f => ({
+      ...serializeFile(f),
+      folderId: f.folderId ? String(f.folderId) : null,
+      path: pathOf(f.folderId),
+    })))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

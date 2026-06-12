@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import AppSidebar from '@core/AppSidebar.vue'
 import AppHeader from '@core/AppHeader.vue'
 import TemplateModal from '@core/TemplateModal.vue'
@@ -250,7 +251,13 @@ async function onRenameSubmit(newName) {
 
 const { uploads, uploadFiles, dismiss } = useUpload(onUploadDone)
 
-onMounted(() => browse(null))
+// Deep-link support (e.g. from the Orbit dashboard widget):
+// /orbit/?folder=<id>&highlight=<fileId> opens that folder and flags the file
+// so its card flashes + scrolls into view once the listing loads.
+const route = useRoute()
+const highlightId = ref(route.query.highlight ? String(route.query.highlight) : null)
+
+onMounted(() => browse(route.query.folder ? String(route.query.folder) : null))
 
 function onUploadDone() {
   browse(currentFolderId.value)
@@ -288,6 +295,7 @@ const parentFolderId = computed(() => {
 function navigate(folderId) {
   search.value = ''
   clearSelection()
+  highlightId.value = null // stop highlighting once the user navigates
   browse(folderId)
 }
 
@@ -477,6 +485,7 @@ async function executeDelete() {
         :parent-folder-id="parentFolderId"
         :uploadable="!search"
         :selection="selection"
+        :highlight-id="highlightId"
         @open-folder="navigate"
         @rename-folder="renameFolder"
         @rename-folder-request="f => withAuth('folder', f, () => { renamingItem = { type: 'folder', item: f } })"

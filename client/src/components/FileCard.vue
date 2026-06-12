@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { getFileTypeInfo, formatSize, formatRelativeDate } from '../utils/fileType.js'
 import ContextMenu from './ContextMenu.vue'
 
@@ -8,6 +8,17 @@ const props = defineProps({
   viewMode: { type: String, default: 'grid' },
   selected: { type: Boolean, default: false },
   selectionSize: { type: Number, default: 0 },
+  highlightId: { type: String, default: null },
+})
+
+// Deep-link highlight: when this card is the targeted file, flash it and
+// scroll it into view once mounted (see FilesView's ?highlight= handling).
+const rootEl = ref(null)
+const isHighlighted = computed(() => props.highlightId && props.file._id === props.highlightId)
+onMounted(() => {
+  if (isHighlighted.value) {
+    nextTick(() => rootEl.value?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+  }
 })
 const emit = defineEmits(['rename', 'delete', 'preview', 'unlock', 'set-password', 'move', 'rename-request', 'toggle-select', 'open-selection-ctx'])
 
@@ -91,8 +102,9 @@ function cancelEdit() {
   <!-- List mode -->
   <div
     v-if="viewMode === 'list'"
+    ref="rootEl"
     class="group flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
-    :class="selected ? 'bg-indigo-50/60 dark:bg-indigo-500/10' : 'hover:bg-white/60 dark:hover:bg-white/6'"
+    :class="[selected ? 'bg-indigo-50/60 dark:bg-indigo-500/10' : 'hover:bg-white/60 dark:hover:bg-white/6', isHighlighted && 'orbit-highlight']"
     @click="!editing && (isLocked ? $emit('unlock', file) : $emit('preview', file))"
     @contextmenu="openCtx"
   >
@@ -163,10 +175,11 @@ function cancelEdit() {
   <!-- Grid mode -->
   <div
     v-else
+    ref="rootEl"
     class="group relative flex flex-col rounded-2xl border transition-all cursor-pointer select-none"
-    :class="selected
+    :class="[selected
       ? 'border-indigo-300 dark:border-indigo-500/40 bg-indigo-50/50 dark:bg-indigo-500/10'
-      : 'border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6'"
+      : 'border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6', isHighlighted && 'orbit-highlight']"
     @click="!editing && (isLocked ? $emit('unlock', file) : $emit('preview', file))"
     @contextmenu="openCtx"
   >
@@ -233,3 +246,20 @@ function cancelEdit() {
 
   <ContextMenu :show="ctxOpen" :x="ctxX" :y="ctxY" :items="ctxItems" @close="ctxOpen = false" />
 </template>
+
+<style scoped>
+/* Deep-link highlight: a one-shot indigo ring + tint that fades out. */
+.orbit-highlight {
+  animation: orbit-hl 2.6s ease-out 1;
+}
+@keyframes orbit-hl {
+  0%, 35% {
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.9), 0 0 0 7px rgba(99, 102, 241, 0.22);
+    background-color: rgba(99, 102, 241, 0.12);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+    background-color: transparent;
+  }
+}
+</style>
