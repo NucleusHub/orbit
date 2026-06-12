@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import AppSidebar from '@core/AppSidebar.vue'
 import AppHeader from '@core/AppHeader.vue'
-import ConfirmModal from '@core/ConfirmModal.vue'
+import TemplateModal from '@core/TemplateModal.vue'
 import FileBrowser from '../components/FileBrowser.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import SearchBar from '../components/SearchBar.vue'
@@ -580,7 +580,7 @@ async function executeDelete() {
       @submit="onPendingAuth"
       @cancel="pendingAuth = null"
     />
-    <ConfirmModal
+    <TemplateModal
       :show="!!confirmTarget"
       :title="confirmTarget?.bulk ? `Delete ${confirmTarget.count} items?` : `Delete ${confirmTarget?.type === 'file' ? 'file' : 'folder'}?`"
       :message="confirmTarget?.bulk
