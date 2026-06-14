@@ -15,14 +15,26 @@ import File from '../models/File.js'
 import Folder from '../models/Folder.js'
 import { hashPassword, verifyPassword } from '../utils/password.js'
 import { requireAuth } from '../middleware/auth.js'
+import { myGroups, groupIdSet, canView, canEdit, childScope, childOwnership } from '../utils/scope.js'
 
 const router = express.Router()
 router.use(requireAuth)
 
-const BUCKET = process.env.MINIO_BUCKET || 'orbit-uploads'
+// Load the caller's group membership once per request (req.groups / req.gset).
+router.use(async (req, _res, next) => {
+  try {
+    req.groups = await myGroups(req.profile.profileId)
+    req.gset = groupIdSet(req.groups)
+    next()
+  } catch (err) {
+    next(err)
+  }
+})
+
+export const BUCKET = process.env.MINIO_BUCKET || 'orbit-uploads'
 const MINIO_INTERNAL = `http://${process.env.MINIO_ENDPOINT || 'minio'}:${process.env.MINIO_PORT || '9000'}`
 
-const s3 = new S3Client({
+export const s3 = new S3Client({
   region: 'us-east-1',
   endpoint: MINIO_INTERNAL,
   credentials: {
@@ -38,11 +50,12 @@ function fileUrl(objectKey) {
   return `/${BUCKET}/${objectKey}`
 }
 
-function serializeFile(f) {
+function serializeFile(f, req) {
   const obj = f.toObject ? f.toObject() : { ...f }
   const { passwordHash, ...rest } = obj
-  if (passwordHash) return { ...rest, protected: true }
-  return { ...rest, url: fileUrl(obj.objectKey) }
+  const base = { ...rest, shared: !!obj.groupId, canEdit: canEdit(obj, req.profile.profileId, req.gset) }
+  if (passwordHash) return { ...base, protected: true }
+  return { ...base, url: fileUrl(obj.objectKey) }
 }
 
 const upload = multer({ dest: '/tmp/orbit-uploads' })
@@ -73,27 +86,35 @@ ensureBucket().catch(err => console.error('MinIO init error:', err.message))
 
 router.get('/', async (req, res) => {
   try {
+    const pid = req.profile.profileId
     const { folderId, search } = req.query
-    const query = { profileId: req.profile.profileId, folderId: folderId || null }
+    const fid = folderId || null
+
+    let scope = { profileId: pid, groupId: null }
+    if (fid) {
+      const parent = await Folder.findById(fid)
+      if (!canView(parent, pid, req.gset)) return res.status(404).json({ error: 'Not found' })
+      scope = childScope(parent, pid)
+    }
+    const query = { folderId: fid, ...scope }
     if (search) query.filename = { $regex: search, $options: 'i' }
     const files = await File.find(query).sort({ createdAt: -1 })
-    res.json(files.map(serializeFile))
+    res.json(files.map(f => serializeFile(f, req)))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-// Most-recent files across every folder, newest upload first. Each file is
-// returned with its folder `path` (array of folder names) so dashboard widgets
-// (e.g. the Orbit hub widget) can show where the file lives. Used by the
-// widget's "Recent files" mode.
+// Most-recent PERSONAL files across every folder (used by the Orbit dashboard
+// widget). Shared-group files are excluded — their folder paths live outside
+// the user's personal tree.
 router.get('/recent', async (req, res) => {
   try {
     const pid = req.profile.profileId
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 8, 1), 50)
     const [files, folders] = await Promise.all([
-      File.find({ profileId: pid }).sort({ createdAt: -1 }).limit(limit),
-      Folder.find({ profileId: pid }).select('name parentId'),
+      File.find({ profileId: pid, groupId: null }).sort({ createdAt: -1 }).limit(limit),
+      Folder.find({ profileId: pid, groupId: null }).select('name parentId'),
     ])
     const byId = new Map(folders.map(f => [String(f._id), f]))
     const pathOf = (fid) => {
@@ -107,7 +128,7 @@ router.get('/recent', async (req, res) => {
       return parts
     }
     res.json(files.map(f => ({
-      ...serializeFile(f),
+      ...serializeFile(f, req),
       folderId: f.folderId ? String(f.folderId) : null,
       path: pathOf(f.folderId),
     })))
@@ -119,10 +140,17 @@ router.get('/recent', async (req, res) => {
 router.post('/upload', upload.single('file'), async (req, res) => {
   const tmpPath = req.file?.path
   try {
+    const pid = req.profile.profileId
     const { folderId } = req.body
+    let parent = null
+    if (folderId) {
+      parent = await Folder.findById(folderId)
+      if (!canView(parent, pid, req.gset)) return res.status(404).json({ error: 'Not found' })
+    }
+    const own = childOwnership(parent, pid) // { groupId, ownerId, profileId }
     const ext = path.extname(req.file.originalname)
-    const profileId = String(req.profile.profileId)
-    const objectKey = `uploads/${profileId}/${randomUUID()}${ext}`
+    const keyPrefix = own.groupId ? `uploads/group/${own.groupId}` : `uploads/${pid}`
+    const objectKey = `${keyPrefix}/${randomUUID()}${ext}`
 
     await s3.send(new PutObjectCommand({
       Bucket: BUCKET,
@@ -133,15 +161,15 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     }))
 
     const doc = await File.create({
-      profileId: req.profile.profileId,
       filename: req.file.originalname,
       objectKey,
       mimeType: req.file.mimetype,
       size: req.file.size,
       folderId: folderId || null,
+      ...own,
     })
 
-    res.status(201).json(serializeFile(doc))
+    res.status(201).json(serializeFile(doc, req))
   } catch (err) {
     res.status(500).json({ error: err.message })
   } finally {
@@ -149,15 +177,23 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 })
 
+// Resolve a file and enforce view/edit permission. Returns the doc, or null
+// after sending the appropriate error response.
+async function loadEditable(req, res) {
+  const pid = req.profile.profileId
+  const file = await File.findById(req.params.id)
+  if (!canView(file, pid, req.gset)) { res.status(404).json({ error: 'Not found' }); return null }
+  if (!canEdit(file, pid, req.gset)) { res.status(403).json({ error: 'Only the owner can change this' }); return null }
+  return file
+}
+
 router.patch('/:id/rename', async (req, res) => {
   try {
-    const file = await File.findOneAndUpdate(
-      { _id: req.params.id, profileId: req.profile.profileId },
-      { filename: req.body.filename },
-      { new: true }
-    )
-    if (!file) return res.status(404).json({ error: 'Not found' })
-    res.json(serializeFile(file))
+    const file = await loadEditable(req, res)
+    if (!file) return
+    file.filename = req.body.filename
+    await file.save()
+    res.json(serializeFile(file, req))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -165,13 +201,23 @@ router.patch('/:id/rename', async (req, res) => {
 
 router.patch('/:id/move', async (req, res) => {
   try {
-    const file = await File.findOneAndUpdate(
-      { _id: req.params.id, profileId: req.profile.profileId },
-      { folderId: req.body.folderId || null },
-      { new: true }
-    )
-    if (!file) return res.status(404).json({ error: 'Not found' })
-    res.json(serializeFile(file))
+    const pid = req.profile.profileId
+    const file = await loadEditable(req, res)
+    if (!file) return
+
+    const target = req.body.folderId || null
+    let targetFolder = null
+    if (target) {
+      targetFolder = await Folder.findById(target)
+      if (!canView(targetFolder, pid, req.gset)) return res.status(404).json({ error: 'Not found' })
+    }
+    const itemGroup = file.groupId ? String(file.groupId) : null
+    const destGroup = target ? (targetFolder.groupId ? String(targetFolder.groupId) : null) : null
+    if (itemGroup !== destGroup) return res.status(400).json({ error: 'Cannot move between personal and shared storage' })
+
+    file.folderId = target
+    await file.save()
+    res.json(serializeFile(file, req))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -179,15 +225,11 @@ router.patch('/:id/move', async (req, res) => {
 
 router.patch('/:id/password', async (req, res) => {
   try {
-    const { password } = req.body
-    const hash = password ? hashPassword(password) : null
-    const file = await File.findOneAndUpdate(
-      { _id: req.params.id, profileId: req.profile.profileId },
-      { passwordHash: hash },
-      { new: true }
-    )
-    if (!file) return res.status(404).json({ error: 'Not found' })
-    res.json(serializeFile(file))
+    const file = await loadEditable(req, res)
+    if (!file) return
+    file.passwordHash = req.body.password ? hashPassword(req.body.password) : null
+    await file.save()
+    res.json(serializeFile(file, req))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -195,8 +237,8 @@ router.patch('/:id/password', async (req, res) => {
 
 router.post('/:id/unlock', async (req, res) => {
   try {
-    const file = await File.findOne({ _id: req.params.id, profileId: req.profile.profileId })
-    if (!file) return res.status(404).json({ error: 'Not found' })
+    const file = await File.findById(req.params.id)
+    if (!canView(file, req.profile.profileId, req.gset)) return res.status(404).json({ error: 'Not found' })
     if (!file.passwordHash) return res.json({ url: fileUrl(file.objectKey) })
     if (!verifyPassword(req.body.password || '', file.passwordHash)) {
       return res.status(401).json({ error: 'Wrong password' })
@@ -209,8 +251,9 @@ router.post('/:id/unlock', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const file = await File.findOneAndDelete({ _id: req.params.id, profileId: req.profile.profileId })
-    if (!file) return res.status(404).json({ error: 'Not found' })
+    const file = await loadEditable(req, res)
+    if (!file) return
+    await File.findByIdAndDelete(file._id)
     await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: file.objectKey }))
     res.json({ ok: true })
   } catch (err) {

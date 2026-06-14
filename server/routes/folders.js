@@ -3,26 +3,48 @@ import Folder from '../models/Folder.js'
 import File from '../models/File.js'
 import { hashPassword, verifyPassword } from '../utils/password.js'
 import { requireAuth } from '../middleware/auth.js'
+import {
+  myGroups, groupIdSet, canView, canEdit,
+  childScope, childOwnership, ensureGroupRoot,
+} from '../utils/scope.js'
 
 const router = express.Router()
 router.use(requireAuth)
+
+// Load the caller's group membership once per request (req.groups / req.gset).
+router.use(async (req, _res, next) => {
+  try {
+    req.groups = await myGroups(req.profile.profileId)
+    req.gset = groupIdSet(req.groups)
+    next()
+  } catch (err) {
+    next(err)
+  }
+})
 
 function fileUrl(objectKey) {
   const bucket = process.env.MINIO_BUCKET || 'orbit-uploads'
   return `/${bucket}/${objectKey}`
 }
 
-function serializeFolder(f) {
+function serializeFolder(f, req) {
   const obj = f.toObject ? f.toObject() : { ...f }
   const { passwordHash, ...rest } = obj
-  return { ...rest, protected: !!passwordHash }
+  return {
+    ...rest,
+    protected: !!passwordHash,
+    shared: !!obj.groupId,
+    locked: !!obj.isGroupRoot,                 // immutable shared root
+    canEdit: canEdit(obj, req.profile.profileId, req.gset),
+  }
 }
 
-function serializeFile(f) {
+function serializeFile(f, req) {
   const obj = f.toObject ? f.toObject() : { ...f }
   const { passwordHash, ...rest } = obj
-  if (passwordHash) return { ...rest, protected: true }
-  return { ...rest, url: fileUrl(obj.objectKey) }
+  const base = { ...rest, shared: !!obj.groupId, canEdit: canEdit(obj, req.profile.profileId, req.gset) }
+  if (passwordHash) return { ...base, protected: true }
+  return { ...base, url: fileUrl(obj.objectKey) }
 }
 
 async function buildBreadcrumbs(folderId) {
@@ -37,10 +59,16 @@ async function buildBreadcrumbs(folderId) {
   return crumbs
 }
 
+// Mongo filter matching everything the user is allowed to see (personal + groups).
+function visibleFilter(req) {
+  const ids = req.groups.map(g => g._id)
+  return { $or: [{ profileId: req.profile.profileId, groupId: null }, { groupId: { $in: ids } }] }
+}
+
 router.post('/:id/verify', async (req, res) => {
   try {
-    const folder = await Folder.findOne({ _id: req.params.id, profileId: req.profile.profileId })
-    if (!folder) return res.status(404).json({ error: 'Not found' })
+    const folder = await Folder.findById(req.params.id)
+    if (!canView(folder, req.profile.profileId, req.gset)) return res.status(404).json({ error: 'Not found' })
     if (!folder.passwordHash) return res.json({ ok: true })
     if (!verifyPassword(req.body.password, folder.passwordHash))
       return res.status(401).json({ error: 'Wrong password' })
@@ -52,29 +80,41 @@ router.post('/:id/verify', async (req, res) => {
 
 router.get('/browse', async (req, res) => {
   try {
+    const pid = req.profile.profileId
     const { parentId } = req.query
     const folderId = parentId || null
-    const pid = req.profile.profileId
 
+    let parent = null
     if (folderId) {
-      const target = await Folder.findOne({ _id: folderId, profileId: pid })
-      if (target?.passwordHash) {
+      parent = await Folder.findById(folderId)
+      if (!canView(parent, pid, req.gset)) return res.status(404).json({ error: 'Not found' })
+      if (parent.passwordHash) {
         const pwd = req.headers['x-folder-password']
-        if (!pwd || !verifyPassword(pwd, target.passwordHash)) {
+        if (!pwd || !verifyPassword(pwd, parent.passwordHash)) {
           return res.status(401).json({ locked: true })
         }
       }
     }
 
+    // Children scope: a group folder shows every member's items; the personal
+    // root shows only the caller's personal items.
+    const scope = parent ? childScope(parent, pid) : { profileId: pid, groupId: null }
     const [folders, rawFiles, breadcrumbs] = await Promise.all([
-      Folder.find({ profileId: pid, parentId: folderId }).sort({ name: 1 }),
-      File.find({ profileId: pid, folderId }).sort({ createdAt: -1 }),
+      Folder.find({ parentId: folderId, ...scope }).sort({ name: 1 }),
+      File.find({ folderId, ...scope }).sort({ createdAt: -1 }),
       buildBreadcrumbs(parentId),
     ])
 
+    let folderList = folders
+    if (!parent) {
+      // Top level: surface an immutable "Group - {name}" folder per shared group.
+      const roots = await Promise.all(req.groups.filter(g => g.sharedOrbit).map(ensureGroupRoot))
+      folderList = [...roots, ...folders]
+    }
+
     res.json({
-      folders: folders.map(serializeFolder),
-      files: rawFiles.map(serializeFile),
+      folders: folderList.map(f => serializeFolder(f, req)),
+      files: rawFiles.map(f => serializeFile(f, req)),
       breadcrumbs,
     })
   } catch (err) {
@@ -87,12 +127,12 @@ router.get('/search', async (req, res) => {
     const q = (req.query.q || '').trim()
     if (!q) return res.json({ folders: [], files: [] })
     const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
-    const pid = req.profile.profileId
+    const vis = visibleFilter(req)
     const [folders, files] = await Promise.all([
-      Folder.find({ profileId: pid, name: regex }),
-      File.find({ profileId: pid, filename: regex }),
+      Folder.find({ ...vis, name: regex }),
+      File.find({ ...vis, filename: regex }),
     ])
-    res.json({ folders: folders.map(serializeFolder), files: files.map(serializeFile) })
+    res.json({ folders: folders.map(f => serializeFolder(f, req)), files: files.map(f => serializeFile(f, req)) })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -100,8 +140,8 @@ router.get('/search', async (req, res) => {
 
 router.get('/all', async (req, res) => {
   try {
-    const folders = await Folder.find({ profileId: req.profile.profileId }).sort({ name: 1 })
-    res.json(folders.map(serializeFolder))
+    const folders = await Folder.find(visibleFilter(req)).sort({ name: 1 })
+    res.json(folders.map(f => serializeFolder(f, req)))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -109,27 +149,45 @@ router.get('/all', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
+    const pid = req.profile.profileId
     const { name, parentId } = req.body
+    let parent = null
+    if (parentId) {
+      parent = await Folder.findById(parentId)
+      // Any member can add inside a group folder; canView covers membership.
+      if (!canView(parent, pid, req.gset)) return res.status(404).json({ error: 'Not found' })
+    }
     const folder = await Folder.create({
-      profileId: req.profile.profileId,
       name,
       parentId: parentId || null,
+      ...childOwnership(parent, pid),
     })
-    res.status(201).json(serializeFolder(folder))
+    res.status(201).json(serializeFolder(folder, req))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
+// Resolve a folder and enforce view/edit permission. Returns the doc, or null
+// after sending the appropriate error response.
+async function loadEditable(req, res) {
+  const pid = req.profile.profileId
+  const folder = await Folder.findById(req.params.id)
+  if (!canView(folder, pid, req.gset)) { res.status(404).json({ error: 'Not found' }); return null }
+  if (!canEdit(folder, pid, req.gset)) {
+    res.status(403).json({ error: folder.isGroupRoot ? 'Shared folder is locked' : 'Only the owner can change this' })
+    return null
+  }
+  return folder
+}
+
 router.patch('/:id/rename', async (req, res) => {
   try {
-    const folder = await Folder.findOneAndUpdate(
-      { _id: req.params.id, profileId: req.profile.profileId },
-      { name: req.body.name },
-      { new: true }
-    )
-    if (!folder) return res.status(404).json({ error: 'Not found' })
-    res.json(serializeFolder(folder))
+    const folder = await loadEditable(req, res)
+    if (!folder) return
+    folder.name = req.body.name
+    await folder.save()
+    res.json(serializeFolder(folder, req))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -137,15 +195,11 @@ router.patch('/:id/rename', async (req, res) => {
 
 router.patch('/:id/password', async (req, res) => {
   try {
-    const { password } = req.body
-    const hash = password ? hashPassword(password) : null
-    const folder = await Folder.findOneAndUpdate(
-      { _id: req.params.id, profileId: req.profile.profileId },
-      { passwordHash: hash },
-      { new: true }
-    )
-    if (!folder) return res.status(404).json({ error: 'Not found' })
-    res.json(serializeFolder(folder))
+    const folder = await loadEditable(req, res)
+    if (!folder) return
+    folder.passwordHash = req.body.password ? hashPassword(req.body.password) : null
+    await folder.save()
+    res.json(serializeFolder(folder, req))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -153,24 +207,33 @@ router.patch('/:id/password', async (req, res) => {
 
 router.patch('/:id/move', async (req, res) => {
   try {
-    const { parentId } = req.body
-    const target = parentId || null
+    const pid = req.profile.profileId
+    const folder = await loadEditable(req, res)
+    if (!folder) return
+
+    const target = req.body.parentId || null
     if (target === req.params.id) return res.status(400).json({ error: 'Cannot move folder into itself' })
+
+    let targetFolder = null
     if (target) {
-      let cur = await Folder.findById(target)
+      targetFolder = await Folder.findById(target)
+      if (!canView(targetFolder, pid, req.gset)) return res.status(404).json({ error: 'Not found' })
+      let cur = targetFolder
       while (cur) {
         if (String(cur._id) === req.params.id) return res.status(400).json({ error: 'Cannot move folder into its own descendant' })
         if (!cur.parentId) break
         cur = await Folder.findById(cur.parentId)
       }
     }
-    const folder = await Folder.findOneAndUpdate(
-      { _id: req.params.id, profileId: req.profile.profileId },
-      { parentId: target },
-      { new: true }
-    )
-    if (!folder) return res.status(404).json({ error: 'Not found' })
-    res.json(serializeFolder(folder))
+
+    // Keep items within their storage scope — no moving between personal and shared.
+    const itemGroup = folder.groupId ? String(folder.groupId) : null
+    const destGroup = target ? (targetFolder.groupId ? String(targetFolder.groupId) : null) : null
+    if (itemGroup !== destGroup) return res.status(400).json({ error: 'Cannot move between personal and shared storage' })
+
+    folder.parentId = target
+    await folder.save()
+    res.json(serializeFolder(folder, req))
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -178,18 +241,24 @@ router.patch('/:id/move', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    await deleteFolderRecursive(req.params.id, req.profile.profileId)
+    const folder = await loadEditable(req, res)
+    if (!folder) return
+    await deleteFolderRecursive(folder)
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 })
 
-async function deleteFolderRecursive(folderId, profileId) {
-  const subfolders = await Folder.find({ parentId: folderId, profileId })
-  await Promise.all(subfolders.map(sf => deleteFolderRecursive(sf._id.toString(), profileId)))
-  await File.deleteMany({ folderId, profileId })
-  await Folder.findOneAndDelete({ _id: folderId, profileId })
+// Removes a folder and everything beneath it. For group folders the subtree is
+// scoped by groupId (so it clears every member's items inside); for personal
+// folders by profileId.
+async function deleteFolderRecursive(folder) {
+  const scope = folder.groupId ? { groupId: folder.groupId } : { profileId: folder.profileId }
+  const subfolders = await Folder.find({ parentId: folder._id, ...scope })
+  await Promise.all(subfolders.map(deleteFolderRecursive))
+  await File.deleteMany({ folderId: folder._id, ...scope })
+  await Folder.findByIdAndDelete(folder._id)
 }
 
 export default router

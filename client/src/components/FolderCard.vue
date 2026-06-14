@@ -26,14 +26,21 @@ const ICONS = {
   move: 'M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5',
 }
 
-const ctxItems = computed(() => [
-  { label: 'Open', icon: ICONS.open, action: () => emit('open', props.folder._id) },
-  { divider: true },
-  { label: 'Move', icon: ICONS.move, action: () => emit('move', props.folder) },
-  { label: 'Rename', icon: ICONS.rename, action: props.folder.protected ? () => emit('rename-request', props.folder) : startEdit },
-  { label: props.folder.protected ? 'Change password' : 'Set password', icon: ICONS.lock, action: () => emit('set-password', props.folder) },
-  { label: 'Delete', icon: ICONS.delete, action: () => emit('delete', props.folder), danger: true },
-])
+// Group roots are immutable and shared items are owner-only, so the server
+// flags what the caller may change via `canEdit`. Show only Open otherwise.
+const ctxItems = computed(() => {
+  const items = [{ label: 'Open', icon: ICONS.open, action: () => emit('open', props.folder._id) }]
+  if (props.folder.canEdit !== false) {
+    items.push(
+      { divider: true },
+      { label: 'Move', icon: ICONS.move, action: () => emit('move', props.folder) },
+      { label: 'Rename', icon: ICONS.rename, action: props.folder.protected ? () => emit('rename-request', props.folder) : startEdit },
+      { label: props.folder.protected ? 'Change password' : 'Set password', icon: ICONS.lock, action: () => emit('set-password', props.folder) },
+      { label: 'Delete', icon: ICONS.delete, action: () => emit('delete', props.folder), danger: true },
+    )
+  }
+  return items
+})
 
 function openCtx(e) {
   e.preventDefault()
@@ -88,11 +95,14 @@ function cancelEdit() {
     <div class="relative w-8 h-8 shrink-0" @click.stop="$emit('toggle-select')">
       <!-- Icon layer -->
       <div
-        class="absolute inset-0 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center transition-opacity"
-        :class="selectionSize > 0 ? 'opacity-0' : 'group-hover:opacity-0'"
+        class="absolute inset-0 rounded-lg flex items-center justify-center transition-opacity"
+        :class="[selectionSize > 0 ? 'opacity-0' : 'group-hover:opacity-0', folder.shared ? 'bg-violet-500/10 dark:bg-violet-500/20' : 'bg-indigo-500/10 dark:bg-indigo-500/20']"
       >
-        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <svg class="w-4 h-4" :class="folder.shared ? 'text-violet-500' : 'text-indigo-500'" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
+        </svg>
+        <svg v-if="folder.shared" class="absolute -bottom-1 -left-1 w-3.5 h-3.5 text-violet-600 dark:text-violet-300 bg-white dark:bg-slate-900 rounded-full p-0.5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
         </svg>
         <svg v-if="folder.protected" class="absolute -bottom-1 -right-1 w-3.5 h-3.5 text-amber-500 bg-white dark:bg-slate-900 rounded-full p-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
@@ -176,10 +186,13 @@ function cancelEdit() {
       </button>
     </div>
 
-    <!-- Folder icon -->
-    <div class="relative w-14 h-14 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center">
-      <svg class="w-7 h-7 text-indigo-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+    <!-- Folder icon (shared group folders are tinted violet + carry a group badge) -->
+    <div class="relative w-14 h-14 rounded-2xl flex items-center justify-center" :class="folder.shared ? 'bg-violet-500/10 dark:bg-violet-500/20' : 'bg-indigo-500/10 dark:bg-indigo-500/20'">
+      <svg class="w-7 h-7" :class="folder.shared ? 'text-violet-500' : 'text-indigo-500'" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
+      </svg>
+      <svg v-if="folder.shared" class="absolute -bottom-1 -left-1 w-4.5 h-4.5 text-violet-600 dark:text-violet-300 bg-white dark:bg-slate-900 rounded-full p-0.5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
       </svg>
       <svg v-if="folder.protected" class="absolute -bottom-1 -right-1 w-4.5 h-4.5 text-amber-500 bg-white dark:bg-slate-900 rounded-full p-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
