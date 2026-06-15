@@ -9,6 +9,7 @@ import {
   HeadBucketCommand,
   DeleteObjectCommand,
   PutObjectCommand,
+  CopyObjectCommand,
   PutBucketPolicyCommand,
 } from '@aws-sdk/client-s3'
 import File from '../models/File.js'
@@ -174,6 +175,37 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     res.status(500).json({ error: err.message })
   } finally {
     if (tmpPath) fs.unlink(tmpPath, () => {})
+  }
+})
+
+// Save a file that was shared elsewhere (e.g. via Echo) into the caller's own
+// drive root. Copies the underlying object so the new file is independently
+// owned (objectKey is unique per file).
+router.post('/:id/save', async (req, res) => {
+  try {
+    const pid = req.profile.profileId
+    const src = await File.findById(req.params.id)
+    if (!src) return res.status(404).json({ error: 'Not found' })
+
+    const ext = path.extname(src.filename) || ''
+    const objectKey = `uploads/${pid}/${randomUUID()}${ext}`
+    await s3.send(new CopyObjectCommand({
+      Bucket: BUCKET,
+      CopySource: `${BUCKET}/${src.objectKey}`,
+      Key: objectKey,
+    }))
+
+    const doc = await File.create({
+      filename: src.filename,
+      objectKey,
+      mimeType: src.mimeType,
+      size: src.size,
+      folderId: null,
+      profileId: pid,
+    })
+    res.status(201).json(serializeFile(doc, req))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
   }
 })
 

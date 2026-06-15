@@ -1,0 +1,34 @@
+{
+  "app": "orbit",
+  "label": "Orbit",
+  "version": "1.0.0",
+  "features": [
+    "attachments",
+    "file_preview",
+    "file_sharing"
+  ],
+  "message_types": [
+    "orbit.file",
+    "orbit.folder"
+  ],
+  "composer_actions": [
+    {
+      "id": "upload_file",
+      "label": "Upload file",
+      "icon": "paperclip"
+    }
+  ],
+  "context_actions": [
+    {
+      "id": "save_to_orbit",
+      "label": "Save to Orbit",
+      "icon": "folder"
+    }
+  ],
+  "renderers": [
+    {
+      "type": "orbit.file",
+      "component": "OrbitFileCard"
+    }
+  ]
+}
