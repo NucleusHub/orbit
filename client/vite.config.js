@@ -23,6 +23,6 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
       },
     },
-    allowedHosts: ['nucleus.home', 'server.tail874d1f.ts.net'],
+    allowedHosts: ['nucleus.olm-altair.ts.net'],
   },
 }))
