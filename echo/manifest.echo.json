@@ -24,11 +24,5 @@
       "label": "Save to Orbit",
       "icon": "folder"
     }
-  ],
-  "renderers": [
-    {
-      "type": "orbit.file",
-      "component": "OrbitFileCard"
-    }
   ]
 }
