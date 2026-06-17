@@ -1,5 +1,6 @@
 import express from 'express'
 import { randomUUID } from 'crypto'
+import crypto from 'crypto'
 import path from 'path'
 import fs from 'node:fs'
 import multer from 'multer'
@@ -17,6 +18,7 @@ import Folder from '../models/Folder.js'
 import { hashPassword, verifyPassword } from '../utils/password.js'
 import { requireAuth } from '../middleware/auth.js'
 import { myGroups, groupIdSet, canView, canEdit, childScope, childOwnership } from '../utils/scope.js'
+import { mimeFor } from '../utils/mime.js'
 
 const router = express.Router()
 router.use(requireAuth)
@@ -59,7 +61,36 @@ function serializeFile(f, req) {
   return { ...base, url: fileUrl(obj.objectKey) }
 }
 
-const upload = multer({ dest: '/tmp/orbit-uploads' })
+// Cap upload size so a single huge (or runaway) upload can't exhaust /tmp and
+// cause truncated temp writes for other concurrent uploads. Tune via env.
+const MAX_UPLOAD_BYTES = parseInt(process.env.ORBIT_MAX_UPLOAD_BYTES, 10) || 5 * 1024 * 1024 * 1024 // 5 GiB
+const upload = multer({ dest: '/tmp/orbit-uploads', limits: { fileSize: MAX_UPLOAD_BYTES } })
+
+// Run multer and turn its errors (notably the size-limit overflow) into clean
+// HTTP responses instead of a generic 500. On overflow multer also removes the
+// partial temp file itself.
+function uploadSingle(field) {
+  return (req, res, next) => upload.single(field)(req, res, err => {
+    if (err) {
+      const tooBig = err.code === 'LIMIT_FILE_SIZE'
+      return res.status(tooBig ? 413 : 400).json({
+        error: tooBig ? `File exceeds the ${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)} MB limit` : err.message,
+      })
+    }
+    next()
+  })
+}
+
+// Base64 MD5 of a file on disk, for S3 Content-MD5 end-to-end integrity.
+function md5Base64(filePath) {
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash('md5')
+    const stream = fs.createReadStream(filePath)
+    stream.on('error', reject)
+    stream.on('data', chunk => hash.update(chunk))
+    stream.on('end', () => resolve(hash.digest('base64')))
+  })
+}
 
 async function ensureBucket() {
   try {
@@ -138,9 +169,24 @@ router.get('/recent', async (req, res) => {
   }
 })
 
-router.post('/upload', upload.single('file'), async (req, res) => {
+router.post('/upload', uploadSingle('file'), async (req, res) => {
   const tmpPath = req.file?.path
+  let objectKey = null
+  let stored = false
   try {
+    // No file part, or an empty file — reject rather than storing a 0-byte
+    // object that will only show as a broken preview later.
+    if (!req.file) return res.status(400).json({ error: 'No file provided' })
+    if (!req.file.size) return res.status(400).json({ error: 'File is empty' })
+
+    // Guard against a temp file whose real size differs from what multer
+    // reported (partial write, disk-full mid-write). An explicit ContentLength
+    // that disagrees with the body would silently truncate the stored object.
+    const actualSize = fs.statSync(tmpPath).size
+    if (actualSize !== req.file.size) {
+      return res.status(400).json({ error: 'Upload was incomplete; please retry' })
+    }
+
     const pid = req.profile.profileId
     const { folderId } = req.body
     let parent = null
@@ -151,27 +197,44 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     const own = childOwnership(parent, pid) // { groupId, ownerId, profileId }
     const ext = path.extname(req.file.originalname)
     const keyPrefix = own.groupId ? `uploads/group/${own.groupId}` : `uploads/${pid}`
-    const objectKey = `${keyPrefix}/${randomUUID()}${ext}`
+    objectKey = `${keyPrefix}/${randomUUID()}${ext}`
+
+    // Derive Content-Type from the extension so browsers can preview the file.
+    // Multer's mimetype is the browser's upload guess and is often the generic
+    // application/octet-stream, which makes <video>/<img> refuse to render.
+    const contentType = mimeFor(req.file.originalname, req.file.mimetype)
+
+    // End-to-end integrity: MinIO verifies the body against this MD5 and fails
+    // the upload with BadDigest if the bytes were corrupted in transit, instead
+    // of silently storing a damaged object.
+    const contentMD5 = await md5Base64(tmpPath)
 
     await s3.send(new PutObjectCommand({
       Bucket: BUCKET,
       Key: objectKey,
       Body: fs.createReadStream(tmpPath),
-      ContentType: req.file.mimetype,
-      ContentLength: req.file.size,
+      ContentType: contentType,
+      ContentLength: actualSize,
+      ContentMD5: contentMD5,
     }))
+    stored = true
 
     const doc = await File.create({
       filename: req.file.originalname,
       objectKey,
-      mimeType: req.file.mimetype,
-      size: req.file.size,
+      mimeType: contentType,
+      size: actualSize,
       folderId: folderId || null,
       ...own,
     })
 
     res.status(201).json(serializeFile(doc, req))
   } catch (err) {
+    // If the object made it to MinIO but the DB record didn't, remove the
+    // orphan so storage doesn't accumulate unreferenced objects.
+    if (stored && objectKey) {
+      await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: objectKey })).catch(() => {})
+    }
     res.status(500).json({ error: err.message })
   } finally {
     if (tmpPath) fs.unlink(tmpPath, () => {})
@@ -185,20 +248,34 @@ router.post('/:id/save', async (req, res) => {
   try {
     const pid = req.profile.profileId
     const src = await File.findById(req.params.id)
+    // NOTE: intentionally no canView gate here. This endpoint backs the Echo
+    // "Save to Drive" button, whose normal caller is the RECIPIENT of a shared
+    // personal file — i.e. not the owner and not a group member — so a canView
+    // check would 404 the very case it exists for. The bucket is public-read
+    // anyway, so the bytes are already reachable by URL; gating the copy adds
+    // no protection. Keep this open until sharing carries a real grant token.
     if (!src) return res.status(404).json({ error: 'Not found' })
 
     const ext = path.extname(src.filename) || ''
     const objectKey = `uploads/${pid}/${randomUUID()}${ext}`
+    // REPLACE the metadata on copy: a plain CopyObject does not reliably carry
+    // the source Content-Type, which would leave the copy unpreviewable.
+    const contentType = mimeFor(src.filename, src.mimeType)
+    // Encode the source key (keys can contain characters that must be escaped
+    // in the CopySource header) while preserving the path separators.
+    const copySource = `${BUCKET}/${src.objectKey}`.split('/').map(encodeURIComponent).join('/')
     await s3.send(new CopyObjectCommand({
       Bucket: BUCKET,
-      CopySource: `${BUCKET}/${src.objectKey}`,
+      CopySource: copySource,
       Key: objectKey,
+      MetadataDirective: 'REPLACE',
+      ContentType: contentType,
     }))
 
     const doc = await File.create({
       filename: src.filename,
       objectKey,
-      mimeType: src.mimeType,
+      mimeType: contentType,
       size: src.size,
       folderId: null,
       profileId: pid,
@@ -285,8 +362,11 @@ router.delete('/:id', async (req, res) => {
   try {
     const file = await loadEditable(req, res)
     if (!file) return
-    await File.findByIdAndDelete(file._id)
+    // Remove the object first (DeleteObject is idempotent): if it fails we keep
+    // the DB record so the file stays intact and the delete can be retried,
+    // rather than dropping the record and orphaning the object.
     await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: file.objectKey }))
+    await File.findByIdAndDelete(file._id)
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: err.message })

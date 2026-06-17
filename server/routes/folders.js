@@ -1,6 +1,8 @@
 import express from 'express'
+import { DeleteObjectsCommand } from '@aws-sdk/client-s3'
 import Folder from '../models/Folder.js'
 import File from '../models/File.js'
+import { s3, BUCKET } from './files.js'
 import { hashPassword, verifyPassword } from '../utils/password.js'
 import { requireAuth } from '../middleware/auth.js'
 import {
@@ -250,13 +252,37 @@ router.delete('/:id', async (req, res) => {
   }
 })
 
+// Best-effort removal of stored objects in batches of up to 1000 (the S3
+// DeleteObjects limit). Failures are logged but don't abort the delete — a
+// stranded object is a storage leak, not data loss, and shouldn't leave the
+// folder tree half-removed.
+async function deleteObjects(keys) {
+  for (let i = 0; i < keys.length; i += 1000) {
+    const chunk = keys.slice(i, i + 1000)
+    try {
+      await s3.send(new DeleteObjectsCommand({
+        Bucket: BUCKET,
+        Delete: { Objects: chunk.map(Key => ({ Key })), Quiet: true },
+      }))
+    } catch (err) {
+      console.error(`Folder delete: failed to remove ${chunk.length} objects: ${err.message}`)
+    }
+  }
+}
+
 // Removes a folder and everything beneath it. For group folders the subtree is
 // scoped by groupId (so it clears every member's items inside); for personal
-// folders by profileId.
+// folders by profileId. Stored objects are removed alongside the DB records so
+// MinIO doesn't accumulate orphans.
 async function deleteFolderRecursive(folder) {
   const scope = folder.groupId ? { groupId: folder.groupId } : { profileId: folder.profileId }
   const subfolders = await Folder.find({ parentId: folder._id, ...scope })
   await Promise.all(subfolders.map(deleteFolderRecursive))
+
+  const files = await File.find({ folderId: folder._id, ...scope }).select('objectKey')
+  const keys = files.map(f => f.objectKey).filter(Boolean)
+  if (keys.length) await deleteObjects(keys)
+
   await File.deleteMany({ folderId: folder._id, ...scope })
   await Folder.findByIdAndDelete(folder._id)
 }
