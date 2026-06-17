@@ -8,6 +8,10 @@ const emit = defineEmits(['close'])
 const textContent = ref(null)
 const textLoading = ref(false)
 const textError = ref(false)
+// Set when an <img>/<video>/<audio> element fails to load or decode the file
+// (e.g. a phone/Messenger video the browser can't play even though the type is
+// correct). When true we fall back to the download view instead of a broken player.
+const mediaError = ref(false)
 
 const previewType = computed(() => {
   const mime = props.file?.mimeType || ''
@@ -26,11 +30,15 @@ const previewType = computed(() => {
   return 'other'
 })
 
+// What we actually render: a failed media load collapses to the download view.
+const view = computed(() => (mediaError.value ? 'other' : previewType.value))
+
 const typeInfo = computed(() => getFileTypeInfo(props.file?.mimeType))
 
 watch(() => props.file, async (file) => {
   textContent.value = null
   textError.value = false
+  mediaError.value = false
   if (file && previewType.value === 'text') {
     textLoading.value = true
     try {
@@ -88,44 +96,46 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
 
           <!-- Image -->
           <img
-            v-if="previewType === 'image'"
+            v-if="view === 'image'"
             :src="file.url"
             :alt="file.filename"
             class="max-h-full max-w-full object-contain rounded-lg shadow-2xl select-none"
+            @error="mediaError = true"
             @click.stop
           />
 
           <!-- Video -->
           <video
-            v-else-if="previewType === 'video'"
+            v-else-if="view === 'video'"
             :src="file.url"
             controls
             autoplay
             class="max-h-full max-w-full rounded-lg shadow-2xl"
+            @error="mediaError = true"
             @click.stop
           />
 
           <!-- Audio -->
-          <div v-else-if="previewType === 'audio'" class="flex flex-col items-center gap-6 w-full max-w-md" @click.stop>
+          <div v-else-if="view === 'audio'" class="flex flex-col items-center gap-6 w-full max-w-md" @click.stop>
             <div class="w-24 h-24 rounded-2xl flex items-center justify-center" :class="typeInfo.bg">
               <svg class="w-12 h-12" :class="typeInfo.color" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="typeInfo.icon" />
               </svg>
             </div>
             <p class="text-white font-medium text-center truncate w-full px-4">{{ file.filename }}</p>
-            <audio :src="file.url" controls autoplay class="w-full" />
+            <audio :src="file.url" controls autoplay class="w-full" @error="mediaError = true" />
           </div>
 
           <!-- PDF -->
           <iframe
-            v-else-if="previewType === 'pdf'"
+            v-else-if="view === 'pdf'"
             :src="file.url"
             class="w-full h-full rounded-lg shadow-2xl bg-white"
             @click.stop
           />
 
           <!-- Text / Code -->
-          <div v-else-if="previewType === 'text'" class="w-full h-full flex flex-col rounded-lg overflow-hidden shadow-2xl" @click.stop>
+          <div v-else-if="view === 'text'" class="w-full h-full flex flex-col rounded-lg overflow-hidden shadow-2xl" @click.stop>
             <div class="flex items-center gap-2 px-4 py-2.5 bg-slate-800 border-b border-white/10 shrink-0">
               <span class="text-xs font-mono text-slate-400">{{ file.filename }}</span>
             </div>
@@ -150,7 +160,10 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
             </div>
             <div>
               <p class="text-white font-medium">{{ file.filename }}</p>
-              <p class="mt-1 text-sm text-white/50">No preview available</p>
+              <p v-if="mediaError" class="mt-1 text-sm text-white/50">
+                This file can’t be played in the browser.<br>Download it to open in its original app.
+              </p>
+              <p v-else class="mt-1 text-sm text-white/50">No preview available</p>
             </div>
             <a
               :href="file.url"
