@@ -8,6 +8,7 @@ services:
       nucleus.stack: "nucleus"
       nucleus.role: "app-server"
       nucleus.app: "orbit"
+      nucleus.depends: "mongo,minio"
     environment:
       MONGODB_URI: mongodb://mongo:27017/nucleus
       PORT: 3003
