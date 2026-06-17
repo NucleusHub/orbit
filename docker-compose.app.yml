@@ -44,6 +44,7 @@ services:
       nucleus.app: "orbit"
     environment:
       API_TARGET: http://orbit-server:3003
+      NUCLEUS_HOST: ${NUCLEUS_HOST:-nucleus.olm-altair.ts.net}
     volumes:
       - ./client/src:/app/src
       - ./client/index.html:/app/index.html
