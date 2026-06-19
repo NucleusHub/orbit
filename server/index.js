@@ -6,6 +6,7 @@ import mongoose from 'mongoose'
 import filesRouter from './routes/files.js'
 import foldersRouter from './routes/folders.js'
 import groupsRouter from './routes/groups.js'
+import profilesRouter from './routes/profiles.js'
 
 const app = express()
 const PORT = process.env.PORT || 3003
@@ -18,6 +19,7 @@ app.get('/api/orbit/health', (req, res) => res.json({ status: 'ok' }))
 app.use('/api/orbit/files', filesRouter)
 app.use('/api/orbit/folders', foldersRouter)
 app.use('/api/orbit/groups', groupsRouter)
+app.use('/api/orbit/profiles', profilesRouter)
 
 mongoose
   .connect(process.env.MONGODB_URI)
