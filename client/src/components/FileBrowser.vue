@@ -1,8 +1,9 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import FolderCard from './FolderCard.vue'
 import FileCard from './FileCard.vue'
 import UploadZone from './UploadZone.vue'
+import { useDnd } from '../composables/useDnd.js'
 
 const props = defineProps({
   folders: { type: Array, default: () => [] },
@@ -14,11 +15,28 @@ const props = defineProps({
   highlightId: { type: String, default: null },
 })
 
-defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-folder', 'set-password-folder', 'move-folder', 'rename-file', 'rename-file-request', 'delete-file', 'preview-file', 'unlock-file', 'set-password-file', 'move-file', 'upload', 'toggle-select', 'open-selection-ctx'])
+const emit = defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-folder', 'set-password-folder', 'move-folder', 'rename-file', 'rename-file-request', 'delete-file', 'preview-file', 'unlock-file', 'set-password-file', 'move-file', 'move-to', 'upload', 'toggle-select', 'open-selection-ctx'])
 
 const selectionKeys = computed(() => new Set(props.selection.map(s => `${s.type}:${s.item._id}`)))
 const selectionSize = computed(() => props.selection.length)
 const isSelected = (type, id) => selectionKeys.value.has(`${type}:${id}`)
+
+// Drag onto the ".." tile to move an item up to the parent folder.
+const { dragging } = useDnd()
+const upDropActive = ref(false)
+function onUpDragOver(e) {
+  if (!dragging.value) return
+  e.preventDefault()
+  e.dataTransfer.dropEffect = 'move'
+  upDropActive.value = true
+}
+function onUpDrop(e) {
+  upDropActive.value = false
+  if (!dragging.value) return
+  e.preventDefault()
+  e.stopPropagation()
+  emit('move-to', { type: dragging.value.type, id: dragging.value.id, targetId: props.parentFolderId ?? null })
+}
 </script>
 
 <template>
@@ -35,8 +53,15 @@ const isSelected = (type, id) => selectionKeys.value.has(`${type}:${id}`)
         <!-- .. up one level -->
         <div
           v-if="parentFolderId !== undefined"
-          class="group flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6 transition-all cursor-pointer select-none"
+          class="group flex flex-col items-center gap-2.5 p-4 rounded-2xl border transition-all cursor-pointer select-none"
+          :class="upDropActive
+            ? 'border-violet-400 dark:border-violet-500 ring-2 ring-violet-400 dark:ring-violet-500 bg-violet-50/70 dark:bg-violet-500/10'
+            : 'border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6'"
           @click="$emit('open-folder', parentFolderId)"
+          @dragover="onUpDragOver"
+          @dragenter="onUpDragOver"
+          @dragleave="upDropActive = false"
+          @drop="onUpDrop"
           title="Go up"
         >
           <div class="w-14 h-14 rounded-2xl bg-slate-200/60 dark:bg-white/8 flex items-center justify-center">
@@ -59,6 +84,7 @@ const isSelected = (type, id) => selectionKeys.value.has(`${type}:${id}`)
           @delete="$emit('delete-folder', $event)"
           @set-password="$emit('set-password-folder', $event)"
           @move="$emit('move-folder', $event)"
+          @move-to="$emit('move-to', $event)"
           @toggle-select="$emit('toggle-select', 'folder', folder)"
           @open-selection-ctx="(x, y) => $emit('open-selection-ctx', x, y)"
         />
@@ -68,8 +94,15 @@ const isSelected = (type, id) => selectionKeys.value.has(`${type}:${id}`)
         <!-- .. up one level -->
         <div
           v-if="parentFolderId !== undefined"
-          class="flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-white/60 dark:hover:bg-white/6 transition-colors cursor-pointer select-none"
+          class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors cursor-pointer select-none"
+          :class="upDropActive
+            ? 'ring-2 ring-violet-400 dark:ring-violet-500 bg-violet-50/70 dark:bg-violet-500/10'
+            : 'hover:bg-white/60 dark:hover:bg-white/6'"
           @click="$emit('open-folder', parentFolderId)"
+          @dragover="onUpDragOver"
+          @dragenter="onUpDragOver"
+          @dragleave="upDropActive = false"
+          @drop="onUpDrop"
           title="Go up"
         >
           <div class="w-8 h-8 rounded-lg bg-slate-200/60 dark:bg-white/8 flex items-center justify-center shrink-0">
@@ -92,6 +125,7 @@ const isSelected = (type, id) => selectionKeys.value.has(`${type}:${id}`)
           @delete="$emit('delete-folder', $event)"
           @set-password="$emit('set-password-folder', $event)"
           @move="$emit('move-folder', $event)"
+          @move-to="$emit('move-to', $event)"
           @toggle-select="$emit('toggle-select', 'folder', folder)"
           @open-selection-ctx="(x, y) => $emit('open-selection-ctx', x, y)"
         />

@@ -187,6 +187,10 @@ router.post('/upload', uploadSingle('file'), async (req, res) => {
       return res.status(400).json({ error: 'Upload was incomplete; please retry' })
     }
 
+    // Multer/busboy decodes the multipart filename header as latin1, so UTF-8
+    // names (e.g. Czech diacritics) arrive mojibaked. Re-decode to recover them.
+    const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8')
+
     const pid = req.profile.profileId
     const { folderId } = req.body
     let parent = null
@@ -195,14 +199,14 @@ router.post('/upload', uploadSingle('file'), async (req, res) => {
       if (!canView(parent, pid, req.gset)) return res.status(404).json({ error: 'Not found' })
     }
     const own = childOwnership(parent, pid) // { groupId, ownerId, profileId }
-    const ext = path.extname(req.file.originalname)
+    const ext = path.extname(originalName)
     const keyPrefix = own.groupId ? `uploads/group/${own.groupId}` : `uploads/${pid}`
     objectKey = `${keyPrefix}/${randomUUID()}${ext}`
 
     // Derive Content-Type from the extension so browsers can preview the file.
     // Multer's mimetype is the browser's upload guess and is often the generic
     // application/octet-stream, which makes <video>/<img> refuse to render.
-    const contentType = mimeFor(req.file.originalname, req.file.mimetype)
+    const contentType = mimeFor(originalName, req.file.mimetype)
 
     // End-to-end integrity: MinIO verifies the body against this MD5 and fails
     // the upload with BadDigest if the bytes were corrupted in transit, instead
@@ -220,7 +224,7 @@ router.post('/upload', uploadSingle('file'), async (req, res) => {
     stored = true
 
     const doc = await File.create({
-      filename: req.file.originalname,
+      filename: originalName,
       objectKey,
       mimeType: contentType,
       size: actualSize,
@@ -320,11 +324,13 @@ router.patch('/:id/move', async (req, res) => {
       targetFolder = await Folder.findById(target)
       if (!canView(targetFolder, pid, req.gset)) return res.status(404).json({ error: 'Not found' })
     }
-    const itemGroup = file.groupId ? String(file.groupId) : null
-    const destGroup = target ? (targetFolder.groupId ? String(targetFolder.groupId) : null) : null
-    if (itemGroup !== destGroup) return res.status(400).json({ error: 'Cannot move between personal and shared storage' })
-
+    // Adopt the destination's storage scope, so the file can cross between
+    // personal storage and a group's shared directory (and vice-versa).
+    const own = childOwnership(targetFolder, pid)
     file.folderId = target
+    file.groupId = own.groupId
+    file.ownerId = own.ownerId
+    file.profileId = own.profileId
     await file.save()
     res.json(serializeFile(file, req))
   } catch (err) {

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, nextTick } from 'vue'
 import ContextMenu from './ContextMenu.vue'
+import { useDnd } from '../composables/useDnd.js'
 
 const props = defineProps({
   folder: { type: Object, required: true },
@@ -8,11 +9,41 @@ const props = defineProps({
   selected: { type: Boolean, default: false },
   selectionSize: { type: Number, default: 0 },
 })
-const emit = defineEmits(['open', 'rename', 'delete', 'set-password', 'move', 'rename-request', 'toggle-select', 'open-selection-ctx'])
+const emit = defineEmits(['open', 'rename', 'delete', 'set-password', 'move', 'move-to', 'rename-request', 'toggle-select', 'open-selection-ctx'])
 
 const editing = ref(false)
 const editName = ref('')
 const editInput = ref(null)
+
+// ── Drag & drop ───────────────────────────────────────────────────────────────
+// A folder can be dragged (unless it's an immutable group root) and is always a
+// drop target — drop a file/folder onto it to move the item inside.
+const { dragging, startDrag, endDrag } = useDnd()
+const dropActive = ref(false)
+const canDrag = computed(() => props.folder.canEdit !== false && !props.folder.isGroupRoot)
+const isValidDrop = computed(() => {
+  const d = dragging.value
+  if (!d) return false
+  return !(d.type === 'folder' && d.id === props.folder._id) // not onto itself
+})
+function onDragStart(e) {
+  if (!canDrag.value) { e.preventDefault(); return }
+  startDrag({ type: 'folder', id: props.folder._id, name: props.folder.name }, e)
+}
+function onDragOver(e) {
+  if (!isValidDrop.value) return
+  e.preventDefault()
+  e.dataTransfer.dropEffect = 'move'
+  dropActive.value = true
+}
+function onDrop(e) {
+  dropActive.value = false
+  if (!isValidDrop.value) return
+  e.preventDefault()
+  e.stopPropagation()
+  emit('move-to', { type: dragging.value.type, id: dragging.value.id, targetId: props.folder._id })
+  endDrag()
+}
 
 const ctxOpen = ref(false)
 const ctxX = ref(0)
@@ -86,10 +117,20 @@ function cancelEdit() {
   <!-- List mode -->
   <div
     v-if="viewMode === 'list'"
+    :draggable="canDrag && !editing"
     class="group flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
-    :class="selected ? 'bg-indigo-50/60 dark:bg-indigo-500/10' : 'hover:bg-white/60 dark:hover:bg-white/6'"
+    :class="[
+      selected ? 'bg-indigo-50/60 dark:bg-indigo-500/10' : 'hover:bg-white/60 dark:hover:bg-white/6',
+      dropActive && 'ring-2 ring-violet-400 dark:ring-violet-500 bg-violet-50/70 dark:bg-violet-500/10',
+    ]"
     @click="!editing && $emit('open', folder._id)"
     @contextmenu="openCtx"
+    @dragstart="onDragStart"
+    @dragend="endDrag"
+    @dragover="onDragOver"
+    @dragenter="onDragOver"
+    @dragleave="dropActive = false"
+    @drop="onDrop"
   >
     <!-- Icon / Checkbox -->
     <div class="relative w-8 h-8 shrink-0" @click.stop="$emit('toggle-select')">
@@ -150,13 +191,22 @@ function cancelEdit() {
   <!-- Grid mode -->
   <div
     v-else
+    :draggable="canDrag && !editing"
     class="group relative flex flex-col items-center gap-2.5 p-4 rounded-2xl border transition-all cursor-pointer select-none"
-    :class="selected
-      ? 'border-indigo-300 dark:border-indigo-500/40 bg-indigo-50/50 dark:bg-indigo-500/10'
-      : 'border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6'"
+    :class="dropActive
+      ? 'border-violet-400 dark:border-violet-500 ring-2 ring-violet-400 dark:ring-violet-500 bg-violet-50/70 dark:bg-violet-500/10'
+      : (selected
+        ? 'border-indigo-300 dark:border-indigo-500/40 bg-indigo-50/50 dark:bg-indigo-500/10'
+        : 'border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6')"
     @click="!editing && $emit('open', folder._id)"
     @dblclick="!editing && $emit('open', folder._id)"
     @contextmenu="openCtx"
+    @dragstart="onDragStart"
+    @dragend="endDrag"
+    @dragover="onDragOver"
+    @dragenter="onDragOver"
+    @dragleave="dropActive = false"
+    @drop="onDrop"
   >
     <!-- Checkbox top-left -->
     <div

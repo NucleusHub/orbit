@@ -13,6 +13,17 @@ import {
 const router = express.Router()
 router.use(requireAuth)
 
+// Propagate a scope change (groupId / ownerId / profileId) to every descendant
+// of a moved folder, keeping the whole subtree consistent with its new home.
+async function rescopeTree(folderId, own) {
+  await File.updateMany({ folderId }, { $set: own })
+  const subfolders = await Folder.find({ parentId: folderId }).select('_id')
+  if (subfolders.length) {
+    await Folder.updateMany({ parentId: folderId }, { $set: own })
+    for (const sf of subfolders) await rescopeTree(sf._id, own)
+  }
+}
+
 // Load the caller's group membership once per request (req.groups / req.gset).
 router.use(async (req, _res, next) => {
   try {
@@ -228,13 +239,22 @@ router.patch('/:id/move', async (req, res) => {
       }
     }
 
-    // Keep items within their storage scope — no moving between personal and shared.
-    const itemGroup = folder.groupId ? String(folder.groupId) : null
-    const destGroup = target ? (targetFolder.groupId ? String(targetFolder.groupId) : null) : null
-    if (itemGroup !== destGroup) return res.status(400).json({ error: 'Cannot move between personal and shared storage' })
+    // Adopt the destination's storage scope, so the folder can cross between
+    // personal storage and a group's shared directory (and vice-versa).
+    const oldGroup = folder.groupId ? String(folder.groupId) : null
+    const own = childOwnership(targetFolder, pid)
+    const newGroup = own.groupId ? String(own.groupId) : null
 
     folder.parentId = target
+    folder.groupId = own.groupId
+    folder.ownerId = own.ownerId
+    folder.profileId = own.profileId
     await folder.save()
+
+    // When the group scope changes the whole subtree must follow it, otherwise
+    // its contents would no longer match the destination's listing query.
+    if (oldGroup !== newGroup) await rescopeTree(folder._id, own)
+
     res.json(serializeFolder(folder, req))
   } catch (err) {
     res.status(500).json({ error: err.message })

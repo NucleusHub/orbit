@@ -2,6 +2,7 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { getFileTypeInfo, formatSize, formatRelativeDate } from '../utils/fileType.js'
 import ContextMenu from './ContextMenu.vue'
+import { useDnd } from '../composables/useDnd.js'
 
 const props = defineProps({
   file: { type: Object, required: true },
@@ -26,6 +27,11 @@ const editing = ref(false)
 const editName = ref('')
 const editInput = ref(null)
 const imgError = ref(false)
+
+const { startDrag, endDrag } = useDnd()
+function onDragStart(e) {
+  startDrag({ type: 'file', id: props.file._id, name: props.file.filename }, e)
+}
 
 const ctxOpen = ref(false)
 const ctxX = ref(0)
@@ -112,10 +118,13 @@ function cancelEdit() {
   <div
     v-if="viewMode === 'list'"
     ref="rootEl"
+    :draggable="!editing"
     class="group flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
     :class="[selected ? 'bg-indigo-50/60 dark:bg-indigo-500/10' : 'hover:bg-white/60 dark:hover:bg-white/6', isHighlighted && 'orbit-highlight']"
     @click="!editing && (isLocked ? $emit('unlock', file) : $emit('preview', file))"
     @contextmenu="openCtx"
+    @dragstart="onDragStart"
+    @dragend="endDrag"
   >
     <!-- Icon / Checkbox -->
     <div class="relative w-8 h-8 shrink-0" @click.stop="$emit('toggle-select')">
@@ -130,7 +139,7 @@ function cancelEdit() {
         <svg v-if="isLocked" class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
         </svg>
-        <img v-else-if="showThumb" :src="file.url" :alt="file.filename" class="w-full h-full object-cover" @error="imgError = true" />
+        <img v-else-if="showThumb" :src="file.url" :alt="file.filename" draggable="false" class="w-full h-full object-cover" @error="imgError = true" />
         <svg v-else class="w-4 h-4" :class="typeInfo.color" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" :d="typeInfo.icon" />
         </svg>
@@ -185,12 +194,15 @@ function cancelEdit() {
   <div
     v-else
     ref="rootEl"
+    :draggable="!editing"
     class="group relative flex flex-col rounded-2xl border transition-all cursor-pointer select-none"
     :class="[selected
       ? 'border-indigo-300 dark:border-indigo-500/40 bg-indigo-50/50 dark:bg-indigo-500/10'
       : 'border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6', isHighlighted && 'orbit-highlight']"
     @click="!editing && (isLocked ? $emit('unlock', file) : $emit('preview', file))"
     @contextmenu="openCtx"
+    @dragstart="onDragStart"
+    @dragend="endDrag"
   >
     <!-- Checkbox top-left -->
     <div
@@ -217,6 +229,7 @@ function cancelEdit() {
         v-else-if="showThumb"
         :src="file.url"
         :alt="file.filename"
+        draggable="false"
         class="w-full h-full object-cover"
         @error="imgError = true"
       />

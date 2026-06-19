@@ -17,7 +17,10 @@ import MoveModal from '../components/MoveModal.vue'
 import ContextMenu from '../components/ContextMenu.vue'
 import { useFiles } from '../composables/useFiles.js'
 import { useUpload } from '../composables/useUpload.js'
+import { useDnd } from '../composables/useDnd.js'
 import { api } from '../api/orbit.js'
+
+const { isDragging } = useDnd()
 
 const sidebarOpen = ref(false)
 const viewMode = ref(localStorage.getItem('orbit:viewMode') || 'grid')
@@ -191,6 +194,19 @@ async function handleMove(targetFolderId) {
   }
 }
 
+// Drag & drop move: dropping a file/folder onto another folder (or the ".." tile)
+// moves it there. The server adopts the destination's scope (personal ⇆ group).
+async function handleDrop({ type, id, targetId }) {
+  try {
+    if (type === 'file') await api.moveFile(id, targetId)
+    else await api.moveFolder(id, targetId)
+  } catch (e) {
+    console.error('Move failed:', e)
+  } finally {
+    browse(currentFolderId.value)
+  }
+}
+
 // Set password
 const settingPasswordFor = ref(null) // { type: 'file'|'folder', item }
 async function onSetPassword(password) {
@@ -302,6 +318,7 @@ function navigate(folderId) {
 watch(search, () => { if (selection.value.length) clearSelection() })
 
 function onDragover(e) {
+  if (isDragging.value) return // internal item move, not an external file upload
   e.preventDefault()
   dragOver.value = true
 }
@@ -309,6 +326,7 @@ function onDragleave(e) {
   if (!e.currentTarget.contains(e.relatedTarget)) dragOver.value = false
 }
 function onDrop(e) {
+  if (isDragging.value) return // handled by the folder / ".." drop targets
   e.preventDefault()
   dragOver.value = false
   if (e.target.closest('[data-upload-zone]')) return
@@ -499,6 +517,7 @@ async function executeDelete() {
         @unlock-file="f => { unlockingFile = f; filePwdError = null }"
         @set-password-file="f => withAuth('file', f, () => { settingPasswordFor = { type: 'file', item: f } })"
         @move-file="f => withAuth('file', f, () => { movingItem = { type: 'file', item: f } })"
+        @move-to="handleDrop"
         @upload="files => uploadFiles(files, currentFolderId)"
         @toggle-select="toggleSelect"
         @open-selection-ctx="openSelCtx"
