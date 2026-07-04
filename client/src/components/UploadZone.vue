@@ -1,15 +1,18 @@
 <script setup>
 import { ref } from 'vue'
+import { readDataTransferEntries } from '../utils/dropEntries.js'
 
 const emit = defineEmits(['files'])
 const isDragging = ref(false)
 const fileInput = ref(null)
+const folderInput = ref(null)
 
 function onDragover() { isDragging.value = true }
 function onDragleave() { isDragging.value = false }
-function onDrop(e) {
+async function onDrop(e) {
   isDragging.value = false
-  if (e.dataTransfer.files.length) emit('files', e.dataTransfer.files)
+  const entries = await readDataTransferEntries(e.dataTransfer)
+  if (entries.length) emit('files', entries)
 }
 function onInput(e) {
   if (e.target.files.length) emit('files', e.target.files)
@@ -34,15 +37,24 @@ function onInput(e) {
       </svg>
     </div>
     <div class="text-center">
-      <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Drop files here to upload</p>
-      <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">or click below to browse</p>
+      <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Drop files or folders here to upload</p>
+      <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">or choose below</p>
     </div>
-    <button
-      @click="fileInput.click()"
-      class="cursor-pointer px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-colors"
-    >
-      Choose files
-    </button>
+    <div class="flex items-center gap-2">
+      <button
+        @click="fileInput.click()"
+        class="cursor-pointer px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-colors"
+      >
+        Choose files
+      </button>
+      <button
+        @click="folderInput.click()"
+        class="cursor-pointer px-5 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-black/5 dark:bg-white/8 hover:bg-black/8 dark:hover:bg-white/12 rounded-xl transition-colors"
+      >
+        Choose folder
+      </button>
+    </div>
     <input ref="fileInput" type="file" multiple class="hidden" @change="onInput" />
+    <input ref="folderInput" type="file" webkitdirectory multiple class="hidden" @change="onInput" />
   </div>
 </template>

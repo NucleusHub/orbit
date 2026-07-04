@@ -19,6 +19,7 @@ import { useFiles } from '../composables/useFiles.js'
 import { useUpload } from '../composables/useUpload.js'
 import { useDnd } from '../composables/useDnd.js'
 import { api } from '../api/orbit.js'
+import { readDataTransferEntries } from '../utils/dropEntries.js'
 
 const { isDragging } = useDnd()
 
@@ -31,6 +32,7 @@ const showCreateFolder = ref(false)
 const confirmTarget = ref(null) // { type, id, name } or { bulk: true, count, items }
 const previewFile = ref(null)
 const fileInput = ref(null)
+const folderInput = ref(null)
 
 // Multi-select
 const selection = ref([]) // [{ type: 'file'|'folder', item }]
@@ -124,6 +126,11 @@ const bgCtxItems = computed(() => [
     label: 'Upload Files',
     icon: 'M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5',
     action: () => { fileInput.value?.click() },
+  },
+  {
+    label: 'Upload Folder',
+    icon: 'M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776',
+    action: () => { folderInput.value?.click() },
   },
   { divider: true },
   {
@@ -325,15 +332,24 @@ function onDragover(e) {
 function onDragleave(e) {
   if (!e.currentTarget.contains(e.relatedTarget)) dragOver.value = false
 }
-function onDrop(e) {
+async function onDrop(e) {
   if (isDragging.value) return // handled by the folder / ".." drop targets
   e.preventDefault()
   dragOver.value = false
   if (e.target.closest('[data-upload-zone]')) return
-  if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files, currentFolderId.value)
+  // Read the dropped entries synchronously (readDataTransferEntries grabs the
+  // entry list before awaiting) so folders are recursed, not dropped as 0-byte
+  // stubs the way dataTransfer.files would give them.
+  const entries = await readDataTransferEntries(e.dataTransfer)
+  if (entries.length) uploadFiles(entries, currentFolderId.value)
 }
 
 function handleFileInput(e) {
+  if (e.target.files.length) uploadFiles(e.target.files, currentFolderId.value)
+  e.target.value = ''
+}
+
+function handleFolderInput(e) {
   if (e.target.files.length) uploadFiles(e.target.files, currentFolderId.value)
   e.target.value = ''
 }
@@ -384,6 +400,7 @@ async function executeDelete() {
   >
     <AppSidebar :open="sidebarOpen" @close="sidebarOpen = false" />
     <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileInput" />
+    <input ref="folderInput" type="file" webkitdirectory multiple class="hidden" @change="handleFolderInput" />
 
     <!-- Header -->
     <AppHeader @contextmenu.stop>

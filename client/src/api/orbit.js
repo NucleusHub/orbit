@@ -49,7 +49,7 @@ export const api = {
     new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest()
       xhr.upload.onprogress = e => {
-        if (e.lengthComputable && onProgress) onProgress(Math.round(e.loaded / e.total * 100))
+        if (e.lengthComputable && onProgress) onProgress(e.loaded, e.total)
       }
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText))

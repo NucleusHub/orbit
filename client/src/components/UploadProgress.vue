@@ -1,6 +1,26 @@
 <script setup>
 defineProps({ uploads: { type: Array, default: () => [] } })
 defineEmits(['dismiss'])
+
+function fmtEta(s) {
+  if (s == null || !isFinite(s)) return ''
+  s = Math.round(s)
+  if (s < 1) return 'less than a second left'
+  if (s < 60) return `${s}s left`
+  const m = Math.floor(s / 60)
+  const sec = s % 60
+  if (m < 60) return sec ? `${m}m ${sec}s left` : `${m}m left`
+  const h = Math.floor(m / 60)
+  return `${h}h ${m % 60}m left`
+}
+
+function fmtSpeed(bps) {
+  if (!bps || !isFinite(bps)) return ''
+  const units = ['B/s', 'KB/s', 'MB/s', 'GB/s']
+  let i = 0
+  while (bps >= 1024 && i < units.length - 1) { bps /= 1024; i++ }
+  return `${bps.toFixed(bps < 10 && i > 0 ? 1 : 0)} ${units[i]}`
+}
 </script>
 
 <template>
@@ -32,11 +52,17 @@ defineEmits(['dismiss'])
           <!-- File name + progress -->
           <div class="flex-1 min-w-0">
             <p class="text-xs font-medium text-slate-900 dark:text-white truncate">{{ u.filename }}</p>
-            <div v-if="u.status === 'uploading'" class="mt-1.5 h-1 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
-              <div
-                class="h-full bg-indigo-500 rounded-full transition-all duration-300"
-                :style="{ width: `${u.progress}%` }"
-              />
+            <div v-if="u.status === 'uploading'" class="mt-1.5">
+              <div class="h-1 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                  :style="{ width: `${u.progress}%` }"
+                />
+              </div>
+              <div class="mt-1 flex items-center justify-between gap-2 text-[10px] text-slate-400 dark:text-slate-500">
+                <span class="font-medium tabular-nums">{{ u.progress }}%</span>
+                <span v-if="u.eta != null" class="truncate">{{ fmtEta(u.eta) }}<template v-if="fmtSpeed(u.speed)"> · {{ fmtSpeed(u.speed) }}</template></span>
+              </div>
             </div>
             <p v-else-if="u.status === 'error'" class="mt-0.5 text-xs text-red-500 truncate">{{ u.error }}</p>
             <p v-else class="mt-0.5 text-xs text-emerald-500">Upload complete</p>
