@@ -2,6 +2,9 @@
 import { ref, computed, nextTick } from 'vue'
 import ContextMenu from './ContextMenu.vue'
 import { useDnd } from '../composables/useDnd.js'
+import { useI18n } from '@core/useI18n.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   folder: { type: Object, required: true },
@@ -60,14 +63,14 @@ const ICONS = {
 // Group roots are immutable and shared items are owner-only, so the server
 // flags what the caller may change via `canEdit`. Show only Open otherwise.
 const ctxItems = computed(() => {
-  const items = [{ label: 'Open', icon: ICONS.open, action: () => emit('open', props.folder._id) }]
+  const items = [{ label: t('orbit.action.open'), icon: ICONS.open, action: () => emit('open', props.folder._id) }]
   if (props.folder.canEdit !== false) {
     items.push(
       { divider: true },
-      { label: 'Move', icon: ICONS.move, action: () => emit('move', props.folder) },
-      { label: 'Rename', icon: ICONS.rename, action: props.folder.protected ? () => emit('rename-request', props.folder) : startEdit },
-      { label: props.folder.protected ? 'Change password' : 'Set password', icon: ICONS.lock, action: () => emit('set-password', props.folder) },
-      { label: 'Delete', icon: ICONS.delete, action: () => emit('delete', props.folder), danger: true },
+      { label: t('orbit.action.move'), icon: ICONS.move, action: () => emit('move', props.folder) },
+      { label: t('orbit.action.rename'), icon: ICONS.rename, action: props.folder.protected ? () => emit('rename-request', props.folder) : startEdit },
+      { label: props.folder.protected ? t('orbit.action.changePassword') : t('orbit.action.setPassword'), icon: ICONS.lock, action: () => emit('set-password', props.folder) },
+      { label: t('orbit.action.delete'), icon: ICONS.delete, action: () => emit('delete', props.folder), danger: true },
     )
   }
   return items

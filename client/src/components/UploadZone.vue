@@ -1,7 +1,9 @@
 <script setup>
 import { ref } from 'vue'
 import { readDataTransferEntries } from '../utils/dropEntries.js'
+import { useI18n } from '@core/useI18n.js'
 
+const { t } = useI18n()
 const emit = defineEmits(['files'])
 const isDragging = ref(false)
 const fileInput = ref(null)
@@ -37,21 +39,21 @@ function onInput(e) {
       </svg>
     </div>
     <div class="text-center">
-      <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Drop files or folders here to upload</p>
-      <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">or choose below</p>
+      <p class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ t('orbit.upload.dropHere') }}</p>
+      <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">{{ t('orbit.upload.orChooseBelow') }}</p>
     </div>
     <div class="flex items-center gap-2">
       <button
         @click="fileInput.click()"
         class="cursor-pointer px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-colors"
       >
-        Choose files
+        {{ t('orbit.upload.chooseFiles') }}
       </button>
       <button
         @click="folderInput.click()"
         class="cursor-pointer px-5 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-black/5 dark:bg-white/8 hover:bg-black/8 dark:hover:bg-white/12 rounded-xl transition-colors"
       >
-        Choose folder
+        {{ t('orbit.upload.chooseFolder') }}
       </button>
     </div>
     <input ref="fileInput" type="file" multiple class="hidden" @change="onInput" />

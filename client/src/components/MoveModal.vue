@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { api } from '../api/orbit.js'
+import { useI18n } from '@core/useI18n.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -94,7 +97,7 @@ function submit() {
 
           <!-- Header -->
           <div class="px-5 pt-5 pb-4 border-b border-white/30 dark:border-white/8 shrink-0">
-            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Move</h2>
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">{{ t('orbit.move.title') }}</h2>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">"{{ itemName }}"</p>
           </div>
 
@@ -107,7 +110,7 @@ function submit() {
               </svg>
             </div>
 
-            <div v-else-if="error" class="px-5 py-4 text-sm text-red-500">Failed to load folders: {{ error }}</div>
+            <div v-else-if="error" class="px-5 py-4 text-sm text-red-500">{{ t('orbit.move.loadError') }} {{ error }}</div>
 
             <template v-else>
               <!-- Root option -->
@@ -121,8 +124,8 @@ function submit() {
                 <svg class="w-4 h-4 shrink-0 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                 </svg>
-                <span class="font-medium">Home</span>
-                <span v-if="currentFolderId === null" class="ml-auto text-xs text-slate-400 dark:text-slate-500">current</span>
+                <span class="font-medium">{{ t('orbit.move.home') }}</span>
+                <span v-if="currentFolderId === null" class="ml-auto text-xs text-slate-400 dark:text-slate-500">{{ t('orbit.move.current') }}</span>
               </button>
 
               <!-- Folder rows -->
@@ -156,11 +159,11 @@ function submit() {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
                   </svg>
                   <span class="truncate">{{ folder.name }}</span>
-                  <span v-if="String(folder._id) === String(currentFolderId)" class="ml-auto text-xs text-slate-400 dark:text-slate-500 shrink-0">current</span>
+                  <span v-if="String(folder._id) === String(currentFolderId)" class="ml-auto text-xs text-slate-400 dark:text-slate-500 shrink-0">{{ t('orbit.move.current') }}</span>
                 </button>
               </div>
 
-              <p v-if="!flatTree.length && !loading" class="px-5 py-4 text-sm text-slate-400 dark:text-slate-500">No folders yet</p>
+              <p v-if="!flatTree.length && !loading" class="px-5 py-4 text-sm text-slate-400 dark:text-slate-500">{{ t('orbit.move.noFolders') }}</p>
             </template>
           </div>
 
@@ -169,12 +172,12 @@ function submit() {
             <button
               @click="$emit('cancel')"
               class="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
-            >Cancel</button>
+            >{{ t('core.button.cancel') }}</button>
             <button
               @click="submit"
               :disabled="isSameLocation"
               class="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
-            >Move here</button>
+            >{{ t('orbit.move.here') }}</button>
           </div>
         </div>
       </div>

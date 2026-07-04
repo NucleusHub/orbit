@@ -3,6 +3,9 @@ import { ref, computed, nextTick, onMounted } from 'vue'
 import { getFileTypeInfo, formatSize, formatRelativeDate } from '../utils/fileType.js'
 import ContextMenu from './ContextMenu.vue'
 import { useDnd } from '../composables/useDnd.js'
+import { useI18n } from '@core/useI18n.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   file: { type: Object, required: true },
@@ -57,17 +60,17 @@ const isLocked = computed(() => props.file.protected && !props.file.url)
 const ctxItems = computed(() => {
   const items = [
     isLocked.value
-      ? { label: 'Unlock', icon: ICONS.lock, action: () => emit('unlock', props.file) }
-      : { label: 'Preview', icon: ICONS.preview, action: () => emit('preview', props.file) },
-    ...(!isLocked.value ? [{ label: 'Download', icon: ICONS.download, href: props.file.url, download: props.file.filename }] : []),
+      ? { label: t('orbit.action.unlock'), icon: ICONS.lock, action: () => emit('unlock', props.file) }
+      : { label: t('orbit.action.preview'), icon: ICONS.preview, action: () => emit('preview', props.file) },
+    ...(!isLocked.value ? [{ label: t('orbit.action.download'), icon: ICONS.download, href: props.file.url, download: props.file.filename }] : []),
   ]
   if (props.file.canEdit !== false) {
     items.push(
       { divider: true },
-      { label: 'Move', icon: ICONS.move, action: () => emit('move', props.file) },
-      { label: 'Rename', icon: ICONS.rename, action: props.file.protected ? () => emit('rename-request', props.file) : startEdit },
-      { label: props.file.protected ? 'Change password' : 'Set password', icon: ICONS.lock, action: () => emit('set-password', props.file) },
-      { label: 'Delete', icon: ICONS.delete, action: () => emit('delete', props.file), danger: true },
+      { label: t('orbit.action.move'), icon: ICONS.move, action: () => emit('move', props.file) },
+      { label: t('orbit.action.rename'), icon: ICONS.rename, action: props.file.protected ? () => emit('rename-request', props.file) : startEdit },
+      { label: props.file.protected ? t('orbit.action.changePassword') : t('orbit.action.setPassword'), icon: ICONS.lock, action: () => emit('set-password', props.file) },
+      { label: t('orbit.action.delete'), icon: ICONS.delete, action: () => emit('delete', props.file), danger: true },
     )
   }
   return items

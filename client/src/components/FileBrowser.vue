@@ -4,6 +4,9 @@ import FolderCard from './FolderCard.vue'
 import FileCard from './FileCard.vue'
 import UploadZone from './UploadZone.vue'
 import { useDnd } from '../composables/useDnd.js'
+import { useI18n } from '@core/useI18n.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   folders: { type: Array, default: () => [] },
@@ -43,7 +46,7 @@ function onUpDrop(e) {
   <div class="flex flex-col gap-8">
     <!-- Folders section -->
     <section v-if="folders.length || parentFolderId !== undefined">
-      <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Folders</h2>
+      <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ t('orbit.browser.folders') }}</h2>
       <!-- Grid -->
       <div
         v-if="viewMode === 'grid'"
@@ -62,7 +65,7 @@ function onUpDrop(e) {
           @dragenter="onUpDragOver"
           @dragleave="upDropActive = false"
           @drop="onUpDrop"
-          title="Go up"
+          :title="t('orbit.browser.goUp')"
         >
           <div class="w-14 h-14 rounded-2xl bg-slate-200/60 dark:bg-white/8 flex items-center justify-center">
             <svg class="w-7 h-7 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -103,7 +106,7 @@ function onUpDrop(e) {
           @dragenter="onUpDragOver"
           @dragleave="upDropActive = false"
           @drop="onUpDrop"
-          title="Go up"
+          :title="t('orbit.browser.goUp')"
         >
           <div class="w-8 h-8 rounded-lg bg-slate-200/60 dark:bg-white/8 flex items-center justify-center shrink-0">
             <svg class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -134,7 +137,7 @@ function onUpDrop(e) {
 
     <!-- Files section -->
     <section v-if="files.length || uploadable">
-      <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Files</h2>
+      <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ t('orbit.browser.files') }}</h2>
 
       <!-- Upload zone when no files -->
       <UploadZone
@@ -173,9 +176,9 @@ function onUpDrop(e) {
           <!-- Header row -->
           <div class="flex items-center gap-3 px-4 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/8 mb-1">
             <div class="w-8 shrink-0" />
-            <span class="flex-1">Name</span>
-            <span class="hidden sm:block w-16 text-right">Size</span>
-            <span class="hidden md:block w-20 text-right">Modified</span>
+            <span class="flex-1">{{ t('orbit.browser.name') }}</span>
+            <span class="hidden sm:block w-16 text-right">{{ t('orbit.browser.size') }}</span>
+            <span class="hidden md:block w-20 text-right">{{ t('orbit.browser.modified') }}</span>
             <div class="w-8 shrink-0" />
           </div>
           <FileCard

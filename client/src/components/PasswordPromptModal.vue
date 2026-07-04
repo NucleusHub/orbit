@@ -1,9 +1,12 @@
 <script setup>
 import { ref, watch, onUnmounted } from 'vue'
+import { useI18n } from '@core/useI18n.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   show: { type: Boolean, default: false },
-  title: { type: String, default: 'Password required' },
+  title: { type: String, default: '' },
   error: { type: String, default: null },
 })
 const emit = defineEmits(['submit', 'cancel'])
@@ -39,8 +42,8 @@ function submit() {
               </svg>
             </div>
             <div>
-              <h2 class="text-sm font-semibold text-slate-900 dark:text-white">{{ title }}</h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Enter the password to continue</p>
+              <h2 class="text-sm font-semibold text-slate-900 dark:text-white">{{ title || t('orbit.password.required') }}</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ t('orbit.password.enterToContinue') }}</p>
             </div>
           </div>
 
@@ -48,7 +51,7 @@ function submit() {
             <input
               v-model="password"
               type="password"
-              placeholder="Password"
+              :placeholder="t('orbit.password.placeholder')"
               autofocus
               class="w-full px-3 py-2 text-sm bg-black/5 dark:bg-white/8 border rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-colors"
               :class="error ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-white/10'"
@@ -61,12 +64,12 @@ function submit() {
             <button
               @click="$emit('cancel')"
               class="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
-            >Cancel</button>
+            >{{ t('core.button.cancel') }}</button>
             <button
               @click="submit"
               :disabled="!password"
               class="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
-            >Unlock</button>
+            >{{ t('orbit.password.unlock') }}</button>
           </div>
         </div>
       </div>

@@ -1,4 +1,7 @@
 <script setup>
+import { useI18n } from '@core/useI18n.js'
+
+const { t } = useI18n()
 defineProps({ uploads: { type: Array, default: () => [] } })
 defineEmits(['dismiss'])
 
@@ -65,7 +68,7 @@ function fmtSpeed(bps) {
               </div>
             </div>
             <p v-else-if="u.status === 'error'" class="mt-0.5 text-xs text-red-500 truncate">{{ u.error }}</p>
-            <p v-else class="mt-0.5 text-xs text-emerald-500">Upload complete</p>
+            <p v-else class="mt-0.5 text-xs text-emerald-500">{{ t('orbit.upload.complete') }}</p>
           </div>
 
           <!-- Dismiss -->

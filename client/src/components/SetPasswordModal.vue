@@ -1,5 +1,8 @@
 <script setup>
 import { ref, watch, onUnmounted } from 'vue'
+import { useI18n } from '@core/useI18n.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -47,7 +50,7 @@ function remove() {
             </div>
             <div>
               <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
-                {{ isProtected ? 'Change password' : 'Set password' }}
+                {{ isProtected ? t('orbit.password.changeTitle') : t('orbit.password.setTitle') }}
               </h2>
               <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-[180px]">{{ name }}</p>
             </div>
@@ -57,20 +60,20 @@ function remove() {
             <input
               v-model="password"
               type="password"
-              :placeholder="isProtected ? 'New password' : 'Password'"
+              :placeholder="isProtected ? t('orbit.password.newPlaceholder') : t('orbit.password.placeholder')"
               autofocus
               class="w-full px-3 py-2 text-sm bg-black/5 dark:bg-white/8 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-colors"
             />
             <input
               v-model="confirm"
               type="password"
-              placeholder="Confirm password"
+              :placeholder="t('orbit.password.confirmPlaceholder')"
               class="w-full px-3 py-2 text-sm bg-black/5 dark:bg-white/8 border rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-colors"
               :class="mismatch ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-white/10'"
               @keydown.enter="save"
               @input="mismatch = false"
             />
-            <p v-if="mismatch" class="text-xs text-red-500">Passwords don't match</p>
+            <p v-if="mismatch" class="text-xs text-red-500">{{ t('orbit.password.mismatch') }}</p>
           </div>
 
           <div class="flex gap-2">
@@ -78,17 +81,17 @@ function remove() {
               v-if="isProtected"
               @click="remove"
               class="cursor-pointer px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
-            >Remove</button>
+            >{{ t('orbit.password.remove') }}</button>
             <div class="flex-1" />
             <button
               @click="$emit('cancel')"
               class="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
-            >Cancel</button>
+            >{{ t('core.button.cancel') }}</button>
             <button
               @click="save"
               :disabled="!password"
               class="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
-            >Save</button>
+            >{{ t('core.button.save') }}</button>
           </div>
         </div>
       </div>

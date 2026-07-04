@@ -20,7 +20,9 @@ import { useUpload } from '../composables/useUpload.js'
 import { useDnd } from '../composables/useDnd.js'
 import { api } from '../api/orbit.js'
 import { readDataTransferEntries } from '../utils/dropEntries.js'
+import { useI18n } from '@core/useI18n.js'
 
+const { t } = useI18n()
 const { isDragging } = useDnd()
 
 const sidebarOpen = ref(false)
@@ -61,10 +63,10 @@ const ICONS_SEL = {
 const selCtxItems = computed(() => {
   const n = selection.value.length
   return [
-    { label: `Move ${n} items`, icon: ICONS_SEL.move, action: () => { movingSelection.value = true } },
-    { label: `Set password`, icon: ICONS_SEL.lock, action: () => { settingPasswordForSelection.value = true } },
+    { label: t('orbit.selection.moveItems', { count: n }), icon: ICONS_SEL.move, action: () => { movingSelection.value = true } },
+    { label: t('orbit.selection.setPassword'), icon: ICONS_SEL.lock, action: () => { settingPasswordForSelection.value = true } },
     { divider: true },
-    { label: `Delete ${n} items`, icon: ICONS_SEL.delete, action: promptDeleteSelection, danger: true },
+    { label: t('orbit.selection.deleteItems', { count: n }), icon: ICONS_SEL.delete, action: promptDeleteSelection, danger: true },
   ]
 })
 
@@ -118,23 +120,23 @@ const bgCtxX = ref(0)
 const bgCtxY = ref(0)
 const bgCtxItems = computed(() => [
   {
-    label: 'New Folder',
+    label: t('orbit.menu.newFolder'),
     icon: 'M12 10.5v6m3-3H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z',
     action: () => { showCreateFolder.value = true },
   },
   {
-    label: 'Upload Files',
+    label: t('orbit.menu.uploadFiles'),
     icon: 'M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5',
     action: () => { fileInput.value?.click() },
   },
   {
-    label: 'Upload Folder',
+    label: t('orbit.menu.uploadFolder'),
     icon: 'M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776',
     action: () => { folderInput.value?.click() },
   },
   { divider: true },
   {
-    label: viewMode.value === 'grid' ? 'List View' : 'Grid View',
+    label: viewMode.value === 'grid' ? t('orbit.menu.listView') : t('orbit.menu.gridView'),
     icon: viewMode.value === 'grid'
       ? 'M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z'
       : 'M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25zM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25z',
@@ -142,7 +144,7 @@ const bgCtxItems = computed(() => [
   },
   { divider: true },
   {
-    label: 'Refresh',
+    label: t('orbit.menu.refresh'),
     icon: 'M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99',
     action: () => { browse(currentFolderId.value) },
   },
@@ -168,7 +170,7 @@ async function onFolderUnlock(password) {
   try {
     unlockFolder(lockedFolderId.value, password)
   } catch {
-    folderPwdError.value = 'Wrong password'
+    folderPwdError.value = t('orbit.error.wrongPassword')
   }
 }
 
@@ -182,7 +184,7 @@ async function onFileUnlock(password) {
     unlockFileInList(unlockingFile.value._id, url)
     unlockingFile.value = null
   } catch {
-    filePwdError.value = 'Wrong password'
+    filePwdError.value = t('orbit.error.wrongPassword')
   }
 }
 
@@ -260,7 +262,7 @@ async function onPendingAuth(password) {
     pendingAuth.value = null
     action()
   } catch (e) {
-    pendingAuthError.value = e.status === 401 ? 'Wrong password' : 'Verification failed'
+    pendingAuthError.value = e.status === 401 ? t('orbit.error.wrongPassword') : t('orbit.error.verificationFailed')
   }
 }
 
@@ -408,7 +410,7 @@ async function executeDelete() {
         <button
           @click="sidebarOpen = true"
           class="cursor-pointer p-2 -ml-1 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
-          aria-label="Open navigation"
+          :aria-label="t('orbit.toolbar.openNav')"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -424,7 +426,7 @@ async function executeDelete() {
           <button
             @click="viewMode = 'grid'"
             :class="['cursor-pointer p-1.5 rounded-md transition-colors', viewMode === 'grid' ? 'bg-white dark:bg-white/20 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300']"
-            title="Grid view"
+            :title="t('orbit.toolbar.gridView')"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25zM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25z" />
@@ -433,7 +435,7 @@ async function executeDelete() {
           <button
             @click="viewMode = 'list'"
             :class="['cursor-pointer p-1.5 rounded-md transition-colors', viewMode === 'list' ? 'bg-white dark:bg-white/20 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300']"
-            title="List view"
+            :title="t('orbit.toolbar.listView')"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z" />
@@ -449,7 +451,7 @@ async function executeDelete() {
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v6m3-3H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
           </svg>
-          <span class="hidden sm:inline">New folder</span>
+          <span class="hidden sm:inline">{{ t('orbit.toolbar.newFolder') }}</span>
         </button>
 
         <!-- Upload -->
@@ -460,7 +462,7 @@ async function executeDelete() {
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
           </svg>
-          <span class="hidden sm:inline">Upload</span>
+          <span class="hidden sm:inline">{{ t('orbit.toolbar.upload') }}</span>
         </button>
       </template>
     </AppHeader>
@@ -484,7 +486,7 @@ async function executeDelete() {
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0zm-9 3.75h.008v.008H12v-.008z" />
         </svg>
         <p class="text-sm text-slate-500 dark:text-slate-400">{{ error }}</p>
-        <button @click="browse(currentFolderId)" class="cursor-pointer text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Try again</button>
+        <button @click="browse(currentFolderId)" class="cursor-pointer text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{{ t('orbit.error.tryAgain') }}</button>
       </div>
 
       <!-- Empty state + upload zone -->
@@ -496,7 +498,7 @@ async function executeDelete() {
               @click="showCreateFolder = true"
               class="cursor-pointer text-sm text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
             >
-              or create a new folder
+              {{ t('orbit.empty.orCreateFolder') }}
             </button>
           </div>
         </div>
@@ -507,8 +509,8 @@ async function executeDelete() {
         <svg class="w-12 h-12 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z" />
         </svg>
-        <p class="text-sm text-slate-500 dark:text-slate-400">No results for "<strong>{{ search }}</strong>"</p>
-        <button @click="search = ''" class="cursor-pointer text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Clear search</button>
+        <p class="text-sm text-slate-500 dark:text-slate-400">{{ t('orbit.search.noResultsFor') }} "<strong>{{ search }}</strong>"</p>
+        <button @click="search = ''" class="cursor-pointer text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{{ t('orbit.search.clear') }}</button>
       </div>
 
       <!-- File browser -->
@@ -548,7 +550,7 @@ async function executeDelete() {
           <svg class="w-12 h-12 text-indigo-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75z" />
           </svg>
-          <p class="text-lg font-semibold text-indigo-600 dark:text-indigo-400">Drop to upload</p>
+          <p class="text-lg font-semibold text-indigo-600 dark:text-indigo-400">{{ t('orbit.upload.dropToUpload') }}</p>
         </div>
       </div>
     </Transition>
@@ -560,7 +562,7 @@ async function executeDelete() {
         class="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 px-2 py-1.5 bg-slate-900 dark:bg-slate-800 rounded-2xl shadow-2xl border border-white/10"
         @contextmenu.stop
       >
-        <span class="pl-2 pr-3 text-sm font-medium text-slate-200 whitespace-nowrap">{{ selection.length }} selected</span>
+        <span class="pl-2 pr-3 text-sm font-medium text-slate-200 whitespace-nowrap">{{ t('orbit.selection.count', { count: selection.length }) }}</span>
         <button
           @click="movingSelection = true"
           class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
@@ -568,7 +570,7 @@ async function executeDelete() {
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
           </svg>
-          Move
+          {{ t('orbit.selection.move') }}
         </button>
         <button
           @click="settingPasswordForSelection = true"
@@ -577,7 +579,7 @@ async function executeDelete() {
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
           </svg>
-          Password
+          {{ t('orbit.selection.password') }}
         </button>
         <button
           @click="promptDeleteSelection"
@@ -586,12 +588,12 @@ async function executeDelete() {
           <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
           </svg>
-          Delete
+          {{ t('orbit.selection.delete') }}
         </button>
         <div class="w-px h-5 bg-white/20 mx-1" />
         <button
           @click="clearSelection"
-          title="Clear selection"
+          :title="t('orbit.selection.clear')"
           class="cursor-pointer p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -607,45 +609,47 @@ async function executeDelete() {
     <!-- Modals -->
     <CreateFolderModal
       :show="showCreateFolder"
+      :title="t('orbit.folder.newTitle')"
+      :confirm-label="t('orbit.folder.create')"
       @create="handleCreateFolder"
       @cancel="showCreateFolder = false"
     />
     <CreateFolderModal
       :show="!!renamingItem"
-      :title="`Rename &quot;${renamingItem?.type === 'file' ? renamingItem?.item?.filename : renamingItem?.item?.name}&quot;`"
+      :title="t('orbit.rename.title', { name: renamingItem?.type === 'file' ? renamingItem?.item?.filename : renamingItem?.item?.name })"
       :initial-value="renamingItem?.type === 'file' ? renamingItem?.item?.filename : renamingItem?.item?.name"
-      confirm-label="Rename"
+      :confirm-label="t('orbit.action.rename')"
       @create="onRenameSubmit"
       @cancel="renamingItem = null"
     />
     <PasswordPromptModal
       :show="!!pendingAuth"
-      :title="`&quot;${pendingAuth?.type === 'file' ? pendingAuth?.item?.filename : pendingAuth?.item?.name}&quot; is protected`"
+      :title="t('orbit.protected.itemTitle', { name: pendingAuth?.type === 'file' ? pendingAuth?.item?.filename : pendingAuth?.item?.name })"
       :error="pendingAuthError"
       @submit="onPendingAuth"
       @cancel="pendingAuth = null"
     />
     <TemplateModal
       :show="!!confirmTarget"
-      :title="confirmTarget?.bulk ? `Delete ${confirmTarget.count} items?` : `Delete ${confirmTarget?.type === 'file' ? 'file' : 'folder'}?`"
+      :title="confirmTarget?.bulk ? t('orbit.delete.bulkTitle', { count: confirmTarget.count }) : (confirmTarget?.type === 'file' ? t('orbit.delete.fileTitle') : t('orbit.delete.folderTitle'))"
       :message="confirmTarget?.bulk
-        ? `Permanently delete ${confirmTarget.count} selected items? This cannot be undone.`
-        : (confirmTarget ? `Permanently delete &quot;${confirmTarget.name}&quot;? This cannot be undone.` : '')"
-      confirm-label="Delete"
+        ? t('orbit.delete.bulkMsg', { count: confirmTarget.count })
+        : (confirmTarget ? t('orbit.delete.fileMsg', { name: confirmTarget.name }) : '')"
+      :confirm-label="t('core.button.delete')"
       @confirm="executeDelete"
       @cancel="confirmTarget = null"
     />
     <FilePreviewModal :file="previewFile" @close="previewFile = null" />
     <PasswordPromptModal
       :show="!!lockedFolderId"
-      title="Folder is protected"
+      :title="t('orbit.protected.folderTitle')"
       :error="folderPwdError"
       @submit="onFolderUnlock"
       @cancel="cancelFolderUnlock"
     />
     <PasswordPromptModal
       :show="!!unlockingFile"
-      :title="`&quot;${unlockingFile?.filename}&quot; is protected`"
+      :title="t('orbit.protected.itemTitle', { name: unlockingFile?.filename })"
       :error="filePwdError"
       @submit="onFileUnlock"
       @cancel="unlockingFile = null"

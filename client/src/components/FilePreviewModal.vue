@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { getFileTypeInfo } from '../utils/fileType.js'
+import { useI18n } from '@core/useI18n.js'
+
+const { t } = useI18n()
 
 const props = defineProps({ file: { type: Object, default: null } })
 const emit = defineEmits(['close'])
@@ -69,7 +72,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
           <button
             @click="$emit('close')"
             class="cursor-pointer p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-colors shrink-0"
-            title="Close (Esc)"
+            :title="t('orbit.preview.close')"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -87,7 +90,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
-            Download
+            {{ t('orbit.action.download') }}
           </a>
         </div>
 
@@ -146,7 +149,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
               </div>
-              <p v-else-if="textError" class="p-6 text-sm text-red-400">Could not load file content.</p>
+              <p v-else-if="textError" class="p-6 text-sm text-red-400">{{ t('orbit.preview.loadError') }}</p>
               <pre v-else class="p-6 text-xs text-slate-300 font-mono leading-relaxed whitespace-pre-wrap break-words">{{ textContent }}</pre>
             </div>
           </div>
@@ -161,9 +164,9 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
             <div>
               <p class="text-white font-medium">{{ file.filename }}</p>
               <p v-if="mediaError" class="mt-1 text-sm text-white/50">
-                This file can’t be played in the browser.<br>Download it to open in its original app.
+                {{ t('orbit.preview.notPlayable') }}<br>{{ t('orbit.preview.downloadToOpen') }}
               </p>
-              <p v-else class="mt-1 text-sm text-white/50">No preview available</p>
+              <p v-else class="mt-1 text-sm text-white/50">{{ t('orbit.preview.noPreview') }}</p>
             </div>
             <a
               :href="file.url"
@@ -173,7 +176,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
               </svg>
-              Download file
+              {{ t('orbit.preview.downloadFile') }}
             </a>
           </div>
 
