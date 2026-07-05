@@ -2,6 +2,11 @@
   "id": "orbit",
   "name": "Orbit",
   "description": "Files & cloud storage",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "compatibility": {
+    "nucleus": ">=0.1.0 <1.0.0"
+  },
   "route": "/orbit",
   "icon": "icon.svg",
   "category": "storage",
