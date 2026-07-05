@@ -3,6 +3,7 @@ import { DeleteObjectsCommand } from '@aws-sdk/client-s3'
 import Folder from '../models/Folder.js'
 import File from '../models/File.js'
 import { s3, BUCKET } from './files.js'
+import { getProgress } from '../transcodeQueue.js'
 import { hashPassword, verifyPassword } from '../utils/password.js'
 import { requireAuth } from '../middleware/auth.js'
 import {
@@ -55,7 +56,14 @@ function serializeFolder(f, req) {
 function serializeFile(f, req) {
   const obj = f.toObject ? f.toObject() : { ...f }
   const { passwordHash, ...rest } = obj
-  const base = { ...rest, shared: !!obj.groupId, canEdit: canEdit(obj, req.profile.profileId, req.gset) }
+  const prog = getProgress(obj._id)
+  const base = {
+    ...rest,
+    shared: !!obj.groupId,
+    canEdit: canEdit(obj, req.profile.profileId, req.gset),
+    transcodeStatus: obj.transcodeStatus || 'none',
+    ...(prog ? { transcodeProgress: prog.percent, transcodeEta: prog.eta } : {}),
+  }
   if (passwordHash) return { ...base, protected: true }
   return { ...base, url: fileUrl(obj.objectKey) }
 }

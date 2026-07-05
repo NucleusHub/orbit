@@ -27,6 +27,14 @@ const queued = []          // fileIds waiting for a slot
 const inFlight = new Set() // fileIds currently downloading/encoding
 let active = 0
 
+// Live encode progress for in-flight files: fileId -> { percent, eta }.
+// In-memory (single process); merged into the file listing by serializeFile so
+// the client can show a % and ETA. Cleared when the job ends.
+const progress = new Map()
+export function getProgress(fileId) {
+  return progress.get(String(fileId)) || null
+}
+
 // Schedule a file for (re)processing. Idempotent — a file already queued or in
 // flight is ignored.
 export function enqueue(fileId) {
@@ -87,7 +95,7 @@ async function processFile(fileId) {
       outExt = '.mp4'; outMime = 'video/mp4'
       outPath = `${srcPath}.mp4`
       if (plan === 'remux') await remuxToMp4(srcPath, outPath)
-      else await transcodeToMp4(srcPath, outPath)
+      else await transcodeToMp4(srcPath, outPath, { onProgress: (p) => progress.set(String(fileId), p) })
     } else if (isImage) {
       const plan = planImage(file.filename, file.mimeType)
       if (plan === 'skip') { await markStatus(fileId, 'done'); return } // already displayable
@@ -137,6 +145,7 @@ async function processFile(fileId) {
     console.error('[orbit] transcode failed for', fileId, '-', err.message)
     await markStatus(fileId, 'failed')
   } finally {
+    progress.delete(String(fileId))
     fs.unlink(srcPath, () => {})
     if (outPath) fs.unlink(outPath, () => {})
   }

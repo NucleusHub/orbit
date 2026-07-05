@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { getFileTypeInfo, canConvertMedia } from '../utils/fileType.js'
+import { getFileTypeInfo, canConvertMedia, formatEta } from '../utils/fileType.js'
 import { useI18n } from '@core/useI18n.js'
 
 const { t } = useI18n()
@@ -11,6 +11,14 @@ const emit = defineEmits(['close', 'transcode'])
 // Background media normalisation state (see server transcodeQueue.js).
 const converting = computed(() => ['pending', 'processing'].includes(props.file?.transcodeStatus))
 const canConvert = computed(() => canConvertMedia(props.file))
+const convertText = computed(() => {
+  if (props.file?.transcodeStatus === 'pending') return t('orbit.transcode.queued')
+  const p = props.file?.transcodeProgress
+  const eta = formatEta(props.file?.transcodeEta)
+  if (p == null) return t('orbit.transcode.converting')
+  const base = `${t('orbit.transcode.converting')} ${p}%`
+  return eta ? `${base} · ${eta}` : base
+})
 
 const textContent = ref(null)
 const textLoading = ref(false)
@@ -95,7 +103,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            <span class="hidden sm:inline">{{ t('orbit.transcode.converting') }}</span>
+            <span class="hidden sm:inline">{{ convertText }}</span>
           </span>
           <button
             v-else-if="canConvert"

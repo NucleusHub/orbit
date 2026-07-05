@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
-import { getFileTypeInfo, formatSize, formatRelativeDate, canConvertMedia } from '../utils/fileType.js'
+import { getFileTypeInfo, formatSize, formatRelativeDate, formatEta, canConvertMedia } from '../utils/fileType.js'
 import ContextMenu from './ContextMenu.vue'
 import { useDnd } from '../composables/useDnd.js'
 import { useI18n } from '@core/useI18n.js'
@@ -51,6 +51,14 @@ const showThumb = computed(() => isImage.value && !imgError.value && props.file.
 const converting = computed(() => ['pending', 'processing'].includes(props.file.transcodeStatus))
 // Offer manual conversion for videos / unsupported images not already done.
 const canConvert = computed(() => canConvertMedia(props.file))
+// "Queued" / "42% · 30s" / "Converting" depending on what the server reports.
+const badgeText = computed(() => {
+  if (props.file.transcodeStatus === 'pending') return t('orbit.transcode.queued')
+  const p = props.file.transcodeProgress
+  const base = (p == null) ? t('orbit.transcode.badge') : `${p}%`
+  const eta = formatEta(props.file.transcodeEta)
+  return eta ? `${base} · ${eta}` : base
+})
 
 const ICONS = {
   preview: 'M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
@@ -194,7 +202,7 @@ function cancelEdit() {
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
       </svg>
-      <span class="hidden sm:inline">{{ t('orbit.transcode.badge') }}</span>
+      <span class="hidden sm:inline">{{ badgeText }}</span>
     </span>
 
     <!-- Meta -->
@@ -267,7 +275,7 @@ function cancelEdit() {
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        <span class="truncate">{{ t('orbit.transcode.badge') }}</span>
+        <span class="truncate">{{ badgeText }}</span>
       </div>
     </div>
 

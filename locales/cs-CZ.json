@@ -25,6 +25,7 @@
   "orbit.action.delete": "Smazat",
 
   "orbit.transcode.badge": "Převádí se",
+  "orbit.transcode.queued": "Ve frontě",
   "orbit.transcode.converting": "Převádí se…",
   "orbit.transcode.convert": "Převést",
   "orbit.transcode.tooltip": "Převede se do formátu, který se přehraje a zobrazí všude, včetně telefonů. Probíhá na pozadí.",

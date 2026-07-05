@@ -25,6 +25,7 @@
   "orbit.action.delete": "Delete",
 
   "orbit.transcode.badge": "Converting",
+  "orbit.transcode.queued": "Queued",
   "orbit.transcode.converting": "Converting…",
   "orbit.transcode.convert": "Convert",
   "orbit.transcode.tooltip": "Convert to a format that plays and displays everywhere, including phones. Runs in the background.",

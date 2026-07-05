@@ -31,6 +31,16 @@ export function canConvertMedia(file) {
   return mime.startsWith('video/') || IMAGE_NEEDS_CONVERT.has(mime)
 }
 
+// Compact "time remaining" for a conversion ETA (seconds -> "45s" / "2m 10s").
+// Returns '' when unknown so callers can omit it.
+export function formatEta(sec) {
+  if (sec == null || !Number.isFinite(sec) || sec < 0) return ''
+  if (sec < 60) return `${Math.max(1, Math.round(sec))}s`
+  const m = Math.floor(sec / 60)
+  const s = Math.round(sec % 60)
+  return s ? `${m}m ${s}s` : `${m}m`
+}
+
 export function formatSize(bytes) {
   if (bytes === 0) return '0 B'
   if (bytes < 1024) return `${bytes} B`

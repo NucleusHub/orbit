@@ -22,7 +22,7 @@ import { mimeFor } from '../utils/mime.js'
 import { getUserSettings } from '../settings.js'
 import { planVideo } from '../utils/transcode.js'
 import { planImage } from '../utils/image.js'
-import { enqueue } from '../transcodeQueue.js'
+import { enqueue, getProgress } from '../transcodeQueue.js'
 
 const router = express.Router()
 router.use(requireAuth)
@@ -60,7 +60,14 @@ function fileUrl(objectKey) {
 function serializeFile(f, req) {
   const obj = f.toObject ? f.toObject() : { ...f }
   const { passwordHash, ...rest } = obj
-  const base = { ...rest, shared: !!obj.groupId, canEdit: canEdit(obj, req.profile.profileId, req.gset), transcodeStatus: obj.transcodeStatus || 'none' }
+  const prog = getProgress(obj._id)
+  const base = {
+    ...rest,
+    shared: !!obj.groupId,
+    canEdit: canEdit(obj, req.profile.profileId, req.gset),
+    transcodeStatus: obj.transcodeStatus || 'none',
+    ...(prog ? { transcodeProgress: prog.percent, transcodeEta: prog.eta } : {}),
+  }
   if (passwordHash) return { ...base, protected: true }
   return { ...base, url: fileUrl(obj.objectKey) }
 }

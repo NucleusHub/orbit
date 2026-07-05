@@ -186,7 +186,7 @@ const anyConverting = computed(() => files.value.some(f => f.transcodeStatus ===
 let transcodePoll = null
 watch(anyConverting, (v) => {
   if (v && !transcodePoll) {
-    transcodePoll = setInterval(() => silentRefresh(), 4000)
+    transcodePoll = setInterval(() => silentRefresh(), 3000)
   } else if (!v && transcodePoll) {
     clearInterval(transcodePoll)
     transcodePoll = null
@@ -203,6 +203,8 @@ watch(files, (list) => {
   if (!fresh) return
   if (
     fresh.transcodeStatus !== previewFile.value.transcodeStatus ||
+    fresh.transcodeProgress !== previewFile.value.transcodeProgress ||
+    fresh.transcodeEta !== previewFile.value.transcodeEta ||
     fresh.url !== previewFile.value.url ||
     fresh.filename !== previewFile.value.filename
   ) {

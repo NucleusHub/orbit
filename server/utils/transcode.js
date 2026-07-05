@@ -11,7 +11,7 @@
 //   transcode — anything else (HEVC, ProRes, exotic audio, probe failure) →
 //               full re-encode to H.264/AAC .mp4
 import path from 'path'
-import { ffprobe, ffmpeg } from './ffmpeg.js'
+import { ffprobe, ffmpeg, ffmpegProgress } from './ffmpeg.js'
 
 // H.264 is the one video codec every mainstream mobile browser decodes in
 // hardware. VP8/VP9 also play (in Firefox/Chrome) but only ship in .webm, which
@@ -61,19 +61,69 @@ export async function planVideo(localPath, filename) {
   return SAFE_CONTAINER.has(ext) ? 'skip' : 'remux'
 }
 
+// Total duration in seconds (0 if unknown) — the denominator for progress %.
+export async function probeDuration(localPath) {
+  try {
+    const out = await ffprobe([
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'default=nw=1:nk=1',
+      localPath,
+    ], { timeout: PROBE_TIMEOUT })
+    const d = parseFloat(String(out).trim())
+    return Number.isFinite(d) && d > 0 ? d : 0
+  } catch {
+    return 0
+  }
+}
+
+// "00:00:05.240000" -> 5.24 seconds.
+function parseClock(s) {
+  const m = /^(\d+):(\d+):(\d+(?:\.\d+)?)$/.exec(String(s).trim())
+  if (!m) return null
+  return Number(m[1]) * 3600 + Number(m[2]) * 60 + parseFloat(m[3])
+}
+
 // Re-encode to H.264 (yuv420p, so no 10-bit/4:2:2 the decoder chokes on) + AAC
 // in a faststart MP4 — the most broadly playable combination. `+faststart`
 // moves the moov atom to the front so playback can begin before the full file
-// is fetched.
-export async function transcodeToMp4(inPath, outPath) {
-  await ffmpeg([
-    '-v', 'error',
+// is fetched. onProgress({ percent, eta }) fires as ffmpeg reports frames —
+// percent is null when duration is unknown; eta is seconds remaining or null.
+export async function transcodeToMp4(inPath, outPath, { onProgress } = {}) {
+  const duration = await probeDuration(inPath)
+  let outTime = 0
+  let speed = 0
+
+  await ffmpegProgress([
+    '-nostdin', '-v', 'error',
     '-i', inPath,
     '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-pix_fmt', 'yuv420p',
     '-c:a', 'aac', '-b:a', '160k',
     '-movflags', '+faststart',
+    '-progress', 'pipe:1', '-nostats',
     '-y', outPath,
-  ], { timeout: TRANSCODE_TIMEOUT })
+  ], {
+    timeout: TRANSCODE_TIMEOUT,
+    onLine: (line) => {
+      if (!onProgress) return
+      const i = line.indexOf('=')
+      if (i < 0) return
+      const key = line.slice(0, i).trim()
+      const val = line.slice(i + 1).trim()
+      if (key === 'out_time') {
+        const t = parseClock(val)
+        if (t != null) outTime = t
+      } else if (key === 'speed') {
+        const s = parseFloat(val) // e.g. "2.5x"
+        if (Number.isFinite(s)) speed = s
+      } else if (key === 'progress') {
+        // End of a progress block — emit a snapshot.
+        const percent = duration > 0 ? Math.max(0, Math.min(99, Math.round((outTime / duration) * 100))) : null
+        const eta = duration > 0 && speed > 0 ? Math.max(0, Math.round((duration - outTime) / speed)) : null
+        onProgress({ percent, eta })
+      }
+    },
+  })
 }
 
 // Repackage already-compatible streams into an MP4 without re-encoding — fast,
