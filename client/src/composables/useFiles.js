@@ -38,6 +38,27 @@ export function useFiles() {
     }
   }
 
+  // Re-fetch the current folder without toggling `loading` (no spinner flicker).
+  // Used by the transcode poller to pick up files as they finish converting;
+  // preserves in-session unlocked URLs the same way browse() does.
+  async function silentRefresh() {
+    try {
+      const fid = currentFolderId.value
+      const password = fid ? sessionStorage.getItem(`orbit:pwd:folder:${fid}`) : null
+      const data = await api.browse(fid, password)
+      folders.value = data.folders
+      files.value = data.files.map(f => {
+        if (f.protected && !f.url) {
+          const cached = sessionStorage.getItem(`orbit:url:file:${f._id}`)
+          if (cached) return { ...f, url: cached }
+        }
+        return f
+      })
+    } catch {
+      // Best-effort background refresh — ignore transient failures.
+    }
+  }
+
   function unlockFolder(folderId, password) {
     sessionStorage.setItem(`orbit:pwd:folder:${folderId}`, password)
     lockedFolderId.value = null
@@ -96,7 +117,7 @@ export function useFiles() {
 
   return {
     folders, files, breadcrumbs, loading, error, currentFolderId, lockedFolderId,
-    browse, unlockFolder, cancelFolderUnlock, unlockFileInList, updateItem,
+    browse, silentRefresh, unlockFolder, cancelFolderUnlock, unlockFileInList, updateItem,
     createFolder, renameFolder, deleteFolder, renameFile, deleteFile,
   }
 }

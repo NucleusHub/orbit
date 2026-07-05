@@ -33,6 +33,9 @@ const BY_EXT = {
   '.ico': 'image/x-icon',
   '.avif': 'image/avif',
   '.heic': 'image/heic',
+  '.heif': 'image/heif',
+  '.tif': 'image/tiff',
+  '.tiff': 'image/tiff',
   // documents / text
   '.pdf': 'application/pdf',
   '.txt': 'text/plain',

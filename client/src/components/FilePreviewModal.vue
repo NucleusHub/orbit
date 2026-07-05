@@ -1,12 +1,16 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { getFileTypeInfo } from '../utils/fileType.js'
+import { getFileTypeInfo, canConvertMedia } from '../utils/fileType.js'
 import { useI18n } from '@core/useI18n.js'
 
 const { t } = useI18n()
 
 const props = defineProps({ file: { type: Object, default: null } })
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'transcode'])
+
+// Background media normalisation state (see server transcodeQueue.js).
+const converting = computed(() => ['pending', 'processing'].includes(props.file?.transcodeStatus))
+const canConvert = computed(() => canConvertMedia(props.file))
 
 const textContent = ref(null)
 const textLoading = ref(false)
@@ -80,6 +84,30 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
           </button>
 
           <span class="flex-1 text-sm font-medium text-white truncate">{{ file.filename }}</span>
+
+          <!-- Transcode status / trigger (videos only) -->
+          <span
+            v-if="converting"
+            class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/80 bg-white/10 rounded-xl shrink-0"
+            :title="t('orbit.transcode.tooltip')"
+          >
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <span class="hidden sm:inline">{{ t('orbit.transcode.converting') }}</span>
+          </span>
+          <button
+            v-else-if="canConvert"
+            @click.stop="$emit('transcode', file)"
+            class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-xl transition-colors shrink-0"
+            :title="t('orbit.transcode.tooltip')"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zM12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm-1.5-12.75 3 3m0 0-3 3m3-3H8.25" />
+            </svg>
+            <span class="hidden sm:inline">{{ t('orbit.transcode.convert') }}</span>
+          </button>
 
           <a
             :href="file.url"

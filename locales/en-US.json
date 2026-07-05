@@ -4,6 +4,7 @@
   "orbit.toolbar.listView": "List view",
   "orbit.toolbar.newFolder": "New folder",
   "orbit.toolbar.upload": "Upload",
+  "orbit.toolbar.settings": "Settings",
 
   "orbit.menu.newFolder": "New Folder",
   "orbit.menu.uploadFiles": "Upload Files",
@@ -20,7 +21,13 @@
   "orbit.action.rename": "Rename",
   "orbit.action.setPassword": "Set password",
   "orbit.action.changePassword": "Change password",
+  "orbit.action.convert": "Convert",
   "orbit.action.delete": "Delete",
+
+  "orbit.transcode.badge": "Converting",
+  "orbit.transcode.converting": "Converting…",
+  "orbit.transcode.convert": "Convert",
+  "orbit.transcode.tooltip": "Convert to a format that plays and displays everywhere, including phones. Runs in the background.",
 
   "orbit.selection.clear": "Clear selection",
   "orbit.selection.move": "Move",
@@ -90,5 +97,24 @@
   "orbit.preview.notPlayable": "This file can’t be played in the browser.",
   "orbit.preview.downloadToOpen": "Download it to open in its original app.",
   "orbit.preview.noPreview": "No preview available",
-  "orbit.preview.downloadFile": "Download file"
+  "orbit.preview.downloadFile": "Download file",
+
+  "orbit.settings.title": "Settings",
+  "orbit.settings.subtitle": "Preferences for how your files are handled. Changes apply to new uploads.",
+  "orbit.settings.loading": "Loading…",
+  "orbit.settings.transcodeTitle": "Convert videos for universal playback",
+  "orbit.settings.transcodeDesc": "Re-encode incompatible videos (e.g. iPhone HEVC) to H.264 MP4 after upload, so they also play on phones. Files that already play everywhere are kept as-is. Conversion runs in the background.",
+  "orbit.settings.convertImagesTitle": "Convert images for universal display",
+  "orbit.settings.convertImagesDesc": "Convert images browsers can't show (e.g. iPhone HEIC, TIFF) to JPEG after upload, so they display everywhere. Images that already display are kept as-is. Conversion runs in the background.",
+  "orbit.settings.convertAllTitle": "Convert existing files",
+  "orbit.settings.convertAllDesc": "Queue all your current videos and unsupported images (HEIC, TIFF) for conversion. Runs in the background.",
+  "orbit.settings.convertAllButton": "Convert all",
+  "orbit.settings.convertAllRunning": "Queuing…",
+  "orbit.settings.convertAllQueued": "Queued {count} file(s) for conversion.",
+  "orbit.settings.convertAllNone": "Nothing to convert — everything is already up to date.",
+  "orbit.settings.save": "Save",
+  "orbit.settings.saving": "Saving…",
+  "orbit.settings.saved": "Saved.",
+  "orbit.settings.done": "Done",
+  "orbit.settings.saveError": "Could not save settings."
 }

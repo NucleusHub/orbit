@@ -66,4 +66,12 @@ export const api = {
     req('PATCH', `/files/${id}/rename`, { filename }),
   deleteFile: (id) =>
     req('DELETE', `/files/${id}`),
+  transcodeFile: (id) =>
+    req('POST', `/files/${id}/transcode`),
+  convertAll: () =>
+    req('POST', '/files/convert-all'),
+  getSettings: () =>
+    req('GET', '/settings'),
+  saveSettings: (patch) =>
+    req('PUT', '/settings', patch),
 }

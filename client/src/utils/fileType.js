@@ -16,6 +16,21 @@ export function getFileTypeInfo(mimeType = '') {
   return { label: 'File', color: 'text-slate-400', bg: 'bg-slate-400/10 dark:bg-slate-400/15', icon: 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9z' }
 }
 
+// Image types browsers can't reliably display inline (HEIC/HEIF from iPhones,
+// TIFF) — the server can convert these to JPEG. Videos are always offerable
+// since we can't tell the codec client-side (an already-compatible one is a
+// no-op server-side).
+const IMAGE_NEEDS_CONVERT = new Set(['image/heic', 'image/heif', 'image/tiff'])
+
+// Whether Orbit can offer to convert this file to a more compatible form.
+// Excludes files already converted ('done') or in flight ('pending'/'processing').
+export function canConvertMedia(file) {
+  if (!file) return false
+  if (file.transcodeStatus === 'done' || file.transcodeStatus === 'pending' || file.transcodeStatus === 'processing') return false
+  const mime = file.mimeType || ''
+  return mime.startsWith('video/') || IMAGE_NEEDS_CONVERT.has(mime)
+}
+
 export function formatSize(bytes) {
   if (bytes === 0) return '0 B'
   if (bytes < 1024) return `${bytes} B`

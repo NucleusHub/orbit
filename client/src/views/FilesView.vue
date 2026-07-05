@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import AppSidebar from '@core/AppSidebar.vue'
 import AppHeader from '@core/AppHeader.vue'
@@ -15,6 +15,8 @@ import PasswordPromptModal from '../components/PasswordPromptModal.vue'
 import SetPasswordModal from '../components/SetPasswordModal.vue'
 import MoveModal from '../components/MoveModal.vue'
 import ContextMenu from '../components/ContextMenu.vue'
+import SettingsModal from '../components/SettingsModal.vue'
+import { useSettingsModal } from '../composables/useSettingsModal.js'
 import { useFiles } from '../composables/useFiles.js'
 import { useUpload } from '../composables/useUpload.js'
 import { useDnd } from '../composables/useDnd.js'
@@ -24,6 +26,7 @@ import { useI18n } from '@core/useI18n.js'
 
 const { t } = useI18n()
 const { isDragging } = useDnd()
+const { open: settingsOpen, openSettings, closeSettings } = useSettingsModal()
 
 const sidebarOpen = ref(false)
 const viewMode = ref(localStorage.getItem('orbit:viewMode') || 'grid')
@@ -159,9 +162,53 @@ function onBgContextMenu(e) {
 
 const {
   folders, files, breadcrumbs, loading, error, currentFolderId, lockedFolderId,
-  browse, unlockFolder, cancelFolderUnlock, unlockFileInList, updateItem,
+  browse, silentRefresh, unlockFolder, cancelFolderUnlock, unlockFileInList, updateItem,
   createFolder, renameFolder, deleteFolder, renameFile, deleteFile,
 } = useFiles()
+
+// Video conversion: kick off a background transcode, then let the poller below
+// pick up the result. Works for any already-uploaded video — no re-upload.
+async function onTranscode(file) {
+  try {
+    const updated = await api.transcodeFile(file._id)
+    updateItem('file', { ...updated, url: file.url })
+    if (previewFile.value?._id === file._id) {
+      previewFile.value = { ...previewFile.value, transcodeStatus: updated.transcodeStatus }
+    }
+  } catch (e) {
+    console.error('Convert failed:', e)
+  }
+}
+
+// While any file is converting, quietly re-poll the listing so the "converting"
+// indicator clears and the swapped-in MP4 (new url/filename) appears on its own.
+const anyConverting = computed(() => files.value.some(f => f.transcodeStatus === 'pending' || f.transcodeStatus === 'processing'))
+let transcodePoll = null
+watch(anyConverting, (v) => {
+  if (v && !transcodePoll) {
+    transcodePoll = setInterval(() => silentRefresh(), 4000)
+  } else if (!v && transcodePoll) {
+    clearInterval(transcodePoll)
+    transcodePoll = null
+  }
+})
+onUnmounted(() => { if (transcodePoll) clearInterval(transcodePoll) })
+
+// Keep an open preview in sync as its file changes underneath us (e.g. it just
+// finished converting: new url/filename/status). Preserve the in-session URL for
+// protected files, which don't carry a url in the listing.
+watch(files, (list) => {
+  if (!previewFile.value) return
+  const fresh = list.find(f => f._id === previewFile.value._id)
+  if (!fresh) return
+  if (
+    fresh.transcodeStatus !== previewFile.value.transcodeStatus ||
+    fresh.url !== previewFile.value.url ||
+    fresh.filename !== previewFile.value.filename
+  ) {
+    previewFile.value = { ...previewFile.value, ...fresh, url: fresh.url ?? previewFile.value.url }
+  }
+})
 
 // Password prompt for locked folders
 const folderPwdError = ref(null)
@@ -443,6 +490,19 @@ async function executeDelete() {
           </button>
         </div>
 
+        <!-- Settings -->
+        <button
+          @click="openSettings"
+          class="cursor-pointer p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
+          :title="t('orbit.toolbar.settings')"
+          :aria-label="t('orbit.toolbar.settings')"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.431l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.248a1.125 1.125 0 0 1 1.37-.49l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+          </svg>
+        </button>
+
         <!-- New folder -->
         <button
           @click="showCreateFolder = true"
@@ -536,6 +596,7 @@ async function executeDelete() {
         @unlock-file="f => { unlockingFile = f; filePwdError = null }"
         @set-password-file="f => withAuth('file', f, () => { settingPasswordFor = { type: 'file', item: f } })"
         @move-file="f => withAuth('file', f, () => { movingItem = { type: 'file', item: f } })"
+        @transcode-file="f => withAuth('file', f, () => onTranscode(f))"
         @move-to="handleDrop"
         @upload="files => uploadFiles(files, currentFolderId)"
         @toggle-select="toggleSelect"
@@ -639,7 +700,7 @@ async function executeDelete() {
       @confirm="executeDelete"
       @cancel="confirmTarget = null"
     />
-    <FilePreviewModal :file="previewFile" @close="previewFile = null" />
+    <FilePreviewModal :file="previewFile" @close="previewFile = null" @transcode="onTranscode" />
     <PasswordPromptModal
       :show="!!lockedFolderId"
       :title="t('orbit.protected.folderTitle')"
@@ -682,6 +743,7 @@ async function executeDelete() {
       @save="onSetPasswordForSelection"
       @cancel="settingPasswordForSelection = false"
     />
+    <SettingsModal :show="settingsOpen" @close="closeSettings" @queued="silentRefresh" />
     <ContextMenu :show="bgCtxOpen" :x="bgCtxX" :y="bgCtxY" :items="bgCtxItems" @close="bgCtxOpen = false" />
     <ContextMenu :show="selCtxOpen" :x="selCtxX" :y="selCtxY" :items="selCtxItems" @close="selCtxOpen = false" />
   </div>

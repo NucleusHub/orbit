@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue'
-import { getFileTypeInfo, formatSize, formatRelativeDate } from '../utils/fileType.js'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { getFileTypeInfo, formatSize, formatRelativeDate, canConvertMedia } from '../utils/fileType.js'
 import ContextMenu from './ContextMenu.vue'
 import { useDnd } from '../composables/useDnd.js'
 import { useI18n } from '@core/useI18n.js'
@@ -24,12 +24,15 @@ onMounted(() => {
     nextTick(() => rootEl.value?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
   }
 })
-const emit = defineEmits(['rename', 'delete', 'preview', 'unlock', 'set-password', 'move', 'rename-request', 'toggle-select', 'open-selection-ctx'])
+const emit = defineEmits(['rename', 'delete', 'preview', 'unlock', 'set-password', 'move', 'rename-request', 'transcode', 'toggle-select', 'open-selection-ctx'])
 
 const editing = ref(false)
 const editName = ref('')
 const editInput = ref(null)
 const imgError = ref(false)
+// The card instance is reused across refreshes (keyed by _id), so clear a prior
+// load failure when the URL changes — e.g. a HEIC that just became a JPEG.
+watch(() => props.file.url, () => { imgError.value = false })
 
 const { startDrag, endDrag } = useDnd()
 function onDragStart(e) {
@@ -44,6 +47,11 @@ const typeInfo = computed(() => getFileTypeInfo(props.file.mimeType))
 const isImage = computed(() => props.file.mimeType?.startsWith('image/'))
 const showThumb = computed(() => isImage.value && !imgError.value && props.file.url)
 
+// Background media normalisation (see server transcodeQueue.js).
+const converting = computed(() => ['pending', 'processing'].includes(props.file.transcodeStatus))
+// Offer manual conversion for videos / unsupported images not already done.
+const canConvert = computed(() => canConvertMedia(props.file))
+
 const ICONS = {
   preview: 'M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
   download: 'M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3',
@@ -51,6 +59,7 @@ const ICONS = {
   delete: 'm14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0',
   lock: 'M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z',
   move: 'M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5',
+  convert: 'M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zM12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm-1.5-12.75 3 3m0 0-3 3m3-3H8.25',
 }
 
 const isLocked = computed(() => props.file.protected && !props.file.url)
@@ -70,8 +79,11 @@ const ctxItems = computed(() => {
       { label: t('orbit.action.move'), icon: ICONS.move, action: () => emit('move', props.file) },
       { label: t('orbit.action.rename'), icon: ICONS.rename, action: props.file.protected ? () => emit('rename-request', props.file) : startEdit },
       { label: props.file.protected ? t('orbit.action.changePassword') : t('orbit.action.setPassword'), icon: ICONS.lock, action: () => emit('set-password', props.file) },
-      { label: t('orbit.action.delete'), icon: ICONS.delete, action: () => emit('delete', props.file), danger: true },
     )
+    if (canConvert.value) {
+      items.push({ label: t('orbit.action.convert'), icon: ICONS.convert, action: () => emit('transcode', props.file) })
+    }
+    items.push({ label: t('orbit.action.delete'), icon: ICONS.delete, action: () => emit('delete', props.file), danger: true })
   }
   return items
 })
@@ -176,6 +188,15 @@ function cancelEdit() {
     />
     <span v-else class="flex-1 text-sm font-medium text-slate-900 dark:text-white truncate">{{ file.filename }}</span>
 
+    <!-- Converting indicator -->
+    <span v-if="converting" class="flex items-center gap-1 shrink-0 text-[11px] font-medium text-indigo-500 dark:text-indigo-400" :title="t('orbit.transcode.tooltip')">
+      <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+      <span class="hidden sm:inline">{{ t('orbit.transcode.badge') }}</span>
+    </span>
+
     <!-- Meta -->
     <span class="hidden sm:block text-xs text-slate-400 dark:text-slate-500 shrink-0 w-16 text-right">{{ formatSize(file.size) }}</span>
     <span class="hidden md:block text-xs text-slate-400 dark:text-slate-500 shrink-0 w-20 text-right">{{ formatRelativeDate(file.createdAt) }}</span>
@@ -224,7 +245,7 @@ function cancelEdit() {
     </div>
 
     <!-- Thumbnail / icon area -->
-    <div class="aspect-square w-full overflow-hidden flex items-center justify-center rounded-t-2xl" :class="isLocked ? 'bg-slate-100 dark:bg-white/6' : (!showThumb ? typeInfo.bg : '')">
+    <div class="relative aspect-square w-full overflow-hidden flex items-center justify-center rounded-t-2xl" :class="isLocked ? 'bg-slate-100 dark:bg-white/6' : (!showThumb ? typeInfo.bg : '')">
       <svg v-if="isLocked" class="w-10 h-10 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
       </svg>
@@ -239,6 +260,15 @@ function cancelEdit() {
       <svg v-else class="w-10 h-10" :class="typeInfo.color" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" :d="typeInfo.icon" />
       </svg>
+
+      <!-- Converting badge -->
+      <div v-if="converting" class="absolute bottom-1.5 left-1.5 right-1.5 flex items-center gap-1.5 px-1.5 py-1 rounded-lg bg-black/65 text-white text-[10px] font-medium backdrop-blur-sm" :title="t('orbit.transcode.tooltip')">
+        <svg class="w-3 h-3 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <span class="truncate">{{ t('orbit.transcode.badge') }}</span>
+      </div>
     </div>
 
     <!-- Footer -->

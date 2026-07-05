@@ -4,6 +4,7 @@
   "orbit.toolbar.listView": "Zobrazení seznamu",
   "orbit.toolbar.newFolder": "Nová složka",
   "orbit.toolbar.upload": "Nahrát",
+  "orbit.toolbar.settings": "Nastavení",
 
   "orbit.menu.newFolder": "Nová složka",
   "orbit.menu.uploadFiles": "Nahrát soubory",
@@ -20,7 +21,13 @@
   "orbit.action.rename": "Přejmenovat",
   "orbit.action.setPassword": "Nastavit heslo",
   "orbit.action.changePassword": "Změnit heslo",
+  "orbit.action.convert": "Převést",
   "orbit.action.delete": "Smazat",
+
+  "orbit.transcode.badge": "Převádí se",
+  "orbit.transcode.converting": "Převádí se…",
+  "orbit.transcode.convert": "Převést",
+  "orbit.transcode.tooltip": "Převede se do formátu, který se přehraje a zobrazí všude, včetně telefonů. Probíhá na pozadí.",
 
   "orbit.selection.clear": "Zrušit výběr",
   "orbit.selection.move": "Přesunout",
@@ -90,5 +97,24 @@
   "orbit.preview.notPlayable": "Tento soubor nelze přehrát v prohlížeči.",
   "orbit.preview.downloadToOpen": "Stáhněte jej a otevřete v původní aplikaci.",
   "orbit.preview.noPreview": "Náhled není k dispozici",
-  "orbit.preview.downloadFile": "Stáhnout soubor"
+  "orbit.preview.downloadFile": "Stáhnout soubor",
+
+  "orbit.settings.title": "Nastavení",
+  "orbit.settings.subtitle": "Předvolby pro zacházení s vašimi soubory. Změny se projeví u nových nahrání.",
+  "orbit.settings.loading": "Načítání…",
+  "orbit.settings.transcodeTitle": "Převádět videa pro univerzální přehrávání",
+  "orbit.settings.transcodeDesc": "Po nahrání překóduje nekompatibilní videa (např. HEVC z iPhonu) do formátu H.264 MP4, aby se přehrála i na telefonech. Soubory, které se přehrají všude, zůstanou beze změny. Převod probíhá na pozadí.",
+  "orbit.settings.convertImagesTitle": "Převádět obrázky pro univerzální zobrazení",
+  "orbit.settings.convertImagesDesc": "Po nahrání převede obrázky, které prohlížeče neumí zobrazit (např. HEIC z iPhonu, TIFF), do formátu JPEG, aby se zobrazily všude. Obrázky, které se zobrazí, zůstanou beze změny. Převod probíhá na pozadí.",
+  "orbit.settings.convertAllTitle": "Převést stávající soubory",
+  "orbit.settings.convertAllDesc": "Zařadí všechna vaše stávající videa a nepodporované obrázky (HEIC, TIFF) k převodu. Probíhá na pozadí.",
+  "orbit.settings.convertAllButton": "Převést vše",
+  "orbit.settings.convertAllRunning": "Zařazuji…",
+  "orbit.settings.convertAllQueued": "K převodu zařazeno souborů: {count}.",
+  "orbit.settings.convertAllNone": "Není co převádět — vše je aktuální.",
+  "orbit.settings.save": "Uložit",
+  "orbit.settings.saving": "Ukládání…",
+  "orbit.settings.saved": "Uloženo.",
+  "orbit.settings.done": "Hotovo",
+  "orbit.settings.saveError": "Nastavení se nepodařilo uložit."
 }

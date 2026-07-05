@@ -18,7 +18,7 @@ const props = defineProps({
   highlightId: { type: String, default: null },
 })
 
-const emit = defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-folder', 'set-password-folder', 'move-folder', 'rename-file', 'rename-file-request', 'delete-file', 'preview-file', 'unlock-file', 'set-password-file', 'move-file', 'move-to', 'upload', 'toggle-select', 'open-selection-ctx'])
+const emit = defineEmits(['open-folder', 'rename-folder', 'rename-folder-request', 'delete-folder', 'set-password-folder', 'move-folder', 'rename-file', 'rename-file-request', 'delete-file', 'preview-file', 'unlock-file', 'set-password-file', 'move-file', 'transcode-file', 'move-to', 'upload', 'toggle-select', 'open-selection-ctx'])
 
 const selectionKeys = computed(() => new Set(props.selection.map(s => `${s.type}:${s.item._id}`)))
 const selectionSize = computed(() => props.selection.length)
@@ -167,6 +167,7 @@ function onUpDrop(e) {
             @unlock="$emit('unlock-file', $event)"
             @set-password="$emit('set-password-file', $event)"
             @move="$emit('move-file', $event)"
+            @transcode="$emit('transcode-file', $event)"
             @toggle-select="$emit('toggle-select', 'file', file)"
             @open-selection-ctx="(x, y) => $emit('open-selection-ctx', x, y)"
           />
@@ -196,6 +197,7 @@ function onUpDrop(e) {
             @unlock="$emit('unlock-file', $event)"
             @set-password="$emit('set-password-file', $event)"
             @move="$emit('move-file', $event)"
+            @transcode="$emit('transcode-file', $event)"
             @toggle-select="$emit('toggle-select', 'file', file)"
             @open-selection-ctx="(x, y) => $emit('open-selection-ctx', x, y)"
           />

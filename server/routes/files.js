@@ -19,6 +19,10 @@ import { hashPassword, verifyPassword } from '../utils/password.js'
 import { requireAuth } from '../middleware/auth.js'
 import { myGroups, groupIdSet, canView, canEdit, childScope, childOwnership } from '../utils/scope.js'
 import { mimeFor } from '../utils/mime.js'
+import { getUserSettings } from '../settings.js'
+import { planVideo } from '../utils/transcode.js'
+import { planImage } from '../utils/image.js'
+import { enqueue } from '../transcodeQueue.js'
 
 const router = express.Router()
 router.use(requireAuth)
@@ -56,7 +60,7 @@ function fileUrl(objectKey) {
 function serializeFile(f, req) {
   const obj = f.toObject ? f.toObject() : { ...f }
   const { passwordHash, ...rest } = obj
-  const base = { ...rest, shared: !!obj.groupId, canEdit: canEdit(obj, req.profile.profileId, req.gset) }
+  const base = { ...rest, shared: !!obj.groupId, canEdit: canEdit(obj, req.profile.profileId, req.gset), transcodeStatus: obj.transcodeStatus || 'none' }
   if (passwordHash) return { ...base, protected: true }
   return { ...base, url: fileUrl(obj.objectKey) }
 }
@@ -82,7 +86,7 @@ function uploadSingle(field) {
 }
 
 // Base64 MD5 of a file on disk, for S3 Content-MD5 end-to-end integrity.
-function md5Base64(filePath) {
+export function md5Base64(filePath) {
   return new Promise((resolve, reject) => {
     const hash = crypto.createHash('md5')
     const stream = fs.createReadStream(filePath)
@@ -232,6 +236,29 @@ router.post('/upload', uploadSingle('file'), async (req, res) => {
       ...own,
     })
 
+    // Media normalisation: if the user has it on and the file isn't already in a
+    // broadly-compatible form, queue a BACKGROUND job (H.264/AAC MP4 for video,
+    // JPEG for HEIC/HEIF/TIFF images) so it plays/displays everywhere including
+    // phones. The check here is quick (ffprobe for video, ext/mime for images);
+    // the heavy encode runs off-request (see transcodeQueue.js) so upload
+    // returns immediately.
+    if (contentType.startsWith('video/') || contentType.startsWith('image/')) {
+      try {
+        const settings = await getUserSettings(pid)
+        const needs = contentType.startsWith('video/')
+          ? settings.transcodeVideos && (await planVideo(tmpPath, originalName)) !== 'skip'
+          : settings.convertImages && planImage(originalName, contentType) !== 'skip'
+        if (needs) {
+          doc.transcodeStatus = 'pending'
+          await doc.save()
+          enqueue(doc._id)
+        }
+      } catch (err) {
+        // A probe/enqueue hiccup must not fail the upload — the file is stored.
+        console.error('[orbit] media convert enqueue check failed:', err.message)
+      }
+    }
+
     res.status(201).json(serializeFile(doc, req))
   } catch (err) {
     // If the object made it to MinIO but the DB record didn't, remove the
@@ -242,6 +269,34 @@ router.post('/upload', uploadSingle('file'), async (req, res) => {
     res.status(500).json({ error: err.message })
   } finally {
     if (tmpPath) fs.unlink(tmpPath, () => {})
+  }
+})
+
+// Bulk: queue every one of the caller's existing videos and unsupported images
+// (HEIC/HEIF/TIFF) for conversion — backs the "convert my whole library" button
+// in Settings. Skips files already converted or in flight. Manual and explicit,
+// so it runs regardless of the per-upload auto-convert toggles. Scoped to the
+// caller's own files (personal, or group files they uploaded).
+const CONVERTIBLE_IMAGE_MIMES = ['image/heic', 'image/heif', 'image/tiff']
+router.post('/convert-all', async (req, res) => {
+  try {
+    const pid = req.profile.profileId
+    const files = await File.find({
+      transcodeStatus: { $nin: ['done', 'pending', 'processing'] },
+      $and: [
+        { $or: [{ profileId: pid }, { ownerId: pid }] },
+        { $or: [{ mimeType: { $regex: '^video/' } }, { mimeType: { $in: CONVERTIBLE_IMAGE_MIMES } }] },
+      ],
+    }).select('_id')
+
+    const ids = files.map(f => f._id)
+    if (ids.length) {
+      await File.updateMany({ _id: { $in: ids } }, { transcodeStatus: 'pending' })
+      ids.forEach(id => enqueue(id))
+    }
+    res.json({ queued: ids.length })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
   }
 })
 
@@ -344,6 +399,30 @@ router.patch('/:id/password', async (req, res) => {
     if (!file) return
     file.passwordHash = req.body.password ? hashPassword(req.body.password) : null
     await file.save()
+    res.json(serializeFile(file, req))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Convert an ALREADY-uploaded video or image to a browser-friendly form — no
+// re-upload needed. Queues the same background job the upload path uses.
+// Idempotent while a job is in flight. The response reflects the new 'pending'
+// status; the file is swapped in place (objectKey/filename/size) once done.
+router.post('/:id/transcode', async (req, res) => {
+  try {
+    const file = await loadEditable(req, res)
+    if (!file) return
+    const isMedia = file.mimeType?.startsWith('video/') || file.mimeType?.startsWith('image/')
+    if (!isMedia) {
+      return res.status(400).json({ error: 'Only videos and images can be converted' })
+    }
+    if (file.transcodeStatus === 'pending' || file.transcodeStatus === 'processing') {
+      return res.json(serializeFile(file, req)) // already queued/running
+    }
+    file.transcodeStatus = 'pending'
+    await file.save()
+    enqueue(file._id)
     res.json(serializeFile(file, req))
   } catch (err) {
     res.status(500).json({ error: err.message })
