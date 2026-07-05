@@ -1,5 +1,8 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+@source "../**/*.{vue,js}";
+@source "../../core/**/*.{vue,js}";
+
 html { background-color: rgb(248 250 252); } /* slate-50 */
 html.dark { background-color: rgb(2 6 23); }  /* slate-950 */
