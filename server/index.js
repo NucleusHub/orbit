@@ -8,6 +8,7 @@ import foldersRouter from './routes/folders.js'
 import groupsRouter from './routes/groups.js'
 import profilesRouter from './routes/profiles.js'
 import settingsRouter from './routes/settings.js'
+import { requireAppEnabled } from './core/server/appAccess.js'
 import { resumePending } from './transcodeQueue.js'
 
 const app = express()
@@ -18,6 +19,8 @@ app.use(express.json())
 app.use(cookieParser())
 
 app.get('/api/orbit/health', (req, res) => res.json({ status: 'ok' }))
+// Refuse all Orbit API access for users who have Orbit disabled (admin override).
+app.use('/api/orbit', requireAppEnabled('orbit'))
 app.use('/api/orbit/files', filesRouter)
 app.use('/api/orbit/folders', foldersRouter)
 app.use('/api/orbit/groups', groupsRouter)

@@ -20,6 +20,7 @@ services:
       MINIO_BUCKET: ${MINIO_BUCKET:-orbit-uploads}
     volumes:
       - ./server:/app
+      - ../../core:/app/core:ro
       - orbit_server_modules:/app/node_modules
     depends_on:
       mongo:

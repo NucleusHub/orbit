@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, nextTick } from 'vue'
-import ContextMenu from './ContextMenu.vue'
+import ContextMenu from '@core/ContextMenu.vue'
 import { useDnd } from '../composables/useDnd.js'
 import { useI18n } from '@core/useI18n.js'
 

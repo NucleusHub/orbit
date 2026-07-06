@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { getFileTypeInfo, formatSize, formatRelativeDate, formatEta, canConvertMedia } from '../utils/fileType.js'
-import ContextMenu from './ContextMenu.vue'
+import ContextMenu from '@core/ContextMenu.vue'
 import { useDnd } from '../composables/useDnd.js'
 import { useI18n } from '@core/useI18n.js'
 

@@ -2,7 +2,7 @@
   "id": "orbit",
   "name": "Orbit",
   "description": "Files & cloud storage",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "manifestVersion": 1,
   "compatibility": {
     "nucleus": ">=0.1.0 <1.0.0"
@@ -49,6 +49,9 @@
     "depends": [
       "mongo",
       "minio"
+    ],
+    "bindMounts": [
+      "../core:/app/core:ro"
     ],
     "healthEndpoint": "/api/orbit/health",
     "startPeriod": "15s"
