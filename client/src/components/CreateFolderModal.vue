@@ -1,5 +1,6 @@
 <script setup>
-import { ref, watch, nextTick, onUnmounted } from 'vue'
+import { ref, watch, nextTick } from 'vue'
+import TemplateModal from '@core/TemplateModal.vue'
 import { useI18n } from '@core/useI18n.js'
 
 const { t } = useI18n()
@@ -15,17 +16,12 @@ const emit = defineEmits(['create', 'cancel'])
 const name = ref('')
 const input = ref(null)
 
-function onKeydown(e) { if (e.key === 'Escape') emit('cancel') }
 watch(() => props.show, val => {
   if (val) {
     name.value = props.initialValue
-    window.addEventListener('keydown', onKeydown)
     nextTick(() => { input.value?.focus(); input.value?.select() })
-  } else {
-    window.removeEventListener('keydown', onKeydown)
   }
 })
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 function submit() {
   const trimmed = name.value.trim()
@@ -36,44 +32,27 @@ function submit() {
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="fade">
-      <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/20 backdrop-blur-xl" @click="$emit('cancel')" />
-        <div class="relative bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-5">
-          <h2 class="text-base font-semibold text-slate-900 dark:text-white">{{ title }}</h2>
-          <input
-            ref="input"
-            v-model="name"
-            type="text"
-            :placeholder="t('orbit.folder.namePlaceholder')"
-            maxlength="255"
-            class="w-full px-3.5 py-2.5 text-sm bg-black/5 dark:bg-white/8 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200 dark:border-white/10 focus:border-indigo-500 focus:outline-none transition-colors"
-            @keydown.enter="submit"
-            @keydown.escape="$emit('cancel')"
-          />
-          <div class="flex gap-3 justify-end">
-            <button
-              @click="$emit('cancel')"
-              class="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
-            >
-              {{ t('core.button.cancel') }}
-            </button>
-            <button
-              @click="submit"
-              :disabled="!name.trim()"
-              class="cursor-pointer px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors"
-            >
-              {{ confirmLabel }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
+  <TemplateModal
+    :show="show"
+    header
+    footer
+    size="sm"
+    :title="title"
+    :confirm-label="confirmLabel"
+    :cancel-label="t('core.button.cancel')"
+    :confirm-disabled="!name.trim()"
+    body-class="px-6 py-4"
+    @confirm="submit"
+    @cancel="$emit('cancel')"
+  >
+    <input
+      ref="input"
+      v-model="name"
+      type="text"
+      :placeholder="t('orbit.folder.namePlaceholder')"
+      maxlength="255"
+      class="w-full px-3.5 py-2.5 text-sm bg-black/5 dark:bg-white/8 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200 dark:border-white/10 focus:border-indigo-500 focus:outline-none transition-colors"
+      @keydown.enter="submit"
+    />
+  </TemplateModal>
 </template>
-
-<style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-</style>

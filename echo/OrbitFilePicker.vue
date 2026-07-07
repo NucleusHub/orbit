@@ -73,7 +73,7 @@ onUnmounted(() => clearTimeout(searchTimer))
     searchable
     v-model:search="search"
     search-placeholder="Search files…"
-    panel-class="max-w-md"
+    size="md"
     body-class="px-2 pb-2 pt-1"
     @cancel="emit('close')"
   >

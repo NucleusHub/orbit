@@ -80,7 +80,7 @@ async function save() {
     :show="show"
     header
     :title="t('orbit.settings.title')"
-    panel-class="max-w-lg"
+    size="lg"
     body-class="px-5 pb-5 pt-5"
     @cancel="emit('close')"
   >
