@@ -51,6 +51,9 @@ services:
       - ./client/index.html:/app/index.html
       - ./client/vite.config.js:/app/vite.config.js
       - ../../core:/app/core:ro
+      # Widget package, so core/AuthGuard's @widgets-core import resolves (Pulse
+      # widgets can float in this app). Mirrors the hub. Read-only.
+      - ../../widgets:/app/widgets:ro
     depends_on:
       orbit-server:
         condition: service_healthy
