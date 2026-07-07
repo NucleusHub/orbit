@@ -11,8 +11,20 @@ const props = defineProps({
   viewMode: { type: String, default: 'grid' },
   selected: { type: Boolean, default: false },
   selectionSize: { type: Number, default: 0 },
+  selectActive: { type: Boolean, default: false },
 })
 const emit = defineEmits(['open', 'rename', 'delete', 'set-password', 'move', 'move-to', 'rename-request', 'toggle-select', 'open-selection-ctx'])
+
+// Only owner-editable folders can be multi-selected — locked group roots and
+// others' shared folders can't (their bulk actions are owner-only anyway).
+const canSelect = computed(() => props.folder.canEdit !== false)
+
+// A tap opens the folder normally, but toggles selection while in select mode.
+function onOpen() {
+  if (editing.value) return
+  if (props.selectActive && canSelect.value) { emit('toggle-select'); return }
+  emit('open', props.folder._id)
+}
 
 const editing = ref(false)
 const editName = ref('')
@@ -126,7 +138,7 @@ function cancelEdit() {
       selected ? 'bg-indigo-50/60 dark:bg-indigo-500/10' : 'hover:bg-white/60 dark:hover:bg-white/6',
       dropActive && 'ring-2 ring-violet-400 dark:ring-violet-500 bg-violet-50/70 dark:bg-violet-500/10',
     ]"
-    @click="!editing && $emit('open', folder._id)"
+    @click="onOpen"
     @contextmenu="openCtx"
     @dragstart="onDragStart"
     @dragend="endDrag"
@@ -136,11 +148,11 @@ function cancelEdit() {
     @drop="onDrop"
   >
     <!-- Icon / Checkbox -->
-    <div class="relative w-8 h-8 shrink-0" @click.stop="$emit('toggle-select')">
+    <div class="relative w-8 h-8 shrink-0" @click.stop="canSelect && $emit('toggle-select')">
       <!-- Icon layer -->
       <div
         class="absolute inset-0 rounded-lg flex items-center justify-center transition-opacity"
-        :class="[selectionSize > 0 ? 'opacity-0' : 'group-hover:opacity-0', folder.shared ? 'bg-violet-500/10 dark:bg-violet-500/20' : 'bg-indigo-500/10 dark:bg-indigo-500/20']"
+        :class="[canSelect ? ((selectActive || selectionSize > 0) ? 'opacity-0' : 'group-hover:opacity-0') : '', folder.shared ? 'bg-violet-500/10 dark:bg-violet-500/20' : 'bg-indigo-500/10 dark:bg-indigo-500/20']"
       >
         <svg class="w-4 h-4" :class="folder.shared ? 'text-violet-500' : 'text-indigo-500'" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
@@ -154,8 +166,9 @@ function cancelEdit() {
       </div>
       <!-- Checkbox layer -->
       <div
+        v-if="canSelect"
         class="absolute inset-0 flex items-center justify-center transition-opacity"
-        :class="selectionSize > 0 || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+        :class="selectActive || selectionSize > 0 || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
       >
         <div
           class="w-5 h-5 rounded-[4px] border-2 flex items-center justify-center transition-colors cursor-pointer"
@@ -201,7 +214,7 @@ function cancelEdit() {
       : (selected
         ? 'border-indigo-300 dark:border-indigo-500/40 bg-indigo-50/50 dark:bg-indigo-500/10'
         : 'border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6')"
-    @click="!editing && $emit('open', folder._id)"
+    @click="onOpen"
     @dblclick="!editing && $emit('open', folder._id)"
     @contextmenu="openCtx"
     @dragstart="onDragStart"
@@ -211,10 +224,11 @@ function cancelEdit() {
     @dragleave="dropActive = false"
     @drop="onDrop"
   >
-    <!-- Checkbox top-left -->
+    <!-- Checkbox top-left. Shown in select mode / when selecting, else on hover. -->
     <div
+      v-if="canSelect"
       class="absolute top-2 left-2 z-10 transition-opacity"
-      :class="selectionSize > 0 || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+      :class="selectActive || selectionSize > 0 || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
       @click.stop="$emit('toggle-select')"
     >
       <div

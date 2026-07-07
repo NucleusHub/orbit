@@ -5,6 +5,8 @@
   "orbit.toolbar.newFolder": "New folder",
   "orbit.toolbar.upload": "Upload",
   "orbit.toolbar.settings": "Settings",
+  "orbit.toolbar.select": "Select",
+  "orbit.toolbar.more": "More",
 
   "orbit.menu.newFolder": "New Folder",
   "orbit.menu.uploadFiles": "Upload Files",
@@ -31,6 +33,7 @@
   "orbit.transcode.tooltip": "Convert to a format that plays and displays everywhere, including phones. Runs in the background.",
 
   "orbit.selection.clear": "Clear selection",
+  "orbit.selection.done": "Done",
   "orbit.selection.move": "Move",
   "orbit.selection.password": "Password",
   "orbit.selection.delete": "Delete",

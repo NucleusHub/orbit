@@ -12,6 +12,7 @@ const props = defineProps({
   viewMode: { type: String, default: 'grid' },
   selected: { type: Boolean, default: false },
   selectionSize: { type: Number, default: 0 },
+  selectActive: { type: Boolean, default: false },
   highlightId: { type: String, default: null },
 })
 
@@ -25,6 +26,16 @@ onMounted(() => {
   }
 })
 const emit = defineEmits(['rename', 'delete', 'preview', 'unlock', 'set-password', 'move', 'rename-request', 'transcode', 'toggle-select', 'open-selection-ctx'])
+
+// Only owner-editable files can be multi-selected (bulk actions are owner-only).
+const canSelect = computed(() => props.file.canEdit !== false)
+
+// A tap opens/previews normally, but toggles selection while in select mode.
+function onOpen() {
+  if (editing.value) return
+  if (props.selectActive && canSelect.value) { emit('toggle-select'); return }
+  isLocked.value ? emit('unlock', props.file) : emit('preview', props.file)
+}
 
 const editing = ref(false)
 const editName = ref('')
@@ -144,19 +155,19 @@ function cancelEdit() {
     :draggable="!editing"
     class="group flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
     :class="[selected ? 'bg-indigo-50/60 dark:bg-indigo-500/10' : 'hover:bg-white/60 dark:hover:bg-white/6', isHighlighted && 'orbit-highlight']"
-    @click="!editing && (isLocked ? $emit('unlock', file) : $emit('preview', file))"
+    @click="onOpen"
     @contextmenu="openCtx"
     @dragstart="onDragStart"
     @dragend="endDrag"
   >
     <!-- Icon / Checkbox -->
-    <div class="relative w-8 h-8 shrink-0" @click.stop="$emit('toggle-select')">
+    <div class="relative w-8 h-8 shrink-0" @click.stop="canSelect && $emit('toggle-select')">
       <!-- Icon layer -->
       <div
         class="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center transition-opacity"
         :class="[
           isLocked ? 'bg-slate-100 dark:bg-white/8' : (!showThumb ? typeInfo.bg : ''),
-          selectionSize > 0 ? 'opacity-0' : 'group-hover:opacity-0'
+          canSelect ? ((selectActive || selectionSize > 0) ? 'opacity-0' : 'group-hover:opacity-0') : ''
         ]"
       >
         <svg v-if="isLocked" class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -169,8 +180,9 @@ function cancelEdit() {
       </div>
       <!-- Checkbox layer -->
       <div
+        v-if="canSelect"
         class="absolute inset-0 flex items-center justify-center transition-opacity"
-        :class="selectionSize > 0 || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+        :class="selectActive || selectionSize > 0 || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
       >
         <div
           class="w-5 h-5 rounded-[4px] border-2 flex items-center justify-center transition-colors cursor-pointer"
@@ -231,15 +243,16 @@ function cancelEdit() {
     :class="[selected
       ? 'border-indigo-300 dark:border-indigo-500/40 bg-indigo-50/50 dark:bg-indigo-500/10'
       : 'border-transparent hover:border-slate-200 dark:hover:border-white/10 hover:bg-white/70 dark:hover:bg-white/6', isHighlighted && 'orbit-highlight']"
-    @click="!editing && (isLocked ? $emit('unlock', file) : $emit('preview', file))"
+    @click="onOpen"
     @contextmenu="openCtx"
     @dragstart="onDragStart"
     @dragend="endDrag"
   >
-    <!-- Checkbox top-left -->
+    <!-- Checkbox top-left. Shown in select mode / when selecting, else on hover. -->
     <div
+      v-if="canSelect"
       class="absolute top-2 left-2 z-10 transition-opacity"
-      :class="selectionSize > 0 || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+      :class="selectActive || selectionSize > 0 || selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
       @click.stop="$emit('toggle-select')"
     >
       <div

@@ -5,6 +5,8 @@
   "orbit.toolbar.newFolder": "Nová složka",
   "orbit.toolbar.upload": "Nahrát",
   "orbit.toolbar.settings": "Nastavení",
+  "orbit.toolbar.select": "Vybrat",
+  "orbit.toolbar.more": "Více",
 
   "orbit.menu.newFolder": "Nová složka",
   "orbit.menu.uploadFiles": "Nahrát soubory",
@@ -31,6 +33,7 @@
   "orbit.transcode.tooltip": "Převede se do formátu, který se přehraje a zobrazí všude, včetně telefonů. Probíhá na pozadí.",
 
   "orbit.selection.clear": "Zrušit výběr",
+  "orbit.selection.done": "Hotovo",
   "orbit.selection.move": "Přesunout",
   "orbit.selection.password": "Heslo",
   "orbit.selection.delete": "Smazat",

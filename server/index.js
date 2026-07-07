@@ -8,6 +8,7 @@ import foldersRouter from './routes/folders.js'
 import groupsRouter from './routes/groups.js'
 import profilesRouter from './routes/profiles.js'
 import settingsRouter from './routes/settings.js'
+import publicRouter from './routes/public.js'
 import { requireAppEnabled } from './core/server/appAccess.js'
 import { resumePending } from './transcodeQueue.js'
 
@@ -19,6 +20,9 @@ app.use(express.json())
 app.use(cookieParser())
 
 app.get('/api/orbit/health', (req, res) => res.json({ status: 'ok' }))
+// Service-to-service media API for sibling apps (e.g. Prism). Shared-secret
+// (X-Prism-Key) auth, so it sits BEFORE the per-user cookie/app-access gate.
+app.use('/api/orbit/public', publicRouter)
 // Refuse all Orbit API access for users who have Orbit disabled (admin override).
 app.use('/api/orbit', requireAppEnabled('orbit'))
 app.use('/api/orbit/files', filesRouter)

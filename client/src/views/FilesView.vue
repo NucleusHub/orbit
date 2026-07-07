@@ -14,6 +14,7 @@ import FilePreviewModal from '../components/FilePreviewModal.vue'
 import PasswordPromptModal from '../components/PasswordPromptModal.vue'
 import SetPasswordModal from '../components/SetPasswordModal.vue'
 import MoveModal from '../components/MoveModal.vue'
+import SelectionToolbar from '@core/SelectionToolbar.vue'
 import ContextMenu from '@core/ContextMenu.vue'
 import SettingsModal from '../components/SettingsModal.vue'
 import { useSettingsModal } from '@core/useSettingsModal.js'
@@ -39,10 +40,23 @@ const previewFile = ref(null)
 const fileInput = ref(null)
 const folderInput = ref(null)
 
-// Multi-select
+// Multi-select. `selectMode` is an explicit, touch-friendly selection mode
+// entered via the toolbar's Select button — it reveals the checkboxes and makes
+// a tap on a card toggle it (rather than open it), without ever hiding previews.
 const selection = ref([]) // [{ type: 'file'|'folder', item }]
+const selectMode = ref(false)
+
+function toggleSelectMode() {
+  if (selectMode.value) clearSelection()
+  else selectMode.value = true
+}
 
 function toggleSelect(type, item) {
+  // Only selectable if the caller may act on it — the bulk toolbar's actions
+  // (move / password / delete) are all owner-only, so shared items you don't own
+  // (and locked group roots) can never enter the selection. Mirrors the per-item
+  // menu, which hides those actions, and the server, which enforces canEdit.
+  if (item?.canEdit === false) return
   const idx = selection.value.findIndex(s => s.type === type && s.item._id === item._id)
   if (idx === -1) selection.value = [...selection.value, { type, item }]
   else selection.value = selection.value.filter((_, i) => i !== idx)
@@ -50,6 +64,7 @@ function toggleSelect(type, item) {
 
 function clearSelection() {
   selection.value = []
+  selectMode.value = false
 }
 
 // Selection context menu (right-click on selected item when 2+ selected)
@@ -72,6 +87,41 @@ const selCtxItems = computed(() => {
     { label: t('orbit.selection.deleteItems', { count: n }), icon: ICONS_SEL.delete, action: promptDeleteSelection, danger: true },
   ]
 })
+
+// Actions for the shared @core/SelectionToolbar.
+const selectionActions = computed(() => [
+  { key: 'move', label: t('orbit.selection.move'), icon: ICONS_SEL.move },
+  { key: 'password', label: t('orbit.selection.password'), icon: ICONS_SEL.lock },
+  { key: 'delete', label: t('orbit.selection.delete'), icon: ICONS_SEL.delete, danger: true },
+])
+function onSelectionAction(key) {
+  if (key === 'move') movingSelection.value = true
+  else if (key === 'password') settingPasswordForSelection.value = true
+  else if (key === 'delete') promptDeleteSelection()
+}
+
+// Overflow (⋮) menu — view mode + settings, kept out of the main toolbar so it
+// stays uncluttered (only sidebar · search · select · new folder · upload show).
+const TOOLBAR_ICONS = {
+  grid: 'M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25zM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25z',
+  list: 'M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z',
+  settings: 'M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.431l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.248a1.125 1.125 0 0 1 1.37-.49l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z',
+}
+const overflowOpen = ref(false)
+const overflowX = ref(0)
+const overflowY = ref(0)
+function openOverflow(e) {
+  const r = e.currentTarget.getBoundingClientRect()
+  overflowX.value = r.right
+  overflowY.value = r.bottom + 4
+  overflowOpen.value = true
+}
+const overflowItems = computed(() => [
+  { label: t('orbit.toolbar.gridView'), icon: TOOLBAR_ICONS.grid, action: () => { viewMode.value = 'grid' } },
+  { label: t('orbit.toolbar.listView'), icon: TOOLBAR_ICONS.list, action: () => { viewMode.value = 'list' } },
+  { divider: true },
+  { label: t('orbit.toolbar.settings'), icon: TOOLBAR_ICONS.settings, action: openSettings },
+])
 
 function openSelCtx(x, y) {
   selCtxX.value = x
@@ -470,15 +520,15 @@ async function executeDelete() {
         <!-- Search -->
         <SearchBar v-model="search" />
 
-        <!-- View toggle -->
-        <div class="flex gap-0.5 bg-black/5 dark:bg-white/8 rounded-lg p-0.5">
+        <!-- View toggle (desktop; on phone it lives in the ⋮ menu) -->
+        <div class="hidden sm:flex gap-0.5 bg-black/5 dark:bg-white/8 rounded-lg p-0.5">
           <button
             @click="viewMode = 'grid'"
             :class="['cursor-pointer p-1.5 rounded-md transition-colors', viewMode === 'grid' ? 'bg-white dark:bg-white/20 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300']"
             :title="t('orbit.toolbar.gridView')"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25zM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25z" />
+              <path stroke-linecap="round" stroke-linejoin="round" :d="TOOLBAR_ICONS.grid" />
             </svg>
           </button>
           <button
@@ -487,23 +537,10 @@ async function executeDelete() {
             :title="t('orbit.toolbar.listView')"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" :d="TOOLBAR_ICONS.list" />
             </svg>
           </button>
         </div>
-
-        <!-- Settings -->
-        <button
-          @click="openSettings"
-          class="cursor-pointer p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
-          :title="t('orbit.toolbar.settings')"
-          :aria-label="t('orbit.toolbar.settings')"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.431l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.248a1.125 1.125 0 0 1 1.37-.49l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-          </svg>
-        </button>
 
         <!-- New folder -->
         <button
@@ -526,11 +563,51 @@ async function executeDelete() {
           </svg>
           <span class="hidden sm:inline">{{ t('orbit.toolbar.upload') }}</span>
         </button>
+
+        <!-- View mode (phone only; desktop shows the toggle inline) -->
+        <button
+          @click="openOverflow"
+          class="sm:hidden cursor-pointer p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
+          :title="t('orbit.toolbar.more')"
+          :aria-label="t('orbit.toolbar.more')"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" />
+          </svg>
+        </button>
+
+        <!-- Settings — last in the header on desktop; on phone it's in the ⋮ menu -->
+        <button
+          @click="openSettings"
+          class="hidden sm:inline-flex cursor-pointer p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
+          :title="t('orbit.toolbar.settings')"
+          :aria-label="t('orbit.toolbar.settings')"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" :d="TOOLBAR_ICONS.settings" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+          </svg>
+        </button>
       </template>
     </AppHeader>
 
-    <!-- Breadcrumbs -->
-    <Breadcrumbs :crumbs="breadcrumbs" @navigate="navigate" @contextmenu.stop />
+    <!-- Breadcrumbs (+ Select toggle, kept out of the crowded header) -->
+    <Breadcrumbs :crumbs="breadcrumbs" @navigate="navigate" @contextmenu.stop>
+      <template #actions>
+        <button
+          @click="toggleSelectMode"
+          :class="['cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
+            selectMode ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'text-slate-600 dark:text-slate-300 bg-black/5 dark:bg-white/8 hover:bg-black/8 dark:hover:bg-white/12']"
+          :title="t('orbit.toolbar.select')"
+        >
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 11l3 3L22 4" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+          </svg>
+          <span>{{ selectMode ? t('orbit.selection.done') : t('orbit.toolbar.select') }}</span>
+        </button>
+      </template>
+    </Breadcrumbs>
 
     <!-- Main content -->
     <main class="px-4 md:px-6 pt-6 pb-24">
@@ -584,6 +661,7 @@ async function executeDelete() {
         :parent-folder-id="parentFolderId"
         :uploadable="!search"
         :selection="selection"
+        :select-active="selectMode"
         :highlight-id="highlightId"
         @open-folder="navigate"
         @rename-folder="renameFolder"
@@ -618,53 +696,19 @@ async function executeDelete() {
       </div>
     </Transition>
 
-    <!-- Selection toolbar -->
-    <Transition name="fade">
-      <div
-        v-if="selection.length > 0"
-        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 px-2 py-1.5 bg-slate-900 dark:bg-slate-800 rounded-2xl shadow-2xl border border-white/10"
-        @contextmenu.stop
-      >
-        <span class="pl-2 pr-3 text-sm font-medium text-slate-200 whitespace-nowrap">{{ t('orbit.selection.count', { count: selection.length }) }}</span>
-        <button
-          @click="movingSelection = true"
-          class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
-        >
-          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
-          </svg>
-          {{ t('orbit.selection.move') }}
-        </button>
-        <button
-          @click="settingPasswordForSelection = true"
-          class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-200 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
-        >
-          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
-          </svg>
-          {{ t('orbit.selection.password') }}
-        </button>
-        <button
-          @click="promptDeleteSelection"
-          class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-white/10 rounded-xl transition-colors"
-        >
-          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-          </svg>
-          {{ t('orbit.selection.delete') }}
-        </button>
-        <div class="w-px h-5 bg-white/20 mx-1" />
-        <button
-          @click="clearSelection"
-          :title="t('orbit.selection.clear')"
-          class="cursor-pointer p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-    </Transition>
+    <!-- Selection toolbar (shared @core component) -->
+    <SelectionToolbar
+      :show="selection.length > 0"
+      :count="selection.length"
+      :label="t('orbit.selection.count', { count: selection.length })"
+      :actions="selectionActions"
+      :clear-title="t('orbit.selection.clear')"
+      @action="onSelectionAction"
+      @clear="clearSelection"
+    />
+
+    <!-- Toolbar overflow (⋮): view mode + settings -->
+    <ContextMenu :show="overflowOpen" :x="overflowX" :y="overflowY" :items="overflowItems" @close="overflowOpen = false" />
 
     <!-- Upload progress -->
     <UploadProgress :uploads="uploads" @dismiss="dismiss" />

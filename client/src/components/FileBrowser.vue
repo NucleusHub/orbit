@@ -15,6 +15,7 @@ const props = defineProps({
   parentFolderId: { type: [String, null], default: undefined },
   uploadable: { type: Boolean, default: true },
   selection: { type: Array, default: () => [] },
+  selectActive: { type: Boolean, default: false },
   highlightId: { type: String, default: null },
 })
 
@@ -81,6 +82,7 @@ function onUpDrop(e) {
           view-mode="grid"
           :selected="isSelected('folder', folder._id)"
           :selection-size="selectionSize"
+          :select-active="selectActive"
           @open="$emit('open-folder', $event)"
           @rename="(id, name) => $emit('rename-folder', id, name)"
           @rename-request="$emit('rename-folder-request', $event)"
@@ -122,6 +124,7 @@ function onUpDrop(e) {
           view-mode="list"
           :selected="isSelected('folder', folder._id)"
           :selection-size="selectionSize"
+          :select-active="selectActive"
           @open="$emit('open-folder', $event)"
           @rename="(id, name) => $emit('rename-folder', id, name)"
           @rename-request="$emit('rename-folder-request', $event)"
@@ -159,6 +162,7 @@ function onUpDrop(e) {
             view-mode="grid"
             :selected="isSelected('file', file._id)"
             :selection-size="selectionSize"
+            :select-active="selectActive"
             :highlight-id="highlightId"
             @rename="(id, name) => $emit('rename-file', id, name)"
             @rename-request="$emit('rename-file-request', $event)"
@@ -189,6 +193,7 @@ function onUpDrop(e) {
             view-mode="list"
             :selected="isSelected('file', file._id)"
             :selection-size="selectionSize"
+            :select-active="selectActive"
             :highlight-id="highlightId"
             @rename="(id, name) => $emit('rename-file', id, name)"
             @rename-request="$emit('rename-file-request', $event)"
