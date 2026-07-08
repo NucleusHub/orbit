@@ -21,6 +21,7 @@ import { Router } from 'express'
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { timingSafeEqual } from 'node:crypto'
 import File from '../models/File.js'
+import Folder from '../models/Folder.js'
 import { s3, BUCKET } from './files.js'
 import { verifyProfile } from '../middleware/auth.js'
 import { myGroups } from '../utils/scope.js'
@@ -61,7 +62,6 @@ router.get('/media', async (req, res, next) => {
 
     const filter = {
       filename: MEDIA_EXT,
-      passwordHash: null,
       $or: [
         { profileId: pid, groupId: null },        // the user's personal files
         { groupId: { $in: sharedGroupIds } },     // files in their shared groups
@@ -69,8 +69,16 @@ router.get('/media', async (req, res, next) => {
     }
 
     const files = await File.find(filter)
-      .select('_id objectKey filename mimeType size folderId groupId ownerId profileId updatedAt')
+      .select('_id objectKey filename mimeType size folderId groupId ownerId profileId passwordHash updatedAt')
       .lean()
+
+    // Which parent folders are password-protected — so a file inside a locked
+    // folder is reported as protected too (Prism then locks it as well).
+    const folderIds = [...new Set(files.map((f) => f.folderId).filter(Boolean).map(String))]
+    const lockedFolders = new Set(
+      (await Folder.find({ _id: { $in: folderIds }, passwordHash: { $ne: null } }).select('_id').lean())
+        .map((d) => String(d._id))
+    )
 
     res.json(
       files.map((f) => ({
@@ -83,6 +91,7 @@ router.get('/media', async (req, res, next) => {
         folderId: f.folderId ? String(f.folderId) : null,
         groupId: f.groupId ? String(f.groupId) : null,
         ownerId: String(f.ownerId || f.profileId || ''),
+        protected: !!f.passwordHash || (f.folderId && lockedFolders.has(String(f.folderId))),
       }))
     )
   } catch (err) {

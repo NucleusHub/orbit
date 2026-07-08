@@ -11,8 +11,10 @@ import {
   DeleteObjectCommand,
   PutObjectCommand,
   CopyObjectCommand,
-  PutBucketPolicyCommand,
+  GetObjectCommand,
+  DeleteBucketPolicyCommand,
 } from '@aws-sdk/client-s3'
+import jwt from 'jsonwebtoken'
 import File from '../models/File.js'
 import Folder from '../models/Folder.js'
 import { hashPassword, verifyPassword } from '../utils/password.js'
@@ -53,8 +55,23 @@ export const s3 = new S3Client({
   responseChecksumValidation: 'WHEN_REQUIRED',
 })
 
-function fileUrl(objectKey) {
-  return `/${BUCKET}/${objectKey}`
+const AUTH_SECRET = process.env.JWT_SECRET || 'nucleus-jwt-secret'
+// Short-lived proof that a file's password was verified, so an <img>/<video> src
+// can stream the bytes without re-sending the password.
+export function signFileToken(id) {
+  return jwt.sign({ fid: String(id) }, AUTH_SECRET, { expiresIn: '6h' })
+}
+export const rawUrl = (id, token) => `/api/orbit/files/${id}/raw${token ? `?t=${token}` : ''}`
+
+// Effective lock on a file: its own password, else its direct parent folder's
+// (mirrors how /browse gates a folder's listing). Null when nothing is locked.
+export async function resolveLock(file) {
+  if (file.passwordHash) return { hash: file.passwordHash }
+  if (file.folderId) {
+    const folder = await Folder.findById(file.folderId).select('passwordHash').lean()
+    if (folder?.passwordHash) return { hash: folder.passwordHash }
+  }
+  return null
 }
 
 function serializeFile(f, req) {
@@ -69,7 +86,7 @@ function serializeFile(f, req) {
     ...(prog ? { transcodeProgress: prog.percent, transcodeEta: prog.eta } : {}),
   }
   if (passwordHash) return { ...base, protected: true }
-  return { ...base, url: fileUrl(obj.objectKey) }
+  return { ...base, url: rawUrl(obj._id) }
 }
 
 // Cap upload size so a single huge (or runaway) upload can't exhaust /tmp and
@@ -110,19 +127,13 @@ async function ensureBucket() {
     await s3.send(new CreateBucketCommand({ Bucket: BUCKET }))
     console.log(`Created MinIO bucket: ${BUCKET}`)
   }
-  await s3.send(new PutBucketPolicyCommand({
-    Bucket: BUCKET,
-    Policy: JSON.stringify({
-      Version: '2012-10-17',
-      Statement: [{
-        Effect: 'Allow',
-        Principal: { AWS: ['*'] },
-        Action: ['s3:GetObject'],
-        Resource: [`arn:aws:s3:::${BUCKET}/*`],
-      }],
-    }),
-  }))
-  console.log('MinIO bucket ready')
+  // Keep the bucket PRIVATE. Bytes are served only through the authenticated,
+  // permission- and password-checked endpoint below (GET /:id/raw) — never
+  // world-readable by object key. Strip any public-read policy a prior version set.
+  try {
+    await s3.send(new DeleteBucketPolicyCommand({ Bucket: BUCKET }))
+  } catch { /* no policy to remove */ }
+  console.log('MinIO bucket ready (private)')
 }
 
 ensureBucket().catch(err => console.error('MinIO init error:', err.message))
@@ -440,13 +451,47 @@ router.post('/:id/unlock', async (req, res) => {
   try {
     const file = await File.findById(req.params.id)
     if (!canView(file, req.profile.profileId, req.gset)) return res.status(404).json({ error: 'Not found' })
-    if (!file.passwordHash) return res.json({ url: fileUrl(file.objectKey) })
-    if (!verifyPassword(req.body.password || '', file.passwordHash)) {
+    const lock = await resolveLock(file)
+    if (!lock) return res.json({ url: rawUrl(file._id) })
+    if (!verifyPassword(req.body.password || '', lock.hash)) {
       return res.status(401).json({ error: 'Wrong password' })
     }
-    res.json({ url: fileUrl(file.objectKey) })
+    res.json({ url: rawUrl(file._id, signFileToken(file._id)) })
   } catch (err) {
     res.status(500).json({ error: err.message })
+  }
+})
+
+// Authenticated, range-capable byte streaming. The bucket is private, so ALL
+// object bytes flow through here: canView is required, and for a password-
+// protected file (its own OR its folder's) a valid unlock token (?t=) is too.
+router.get('/:id/raw', async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id)
+    if (!file || !canView(file, req.profile.profileId, req.gset)) return res.status(404).end()
+
+    const lock = await resolveLock(file)
+    if (lock) {
+      let ok = false
+      try { ok = jwt.verify(String(req.query.t || ''), AUTH_SECRET)?.fid === String(file._id) } catch { /* bad/expired */ }
+      if (!ok) return res.status(403).json({ error: 'Locked' })
+    }
+
+    const range = req.headers.range
+    const out = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: file.objectKey, ...(range ? { Range: range } : {}) }))
+    res.set('Accept-Ranges', 'bytes')
+    if (file.mimeType) res.type(file.mimeType)
+    if (out.ContentLength != null) res.set('Content-Length', String(out.ContentLength))
+    if (out.ContentRange) { res.status(206); res.set('Content-Range', out.ContentRange) }
+    const body = out.Body
+    body.on('error', () => (res.headersSent ? res.destroy() : res.status(502).end()))
+    res.on('close', () => body.destroy?.())
+    body.pipe(res)
+  } catch (err) {
+    const code = err?.$metadata?.httpStatusCode
+    if (code === 416) return res.status(416).set('Content-Range', 'bytes */*').end()
+    if (code === 404 || err?.name === 'NoSuchKey') return res.status(404).end()
+    if (!res.headersSent) res.status(500).end()
   }
 })
 

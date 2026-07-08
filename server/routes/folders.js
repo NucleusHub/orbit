@@ -2,7 +2,7 @@ import express from 'express'
 import { DeleteObjectsCommand } from '@aws-sdk/client-s3'
 import Folder from '../models/Folder.js'
 import File from '../models/File.js'
-import { s3, BUCKET } from './files.js'
+import { s3, BUCKET, signFileToken, rawUrl } from './files.js'
 import { getProgress } from '../transcodeQueue.js'
 import { hashPassword, verifyPassword } from '../utils/password.js'
 import { requireAuth } from '../middleware/auth.js'
@@ -36,11 +36,6 @@ router.use(async (req, _res, next) => {
   }
 })
 
-function fileUrl(objectKey) {
-  const bucket = process.env.MINIO_BUCKET || 'orbit-uploads'
-  return `/${bucket}/${objectKey}`
-}
-
 function serializeFolder(f, req) {
   const obj = f.toObject ? f.toObject() : { ...f }
   const { passwordHash, ...rest } = obj
@@ -53,7 +48,9 @@ function serializeFolder(f, req) {
   }
 }
 
-function serializeFile(f, req) {
+// `folderUnlocked` = the containing folder's password was satisfied for this
+// request, so folder-locked files get a streaming token.
+function serializeFile(f, req, folderUnlocked = false) {
   const obj = f.toObject ? f.toObject() : { ...f }
   const { passwordHash, ...rest } = obj
   const prog = getProgress(obj._id)
@@ -64,8 +61,9 @@ function serializeFile(f, req) {
     transcodeStatus: obj.transcodeStatus || 'none',
     ...(prog ? { transcodeProgress: prog.percent, transcodeEta: prog.eta } : {}),
   }
-  if (passwordHash) return { ...base, protected: true }
-  return { ...base, url: fileUrl(obj.objectKey) }
+  if (passwordHash) return { ...base, protected: true } // own password → separate unlock
+  if (folderUnlocked) return { ...base, url: rawUrl(obj._id, signFileToken(obj._id)) }
+  return { ...base, url: rawUrl(obj._id) }
 }
 
 async function buildBreadcrumbs(folderId) {
@@ -135,7 +133,8 @@ router.get('/browse', async (req, res) => {
 
     res.json({
       folders: folderList.map(f => serializeFolder(f, req)),
-      files: rawFiles.map(f => serializeFile(f, req)),
+      // The folder's password (if any) was verified above, so its files may stream.
+      files: rawFiles.map(f => serializeFile(f, req, !!parent?.passwordHash)),
       breadcrumbs,
     })
   } catch (err) {
