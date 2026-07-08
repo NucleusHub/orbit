@@ -72,32 +72,90 @@ router.get('/media', async (req, res, next) => {
       .select('_id objectKey filename mimeType size folderId groupId ownerId profileId passwordHash updatedAt')
       .lean()
 
-    // Which parent folders are password-protected — so a file inside a locked
-    // folder is reported as protected too (Prism then locks it as well).
-    const folderIds = [...new Set(files.map((f) => f.folderId).filter(Boolean).map(String))]
-    const lockedFolders = new Set(
-      (await Folder.find({ _id: { $in: folderIds }, passwordHash: { $ne: null } }).select('_id').lean())
-        .map((d) => String(d._id))
+    // Load every folder in the caller's scope so we can (a) detect password
+    // protection ANYWHERE up a file's folder chain — not just its direct parent,
+    // which previously let files in a locked *sub*folder leak — and (b) map group
+    // files to the top-level shared folder they live under.
+    const folderDocs = await Folder.find({
+      $or: [
+        { profileId: pid, groupId: null },
+        { groupId: { $in: sharedGroupIds } },
+      ],
+    }).select('_id parentId passwordHash name isGroupRoot').lean()
+    const folders = new Map(
+      folderDocs.map((f) => [String(f._id), {
+        parentId: f.parentId ? String(f.parentId) : null,
+        locked: f.passwordHash != null,
+        name: f.name,
+        isGroupRoot: !!f.isGroupRoot,
+      }])
     )
+    // A file is protected if it, or ANY ancestor folder, is password-protected.
+    const chainLocked = (folderId) => {
+      let id = folderId ? String(folderId) : null
+      for (let guard = 0; id && guard < 100; guard++) {
+        const f = folders.get(id)
+        if (!f) break
+        if (f.locked) return true
+        id = f.parentId
+      }
+      return false
+    }
+    // The shared folder a group file belongs to = the ancestor sitting directly
+    // under the group root. Nested subfolders flatten into that folder, so Prism
+    // shows one shared album per top-level shared folder. Null if the file sits
+    // directly in the group root.
+    const shareFolder = (folderId) => {
+      let id = folderId ? String(folderId) : null
+      let top = null
+      for (let guard = 0; id && guard < 100; guard++) {
+        const f = folders.get(id)
+        if (!f || f.isGroupRoot) break
+        top = { id, name: f.name }
+        id = f.parentId
+      }
+      return top
+    }
 
     res.json(
-      files.map((f) => ({
-        id: String(f._id),
-        path: f.objectKey,
-        filename: f.filename,
-        mimeType: f.mimeType,
-        size: f.size,
-        mtimeMs: f.updatedAt ? new Date(f.updatedAt).getTime() : 0,
-        folderId: f.folderId ? String(f.folderId) : null,
-        groupId: f.groupId ? String(f.groupId) : null,
-        ownerId: String(f.ownerId || f.profileId || ''),
-        protected: !!f.passwordHash || (f.folderId && lockedFolders.has(String(f.folderId))),
-      }))
+      files.map((f) => {
+        const share = f.groupId ? shareFolder(f.folderId) : null
+        return {
+          id: String(f._id),
+          path: f.objectKey,
+          filename: f.filename,
+          mimeType: f.mimeType,
+          size: f.size,
+          mtimeMs: f.updatedAt ? new Date(f.updatedAt).getTime() : 0,
+          folderId: f.folderId ? String(f.folderId) : null,
+          groupId: f.groupId ? String(f.groupId) : null,
+          ownerId: String(f.ownerId || f.profileId || ''),
+          protected: !!f.passwordHash || chainLocked(f.folderId),
+          shareId: share?.id || null,
+          shareName: share?.name || null,
+        }
+      })
     )
   } catch (err) {
     next(err)
   }
 })
+
+// True if the file is password-protected, or lives under any locked folder
+// (walks the whole ancestor chain). The stream boundary must refuse locked bytes
+// regardless of caller — this is what actually stops a locked file's content
+// (thumbnails, playback) from ever reaching Prism.
+async function isLocked(file) {
+  if (file.passwordHash) return true
+  let id = file.folderId ? String(file.folderId) : null
+  for (let guard = 0; id && guard < 100; guard++) {
+    const f = await Folder.findById(id).select('parentId passwordHash').lean()
+    if (!f) break
+    if (f.passwordHash) return true
+    id = f.parentId ? String(f.parentId) : null
+  }
+  return false
+}
 
 // ── Stream one object (Range-capable) ────────────────────────────────────────
 router.get('/stream', async (req, res) => {
@@ -106,9 +164,9 @@ router.get('/stream', async (req, res) => {
 
   // Only stream keys that map to a real, non-protected Orbit file — this scopes
   // access to known objects and gives us the authoritative Content-Type.
-  const file = await File.findOne({ objectKey: key }).select('mimeType passwordHash').lean()
+  const file = await File.findOne({ objectKey: key }).select('mimeType passwordHash folderId').lean()
   if (!file) return res.status(404).end()
-  if (file.passwordHash) return res.status(403).end()
+  if (await isLocked(file)) return res.status(403).end()
 
   const range = req.headers.range
   try {
