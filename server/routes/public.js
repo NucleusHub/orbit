@@ -22,6 +22,8 @@ import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { timingSafeEqual } from 'node:crypto'
 import File from '../models/File.js'
 import { s3, BUCKET } from './files.js'
+import { verifyProfile } from '../middleware/auth.js'
+import { myGroups } from '../utils/scope.js'
 
 const router = Router()
 
@@ -42,16 +44,32 @@ function requirePrismKey(req, res, next) {
 }
 router.use(requirePrismKey)
 
-// ── List media ───────────────────────────────────────────────────────────────
-// Note: password-protected files are never listed — even though MinIO objects are
-// public-read, exposing them through Prism would leak content the owner gated.
+// ── List media — SCOPED TO ONE USER ──────────────────────────────────────────
+// The shared secret only proves the caller is Prism; it says nothing about WHOM
+// the request is for. Prism forwards the signed-in user's `nucleus_token`, and we
+// return only that user's own files plus files in the shared groups they belong
+// to — never the whole store. Password-protected files are always excluded.
+// Each item carries ownerId/groupId so Prism can enforce the same scope on read.
 router.get('/media', async (req, res, next) => {
   try {
-    const filter = { filename: MEDIA_EXT, passwordHash: null }
-    if (req.query.shared === '1') filter.groupId = { $ne: null }
+    const profile = verifyProfile(req) // forwarded nucleus_token cookie
+    if (!profile) return res.status(401).json({ error: 'A user token is required' })
+    const pid = profile.profileId
+
+    const groups = await myGroups(pid)
+    const sharedGroupIds = groups.filter((g) => g.sharedOrbit).map((g) => String(g._id))
+
+    const filter = {
+      filename: MEDIA_EXT,
+      passwordHash: null,
+      $or: [
+        { profileId: pid, groupId: null },        // the user's personal files
+        { groupId: { $in: sharedGroupIds } },     // files in their shared groups
+      ],
+    }
 
     const files = await File.find(filter)
-      .select('_id objectKey filename mimeType size folderId updatedAt')
+      .select('_id objectKey filename mimeType size folderId groupId ownerId profileId updatedAt')
       .lean()
 
     res.json(
@@ -63,6 +81,8 @@ router.get('/media', async (req, res, next) => {
         size: f.size,
         mtimeMs: f.updatedAt ? new Date(f.updatedAt).getTime() : 0,
         folderId: f.folderId ? String(f.folderId) : null,
+        groupId: f.groupId ? String(f.groupId) : null,
+        ownerId: String(f.ownerId || f.profileId || ''),
       }))
     )
   } catch (err) {
