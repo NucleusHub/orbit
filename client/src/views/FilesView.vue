@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import AppSidebar from '@core/AppSidebar.vue'
 import AppHeader from '@core/AppHeader.vue'
 import TemplateModal from '@core/TemplateModal.vue'
@@ -375,13 +375,21 @@ async function onRenameSubmit(newName) {
 
 const { uploads, uploadFiles, dismiss } = useUpload(onUploadDone)
 
-// Deep-link support (e.g. from the Orbit dashboard widget):
-// /orbit/?folder=<id>&highlight=<fileId> opens that folder and flags the file
-// so its card flashes + scrolls into view once the listing loads.
-const route = useRoute()
-const highlightId = ref(route.query.highlight ? String(route.query.highlight) : null)
+// Deep-link support (e.g. from the Orbit dashboard widget or Prism's "Show in
+// Orbit"): /orbit/?folder=<id>&highlight=<fileId> opens that folder and flags the
+// file so its card flashes + scrolls into view once the listing loads.
+const router = useRouter()
+const highlightId = ref(null)
 
-onMounted(() => browse(route.query.folder ? String(route.query.folder) : null))
+// Wait for the router's initial navigation to resolve before reading the query —
+// on a fresh deep-link load (?folder=&highlight=) the query can still be empty at
+// mount time otherwise, which made non-root folders fall back to the drive root.
+onMounted(async () => {
+  await router.isReady()
+  const q = router.currentRoute.value.query
+  highlightId.value = q.highlight ? String(q.highlight) : null
+  browse(q.folder ? String(q.folder) : null)
+})
 
 function onUploadDone() {
   browse(currentFolderId.value)
