@@ -102,7 +102,7 @@ const ctxItems = computed(() => {
     if (canConvert.value) {
       items.push({ label: t('orbit.action.convert'), icon: ICONS.convert, action: () => emit('transcode', props.file) })
     }
-    items.push({ label: t('orbit.action.delete'), icon: ICONS.delete, action: () => emit('delete', props.file), danger: true })
+    items.push({ label: t('orbit.action.delete'), iconTrash: true, action: () => emit('delete', props.file), danger: true })
   }
   return items
 })

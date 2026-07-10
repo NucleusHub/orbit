@@ -82,7 +82,7 @@ const ctxItems = computed(() => {
       { label: t('orbit.action.move'), icon: ICONS.move, action: () => emit('move', props.folder) },
       { label: t('orbit.action.rename'), icon: ICONS.rename, action: props.folder.protected ? () => emit('rename-request', props.folder) : startEdit },
       { label: props.folder.protected ? t('orbit.action.changePassword') : t('orbit.action.setPassword'), icon: ICONS.lock, action: () => emit('set-password', props.folder) },
-      { label: t('orbit.action.delete'), icon: ICONS.delete, action: () => emit('delete', props.folder), danger: true },
+      { label: t('orbit.action.delete'), iconTrash: true, action: () => emit('delete', props.folder), danger: true },
     )
   }
   return items

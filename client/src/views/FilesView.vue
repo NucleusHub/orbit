@@ -84,7 +84,7 @@ const selCtxItems = computed(() => {
     { label: t('orbit.selection.moveItems', { count: n }), icon: ICONS_SEL.move, action: () => { movingSelection.value = true } },
     { label: t('orbit.selection.setPassword'), icon: ICONS_SEL.lock, action: () => { settingPasswordForSelection.value = true } },
     { divider: true },
-    { label: t('orbit.selection.deleteItems', { count: n }), icon: ICONS_SEL.delete, action: promptDeleteSelection, danger: true },
+    { label: t('orbit.selection.deleteItems', { count: n }), iconTrash: true, action: promptDeleteSelection, danger: true },
   ]
 })
 
@@ -92,7 +92,7 @@ const selCtxItems = computed(() => {
 const selectionActions = computed(() => [
   { key: 'move', label: t('orbit.selection.move'), icon: ICONS_SEL.move },
   { key: 'password', label: t('orbit.selection.password'), icon: ICONS_SEL.lock },
-  { key: 'delete', label: t('orbit.selection.delete'), icon: ICONS_SEL.delete, danger: true },
+  { key: 'delete', label: t('orbit.selection.delete'), iconTrash: true, danger: true },
 ])
 function onSelectionAction(key) {
   if (key === 'move') movingSelection.value = true
@@ -587,11 +587,11 @@ async function executeDelete() {
         <!-- Settings — last in the header on desktop; on phone it's in the ⋮ menu -->
         <button
           @click="openSettings"
-          class="hidden sm:inline-flex cursor-pointer p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
+          class="group hidden sm:inline-flex cursor-pointer p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
           :title="t('orbit.toolbar.settings')"
           :aria-label="t('orbit.toolbar.settings')"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 nuc-cog" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" :d="TOOLBAR_ICONS.settings" />
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
           </svg>
