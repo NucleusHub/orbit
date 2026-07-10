@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../../core/assets/motion.css";
 @custom-variant dark (&:where(.dark, .dark *));
 
 @source "../**/*.{vue,js}";

@@ -51,8 +51,8 @@ function onUpDrop(e) {
       <!-- Grid -->
       <div
         v-if="viewMode === 'grid'"
-        class="grid gap-2"
-        style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr))"
+        class="grid gap-2 nuc-stagger"
+        style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); --nuc-step: 32ms"
       >
         <!-- .. up one level -->
         <div
@@ -95,7 +95,7 @@ function onUpDrop(e) {
         />
       </div>
       <!-- List -->
-      <div v-else class="flex flex-col">
+      <div v-else class="flex flex-col nuc-stagger" style="--nuc-step: 28ms">
         <!-- .. up one level -->
         <div
           v-if="parentFolderId !== undefined"
@@ -152,8 +152,8 @@ function onUpDrop(e) {
         <!-- Grid -->
         <div
           v-if="viewMode === 'grid'"
-          class="grid gap-3"
-          style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr))"
+          class="grid gap-3 nuc-stagger"
+          style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); --nuc-step: 32ms"
         >
           <FileCard
             v-for="file in files"
@@ -177,7 +177,7 @@ function onUpDrop(e) {
           />
         </div>
         <!-- List -->
-        <div v-else class="flex flex-col">
+        <div v-else class="flex flex-col nuc-stagger" style="--nuc-step: 28ms">
           <!-- Header row -->
           <div class="flex items-center gap-3 px-4 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/8 mb-1">
             <div class="w-8 shrink-0" />
