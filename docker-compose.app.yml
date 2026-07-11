@@ -21,6 +21,7 @@ services:
     volumes:
       - ./server:/app
       - ../../core:/app/core:ro
+      - ../../plugins:/app/plugins:ro
       - orbit_server_modules:/app/node_modules
     depends_on:
       mongo:
@@ -51,6 +52,7 @@ services:
       - ./client/index.html:/app/index.html
       - ./client/vite.config.js:/app/vite.config.js
       - ../../core:/app/core:ro
+      - ../../plugins:/app/plugins:ro
       # Widget package, so core/AuthGuard's @widgets-core import resolves (Pulse
       # widgets can float in this app). Mirrors the hub. Read-only.
       - ../../widgets:/app/widgets:ro
