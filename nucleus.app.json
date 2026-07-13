@@ -10,6 +10,9 @@
   "route": "/orbit",
   "icon": "icon.svg",
   "category": "storage",
+  "localization": {
+    "defaultLanguage": "en-US"
+  },
   "hub": {
     "showInSidebar": true,
     "showOnDashboard": true
