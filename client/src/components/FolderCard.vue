@@ -3,6 +3,7 @@ import { ref, computed, nextTick } from 'vue'
 import ContextMenu from '@core/ContextMenu.vue'
 import { useDnd } from '../composables/useDnd.js'
 import { useI18n } from '@core/useI18n.js'
+import { Icon } from '@core/icons'
 
 const { t } = useI18n()
 
@@ -154,15 +155,9 @@ function cancelEdit() {
         class="absolute inset-0 rounded-lg flex items-center justify-center transition-opacity"
         :class="[canSelect ? ((selectActive || selectionSize > 0) ? 'opacity-0' : 'group-hover:opacity-0') : '', folder.shared ? 'bg-violet-500/10 dark:bg-violet-500/20' : 'bg-indigo-500/10 dark:bg-indigo-500/20']"
       >
-        <svg class="w-4 h-4" :class="folder.shared ? 'text-violet-500' : 'text-indigo-500'" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
-        </svg>
-        <svg v-if="folder.shared" class="absolute -bottom-1 -left-1 w-3.5 h-3.5 text-violet-600 dark:text-violet-300 bg-white dark:bg-slate-900 rounded-full p-0.5" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-        </svg>
-        <svg v-if="folder.protected" class="absolute -bottom-1 -right-1 w-3.5 h-3.5 text-amber-500 bg-white dark:bg-slate-900 rounded-full p-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
-        </svg>
+        <Icon name="folder" class="w-4 h-4" :class="folder.shared ? 'text-violet-500' : 'text-indigo-500'" />
+        <Icon name="users" v-if="folder.shared" class="absolute -bottom-1 -left-1 w-3.5 h-3.5 text-violet-600 dark:text-violet-300 bg-white dark:bg-slate-900 rounded-full p-0.5" fill />
+        <Icon name="lock" v-if="folder.protected" class="absolute -bottom-1 -right-1 w-3.5 h-3.5 text-amber-500 bg-white dark:bg-slate-900 rounded-full p-0.5" :sw="2.5" />
       </div>
       <!-- Checkbox layer -->
       <div
@@ -174,9 +169,7 @@ function cancelEdit() {
           class="w-5 h-5 rounded-[4px] border-2 flex items-center justify-center transition-colors cursor-pointer"
           :class="selected ? 'bg-indigo-600 border-indigo-600' : 'bg-white/80 dark:bg-slate-800/80 border-slate-300 dark:border-white/30'"
         >
-          <svg v-if="selected" class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-          </svg>
+          <Icon name="check" v-if="selected" class="w-3 h-3 text-white" :sw="3" />
         </div>
       </div>
     </div>
@@ -197,9 +190,7 @@ function cancelEdit() {
         @click="openCtxFromBtn"
         class="cursor-pointer p-1 rounded-lg text-slate-900 dark:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-all sm:opacity-0 sm:group-hover:opacity-100"
       >
-        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" />
-        </svg>
+        <Icon name="kebab" class="w-4 h-4" />
       </button>
     </div>
   </div>
@@ -235,9 +226,7 @@ function cancelEdit() {
         class="w-5 h-5 rounded-[5px] border-2 flex items-center justify-center cursor-pointer transition-colors"
         :class="selected ? 'bg-indigo-600 border-indigo-600' : 'bg-white/80 dark:bg-slate-800/80 border-slate-300 dark:border-white/30'"
       >
-        <svg v-if="selected" class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-        </svg>
+        <Icon name="check" v-if="selected" class="w-3 h-3 text-white" :sw="3" />
       </div>
     </div>
 
@@ -247,23 +236,15 @@ function cancelEdit() {
         @click="openCtxFromBtn"
         class="cursor-pointer p-1 rounded-lg text-slate-900 dark:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
       >
-        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" />
-        </svg>
+        <Icon name="kebab" class="w-4 h-4" />
       </button>
     </div>
 
     <!-- Folder icon (shared group folders are tinted violet + carry a group badge) -->
     <div class="relative w-14 h-14 rounded-2xl flex items-center justify-center" :class="folder.shared ? 'bg-violet-500/10 dark:bg-violet-500/20' : 'bg-indigo-500/10 dark:bg-indigo-500/20'">
-      <svg class="w-7 h-7" :class="folder.shared ? 'text-violet-500' : 'text-indigo-500'" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
-      </svg>
-      <svg v-if="folder.shared" class="absolute -bottom-1 -left-1 w-4.5 h-4.5 text-violet-600 dark:text-violet-300 bg-white dark:bg-slate-900 rounded-full p-0.5" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-      </svg>
-      <svg v-if="folder.protected" class="absolute -bottom-1 -right-1 w-4.5 h-4.5 text-amber-500 bg-white dark:bg-slate-900 rounded-full p-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
-      </svg>
+      <Icon name="folder" class="w-7 h-7" :class="folder.shared ? 'text-violet-500' : 'text-indigo-500'" :sw="1.5" />
+      <Icon name="users" v-if="folder.shared" class="absolute -bottom-1 -left-1 w-4.5 h-4.5 text-violet-600 dark:text-violet-300 bg-white dark:bg-slate-900 rounded-full p-0.5" fill />
+      <Icon name="lock" v-if="folder.protected" class="absolute -bottom-1 -right-1 w-4.5 h-4.5 text-amber-500 bg-white dark:bg-slate-900 rounded-full p-0.5" :sw="2.5" />
     </div>
 
     <!-- Name -->

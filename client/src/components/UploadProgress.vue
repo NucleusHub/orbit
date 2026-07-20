@@ -1,5 +1,6 @@
 <script setup>
 import { useI18n } from '@core/useI18n.js'
+import { Icon, Spinner } from '@core/icons'
 
 const { t } = useI18n()
 defineProps({ uploads: { type: Array, default: () => [] } })
@@ -40,16 +41,9 @@ function fmtSpeed(bps) {
         >
           <!-- Status icon -->
           <div class="shrink-0">
-            <svg v-if="u.status === 'done'" class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            </svg>
-            <svg v-else-if="u.status === 'error'" class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0zm-9 3.75h.008v.008H12v-.008z" />
-            </svg>
-            <svg v-else class="w-4 h-4 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
+            <Icon name="check" v-if="u.status === 'done'" class="w-4 h-4 text-emerald-500" :sw="2.5" />
+            <Icon name="infoDot" v-else-if="u.status === 'error'" class="w-4 h-4 text-red-500" :sw="2.5" />
+            <Spinner v-else class="w-4 h-4 text-indigo-500 animate-spin" />
           </div>
 
           <!-- File name + progress -->
@@ -77,9 +71,7 @@ function fmtSpeed(bps) {
             @click="$emit('dismiss', u.id)"
             class="cursor-pointer shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
           >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
+            <Icon name="close" class="w-3.5 h-3.5" :sw="2.5" />
           </button>
         </div>
       </div>

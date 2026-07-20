@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import TemplateModal from '@core/TemplateModal.vue'
 import { useI18n } from '@core/useI18n.js'
+import { Icon } from '@core/icons'
 
 const { t } = useI18n()
 
@@ -46,9 +47,7 @@ function remove() {
     <template #header>
       <div class="flex items-center gap-3 min-w-0">
         <div class="w-10 h-10 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center shrink-0">
-          <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
-          </svg>
+          <Icon name="lock" class="w-5 h-5 text-indigo-500" />
         </div>
         <div class="min-w-0">
           <h2 class="text-sm font-semibold text-slate-900 dark:text-white">

@@ -24,6 +24,10 @@ import { useDnd } from '../composables/useDnd.js'
 import { api } from '../api/orbit.js'
 import { readDataTransferEntries } from '../utils/dropEntries.js'
 import { useI18n } from '@core/useI18n.js'
+import { Icon, Spinner } from '@core/icons'
+import FolderPlusIcon from '@/assets/icons/folder-plus.svg?component'
+import ArrowUpTrayIcon from '@/assets/icons/arrow-up-tray.svg?component'
+import CheckIcon from '@/assets/icons/check.svg?component'
 
 const { t } = useI18n()
 const { isDragging } = useDnd()
@@ -519,9 +523,7 @@ async function executeDelete() {
           class="cursor-pointer p-2 -ml-1 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
           :aria-label="t('orbit.toolbar.openNav')"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-          </svg>
+          <Icon name="menu" class="w-5 h-5" />
         </button>
       </template>
       <template #right>
@@ -555,9 +557,7 @@ async function executeDelete() {
           @click="showCreateFolder = true"
           class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-black/5 dark:bg-white/8 hover:bg-black/8 dark:hover:bg-white/12 rounded-xl transition-colors"
         >
-          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v6m3-3H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
-          </svg>
+          <FolderPlusIcon class="w-4 h-4 shrink-0" />
           <span class="hidden sm:inline">{{ t('orbit.toolbar.newFolder') }}</span>
         </button>
 
@@ -566,9 +566,7 @@ async function executeDelete() {
           @click="fileInput.click()"
           class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-colors"
         >
-          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-          </svg>
+          <ArrowUpTrayIcon class="w-4 h-4 shrink-0" />
           <span class="hidden sm:inline">{{ t('orbit.toolbar.upload') }}</span>
         </button>
 
@@ -579,9 +577,7 @@ async function executeDelete() {
           :title="t('orbit.toolbar.more')"
           :aria-label="t('orbit.toolbar.more')"
         >
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5zM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" />
-          </svg>
+          <Icon name="kebab" class="w-5 h-5" />
         </button>
 
         <!-- Settings — last in the header on desktop; on phone it's in the ⋮ menu -->
@@ -608,10 +604,7 @@ async function executeDelete() {
             selectMode ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'text-slate-600 dark:text-slate-300 bg-black/5 dark:bg-white/8 hover:bg-black/8 dark:hover:bg-white/12']"
           :title="t('orbit.toolbar.select')"
         >
-          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 11l3 3L22 4" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-          </svg>
+          <CheckIcon class="w-4 h-4 shrink-0" />
           <span>{{ selectMode ? t('orbit.selection.done') : t('orbit.toolbar.select') }}</span>
         </button>
       </template>
@@ -621,17 +614,12 @@ async function executeDelete() {
     <main class="px-4 md:px-6 pt-6 pb-24">
       <!-- Loading -->
       <div v-if="loading || searchLoading" class="flex items-center justify-center py-20">
-        <svg class="w-8 h-8 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
+        <Spinner class="w-8 h-8 text-indigo-500 animate-spin" />
       </div>
 
       <!-- Error -->
       <div v-else-if="error" class="flex flex-col items-center justify-center py-20 gap-3 text-center">
-        <svg class="w-12 h-12 text-red-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0zm-9 3.75h.008v.008H12v-.008z" />
-        </svg>
+        <Icon name="infoDot" class="w-12 h-12 text-red-400" :sw="1.5" />
         <p class="text-sm text-slate-500 dark:text-slate-400">{{ error }}</p>
         <button @click="browse(currentFolderId)" class="cursor-pointer text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{{ t('orbit.error.tryAgain') }}</button>
       </div>
@@ -653,9 +641,7 @@ async function executeDelete() {
 
       <!-- Search empty state -->
       <div v-else-if="isEmpty && search" class="flex flex-col items-center justify-center py-20 gap-3 text-center">
-        <svg class="w-12 h-12 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z" />
-        </svg>
+        <Icon name="search" class="w-12 h-12 text-slate-300 dark:text-slate-600" :sw="1.5" />
         <p class="text-sm text-slate-500 dark:text-slate-400">{{ t('orbit.search.noResultsFor') }} "<strong>{{ search }}</strong>"</p>
         <button @click="search = ''" class="cursor-pointer text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{{ t('orbit.search.clear') }}</button>
       </div>
@@ -696,9 +682,7 @@ async function executeDelete() {
     <Transition name="fade">
       <div v-if="dragOver" class="fixed inset-0 z-40 pointer-events-none">
         <div class="absolute inset-4 rounded-2xl border-2 border-dashed border-indigo-500 bg-indigo-500/8 dark:bg-indigo-500/12 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
-          <svg class="w-12 h-12 text-indigo-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75z" />
-          </svg>
+          <Icon name="uploadCloud" class="w-12 h-12 text-indigo-500" :sw="1.5" />
           <p class="text-lg font-semibold text-indigo-600 dark:text-indigo-400">{{ t('orbit.upload.dropToUpload') }}</p>
         </div>
       </div>

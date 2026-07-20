@@ -5,6 +5,7 @@ import FileCard from './FileCard.vue'
 import UploadZone from './UploadZone.vue'
 import { useDnd } from '../composables/useDnd.js'
 import { useI18n } from '@core/useI18n.js'
+import { Icon } from '@core/icons'
 
 const { t } = useI18n()
 
@@ -69,9 +70,7 @@ function onUpDrop(e) {
           :title="t('orbit.browser.goUp')"
         >
           <div class="w-14 h-14 rounded-2xl bg-slate-200/60 dark:bg-white/8 flex items-center justify-center">
-            <svg class="w-7 h-7 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-            </svg>
+            <Icon name="arrowLeft" class="w-7 h-7 text-slate-400 dark:text-slate-500" :sw="1.5" />
           </div>
           <span class="text-xs font-medium text-slate-400 dark:text-slate-500">..</span>
         </div>
@@ -111,9 +110,7 @@ function onUpDrop(e) {
           :title="t('orbit.browser.goUp')"
         >
           <div class="w-8 h-8 rounded-lg bg-slate-200/60 dark:bg-white/8 flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-            </svg>
+            <Icon name="arrowLeft" class="w-4 h-4 text-slate-400 dark:text-slate-500" />
           </div>
           <span class="text-sm font-medium text-slate-400 dark:text-slate-500">..</span>
         </div>

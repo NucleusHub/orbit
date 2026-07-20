@@ -3,10 +3,20 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
+import svgLoader from 'vite-svg-loader'
 
 export default defineConfig(({ mode }) => ({
   base: '/orbit/',
-  plugins: [vue(), mode !== 'production' && vueDevTools(), tailwindcss()].filter(Boolean),
+  // svgLoader with defaultImport 'url' so only `import Foo from './x.svg?component'`
+  // yields a themeable Vue component; plain .svg imports stay URLs. Icons keep
+  // currentColor, so we tell svgo not to touch colours or drop the viewBox.
+  plugins: [vue(), mode !== 'production' && vueDevTools(), tailwindcss(), svgLoader({
+    defaultImport: 'url',
+    svgo: true,
+    svgoConfig: {
+      plugins: [{ name: 'preset-default', params: { overrides: { removeViewBox: false, convertColors: false } } }],
+    },
+  })].filter(Boolean),
   css: {
     transformer: 'lightningcss',
     lightningcss: {

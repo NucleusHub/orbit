@@ -2,6 +2,7 @@
 import { ref, watch, provide, onUnmounted } from 'vue'
 import TemplateModal from '@core/TemplateModal.vue'
 import FileTreeNode from './FileTreeNode.vue'
+import { Spinner } from '@core/icons'
 
 // Orbit's own composer picker, contributed to Echo via integration.echo.js.
 // Built on the core TemplateModal; the body is a full Orbit drive tree (folders
@@ -78,10 +79,7 @@ onUnmounted(() => clearTimeout(searchTimer))
     @cancel="emit('close')"
   >
     <div v-if="loading" class="flex items-center justify-center py-12">
-      <svg class="w-6 h-6 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-      </svg>
+      <Spinner class="w-6 h-6 text-indigo-500 animate-spin" />
     </div>
 
     <!-- Search results (flat) -->

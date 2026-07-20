@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import EchoEmbedContainer from '@core/echo/EchoEmbedContainer.vue'
 import EchoAddButton from '@core/echo/EchoAddButton.vue'
+import DocumentIcon from './icons/document.svg?component'
 
 // Renderer for "orbit.file" messages. Lives in Orbit (next to its
 // manifest.echo.json) and is auto-registered into Echo via this app's
@@ -54,7 +55,7 @@ const isImage = computed(() => /^image\//.test(props.payload.mimeType || ''))
         v-else
         class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-sky-400/15 text-sky-500 dark:text-sky-300"
       >
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/></svg>
+        <DocumentIcon width="22" height="22" />
       </span>
       <span class="min-w-0">
         <span class="block truncate font-medium text-slate-900 dark:text-white">{{ payload.name }}</span>

@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { api } from '../api/orbit.js'
 import TemplateModal from '@core/TemplateModal.vue'
 import { useI18n } from '@core/useI18n.js'
+import { Icon, Spinner } from '@core/icons'
 
 const { t } = useI18n()
 
@@ -100,10 +101,7 @@ function submit() {
     @cancel="$emit('cancel')"
   >
     <div v-if="loading" class="flex items-center justify-center py-10">
-      <svg class="w-5 h-5 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+      <Spinner class="w-5 h-5 text-indigo-500 animate-spin" />
     </div>
 
     <div v-else-if="error" class="px-5 py-4 text-sm text-red-500">{{ t('orbit.move.loadError') }} {{ error }}</div>
@@ -117,9 +115,7 @@ function submit() {
           : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/6'"
         @click="selected = null"
       >
-        <svg class="w-4 h-4 shrink-0 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-        </svg>
+        <Icon name="home" class="w-4 h-4 shrink-0 text-slate-400 dark:text-slate-500" />
         <span class="font-medium">{{ t('orbit.move.home') }}</span>
         <span v-if="currentFolderId === null" class="ml-auto text-xs text-slate-400 dark:text-slate-500">{{ t('orbit.move.current') }}</span>
       </button>
@@ -137,9 +133,7 @@ function submit() {
           class="cursor-pointer p-0.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 shrink-0"
           @click.stop="toggle(String(folder._id))"
         >
-          <svg class="w-3 h-3 transition-transform" :class="folder.isCollapsed ? '' : 'rotate-90'" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-          </svg>
+          <Icon name="chevronRight" class="w-3 h-3 transition-transform" :class="folder.isCollapsed ? '' : 'rotate-90'" :sw="2.5" />
         </button>
         <span v-else class="w-4 shrink-0" />
 
@@ -151,9 +145,7 @@ function submit() {
             : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/6'"
           @click="selected = folder._id"
         >
-          <svg class="w-4 h-4 shrink-0 text-indigo-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44z" />
-          </svg>
+          <Icon name="folder" class="w-4 h-4 shrink-0 text-indigo-400" :sw="1.5" />
           <span class="truncate">{{ folder.name }}</span>
           <span v-if="String(folder._id) === String(currentFolderId)" class="ml-auto text-xs text-slate-400 dark:text-slate-500 shrink-0">{{ t('orbit.move.current') }}</span>
         </button>
