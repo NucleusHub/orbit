@@ -132,7 +132,7 @@ async function save() {
       >
         <div class="flex items-start gap-3">
           <span class="mt-0.5 grid place-items-center w-9 h-9 rounded-xl bg-emerald-600 text-white shrink-0">
-            <Icon name="image" :sw="1.8" />
+            <Icon width="18" height="18" name="image" :sw="1.8" />
           </span>
           <div class="min-w-0 flex-1">
             <span class="font-semibold text-slate-900 dark:text-white">{{ t('orbit.settings.convertImagesTitle') }}</span>

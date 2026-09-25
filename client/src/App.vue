@@ -5,7 +5,9 @@ import AuthGuard from '@core/auth/AuthGuard.vue'
 
 <template>
   <BackgroundBlobs />
-  <AuthGuard>
-    <RouterView />
-  </AuthGuard>
+  <div class="relative z-10">
+    <AuthGuard>
+      <RouterView />
+    </AuthGuard>
+  </div>
 </template>

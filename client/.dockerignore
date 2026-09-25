@@ -1,0 +1,13 @@
+node_modules
+dist
+# core/, plugins/ and widgets/ are excluded because compose bind-mounts them
+# straight onto /app/core, /app/plugins and /app/widgets — the committed
+# symlinks would only be shadowed.
+#
+# `locales` is deliberately NOT excluded. It is mounted at /locales (not
+# /app/locales), so the committed `locales -> ../locales` symlink has to be in
+# the image for main.js's `../locales/en-US.json` to resolve. Ignoring it makes
+# Vite fail with "Failed to resolve import ../locales/en-US.json".
+core
+plugins
+widgets
