@@ -29,7 +29,6 @@ import { enqueue, getProgress } from '../transcodeQueue.js'
 const router = express.Router()
 router.use(requireAuth)
 
-// Load the caller's group membership once per request (req.groups / req.gset).
 router.use(async (req, _res, next) => {
   try {
     req.groups = await myGroups(req.profile.profileId)
@@ -56,15 +55,11 @@ export const s3 = new S3Client({
 })
 
 const AUTH_SECRET = process.env.JWT_SECRET || 'nucleus-jwt-secret'
-// Short-lived proof that a file's password was verified, so an <img>/<video> src
-// can stream the bytes without re-sending the password.
 export function signFileToken(id) {
   return jwt.sign({ fid: String(id) }, AUTH_SECRET, { expiresIn: '6h' })
 }
 export const rawUrl = (id, token) => `/api/orbit/files/${id}/raw${token ? `?t=${token}` : ''}`
 
-// Effective lock on a file: its own password, else its direct parent folder's
-// (mirrors how /browse gates a folder's listing). Null when nothing is locked.
 export async function resolveLock(file) {
   if (file.passwordHash) return { hash: file.passwordHash }
   if (file.folderId) {
@@ -89,14 +84,9 @@ function serializeFile(f, req) {
   return { ...base, url: rawUrl(obj._id) }
 }
 
-// Cap upload size so a single huge (or runaway) upload can't exhaust /tmp and
-// cause truncated temp writes for other concurrent uploads. Tune via env.
-const MAX_UPLOAD_BYTES = parseInt(process.env.ORBIT_MAX_UPLOAD_BYTES, 10) || 5 * 1024 * 1024 * 1024 // 5 GiB
+const MAX_UPLOAD_BYTES = parseInt(process.env.ORBIT_MAX_UPLOAD_BYTES, 10) || 5 * 1024 * 1024 * 1024
 const upload = multer({ dest: '/tmp/orbit-uploads', limits: { fileSize: MAX_UPLOAD_BYTES } })
 
-// Run multer and turn its errors (notably the size-limit overflow) into clean
-// HTTP responses instead of a generic 500. On overflow multer also removes the
-// partial temp file itself.
 function uploadSingle(field) {
   return (req, res, next) => upload.single(field)(req, res, err => {
     if (err) {
@@ -109,7 +99,6 @@ function uploadSingle(field) {
   })
 }
 
-// Base64 MD5 of a file on disk, for S3 Content-MD5 end-to-end integrity.
 export function md5Base64(filePath) {
   return new Promise((resolve, reject) => {
     const hash = crypto.createHash('md5')
@@ -127,12 +116,9 @@ async function ensureBucket() {
     await s3.send(new CreateBucketCommand({ Bucket: BUCKET }))
     console.log(`Created MinIO bucket: ${BUCKET}`)
   }
-  // Keep the bucket PRIVATE. Bytes are served only through the authenticated,
-  // permission- and password-checked endpoint below (GET /:id/raw) — never
-  // world-readable by object key. Strip any public-read policy a prior version set.
   try {
     await s3.send(new DeleteBucketPolicyCommand({ Bucket: BUCKET }))
-  } catch { /* no policy to remove */ }
+  } catch {}
   console.log('MinIO bucket ready (private)')
 }
 
@@ -159,9 +145,6 @@ router.get('/', async (req, res) => {
   }
 })
 
-// Most-recent PERSONAL files across every folder (used by the Orbit dashboard
-// widget). Shared-group files are excluded — their folder paths live outside
-// the user's personal tree.
 router.get('/recent', async (req, res) => {
   try {
     const pid = req.profile.profileId
@@ -196,21 +179,15 @@ router.post('/upload', uploadSingle('file'), async (req, res) => {
   let objectKey = null
   let stored = false
   try {
-    // No file part, or an empty file — reject rather than storing a 0-byte
-    // object that will only show as a broken preview later.
     if (!req.file) return res.status(400).json({ error: 'No file provided' })
     if (!req.file.size) return res.status(400).json({ error: 'File is empty' })
 
-    // Guard against a temp file whose real size differs from what multer
-    // reported (partial write, disk-full mid-write). An explicit ContentLength
-    // that disagrees with the body would silently truncate the stored object.
     const actualSize = fs.statSync(tmpPath).size
     if (actualSize !== req.file.size) {
       return res.status(400).json({ error: 'Upload was incomplete; please retry' })
     }
 
-    // Multer/busboy decodes the multipart filename header as latin1, so UTF-8
-    // names (e.g. Czech diacritics) arrive mojibaked. Re-decode to recover them.
+    // Multer decodes multipart filenames as latin1.
     const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8')
 
     const pid = req.profile.profileId
@@ -220,19 +197,13 @@ router.post('/upload', uploadSingle('file'), async (req, res) => {
       parent = await Folder.findById(folderId)
       if (!canView(parent, pid, req.gset)) return res.status(404).json({ error: 'Not found' })
     }
-    const own = childOwnership(parent, pid) // { groupId, ownerId, profileId }
+    const own = childOwnership(parent, pid)
     const ext = path.extname(originalName)
     const keyPrefix = own.groupId ? `uploads/group/${own.groupId}` : `uploads/${pid}`
     objectKey = `${keyPrefix}/${randomUUID()}${ext}`
 
-    // Derive Content-Type from the extension so browsers can preview the file.
-    // Multer's mimetype is the browser's upload guess and is often the generic
-    // application/octet-stream, which makes <video>/<img> refuse to render.
     const contentType = mimeFor(originalName, req.file.mimetype)
 
-    // End-to-end integrity: MinIO verifies the body against this MD5 and fails
-    // the upload with BadDigest if the bytes were corrupted in transit, instead
-    // of silently storing a damaged object.
     const contentMD5 = await md5Base64(tmpPath)
 
     await s3.send(new PutObjectCommand({
@@ -254,12 +225,6 @@ router.post('/upload', uploadSingle('file'), async (req, res) => {
       ...own,
     })
 
-    // Media normalisation: if the user has it on and the file isn't already in a
-    // broadly-compatible form, queue a BACKGROUND job (H.264/AAC MP4 for video,
-    // JPEG for HEIC/HEIF/TIFF images) so it plays/displays everywhere including
-    // phones. The check here is quick (ffprobe for video, ext/mime for images);
-    // the heavy encode runs off-request (see transcodeQueue.js) so upload
-    // returns immediately.
     if (contentType.startsWith('video/') || contentType.startsWith('image/')) {
       try {
         const settings = await getUserSettings(pid)
@@ -272,15 +237,12 @@ router.post('/upload', uploadSingle('file'), async (req, res) => {
           enqueue(doc._id)
         }
       } catch (err) {
-        // A probe/enqueue hiccup must not fail the upload — the file is stored.
         console.error('[orbit] media convert enqueue check failed:', err.message)
       }
     }
 
     res.status(201).json(serializeFile(doc, req))
   } catch (err) {
-    // If the object made it to MinIO but the DB record didn't, remove the
-    // orphan so storage doesn't accumulate unreferenced objects.
     if (stored && objectKey) {
       await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: objectKey })).catch(() => {})
     }
@@ -290,11 +252,6 @@ router.post('/upload', uploadSingle('file'), async (req, res) => {
   }
 })
 
-// Bulk: queue every one of the caller's existing videos and unsupported images
-// (HEIC/HEIF/TIFF) for conversion — backs the "convert my whole library" button
-// in Settings. Skips files already converted or in flight. Manual and explicit,
-// so it runs regardless of the per-upload auto-convert toggles. Scoped to the
-// caller's own files (personal, or group files they uploaded).
 const CONVERTIBLE_IMAGE_MIMES = ['image/heic', 'image/heif', 'image/tiff']
 router.post('/convert-all', async (req, res) => {
   try {
@@ -318,33 +275,22 @@ router.post('/convert-all', async (req, res) => {
   }
 })
 
-// Save a file that was shared elsewhere (e.g. via Echo) into the caller's own
-// drive root. Copies the underlying object so the new file is independently
-// owned (objectKey is unique per file).
+// No canView gate: the recipient of a shared file must be able to save it.
 router.post('/:id/save', async (req, res) => {
   try {
     const pid = req.profile.profileId
     const src = await File.findById(req.params.id)
-    // NOTE: intentionally no canView gate here. This endpoint backs the Echo
-    // "Save to Drive" button, whose normal caller is the RECIPIENT of a shared
-    // personal file — i.e. not the owner and not a group member — so a canView
-    // check would 404 the very case it exists for. The bucket is public-read
-    // anyway, so the bytes are already reachable by URL; gating the copy adds
-    // no protection. Keep this open until sharing carries a real grant token.
     if (!src) return res.status(404).json({ error: 'Not found' })
 
     const ext = path.extname(src.filename) || ''
     const objectKey = `uploads/${pid}/${randomUUID()}${ext}`
-    // REPLACE the metadata on copy: a plain CopyObject does not reliably carry
-    // the source Content-Type, which would leave the copy unpreviewable.
     const contentType = mimeFor(src.filename, src.mimeType)
-    // Encode the source key (keys can contain characters that must be escaped
-    // in the CopySource header) while preserving the path separators.
     const copySource = `${BUCKET}/${src.objectKey}`.split('/').map(encodeURIComponent).join('/')
     await s3.send(new CopyObjectCommand({
       Bucket: BUCKET,
       CopySource: copySource,
       Key: objectKey,
+      // CopyObject doesn't reliably carry Content-Type over.
       MetadataDirective: 'REPLACE',
       ContentType: contentType,
     }))
@@ -363,8 +309,6 @@ router.post('/:id/save', async (req, res) => {
   }
 })
 
-// Resolve a file and enforce view/edit permission. Returns the doc, or null
-// after sending the appropriate error response.
 async function loadEditable(req, res) {
   const pid = req.profile.profileId
   const file = await File.findById(req.params.id)
@@ -397,8 +341,6 @@ router.patch('/:id/move', async (req, res) => {
       targetFolder = await Folder.findById(target)
       if (!canView(targetFolder, pid, req.gset)) return res.status(404).json({ error: 'Not found' })
     }
-    // Adopt the destination's storage scope, so the file can cross between
-    // personal storage and a group's shared directory (and vice-versa).
     const own = childOwnership(targetFolder, pid)
     file.folderId = target
     file.groupId = own.groupId
@@ -423,10 +365,6 @@ router.patch('/:id/password', async (req, res) => {
   }
 })
 
-// Convert an ALREADY-uploaded video or image to a browser-friendly form — no
-// re-upload needed. Queues the same background job the upload path uses.
-// Idempotent while a job is in flight. The response reflects the new 'pending'
-// status; the file is swapped in place (objectKey/filename/size) once done.
 router.post('/:id/transcode', async (req, res) => {
   try {
     const file = await loadEditable(req, res)
@@ -436,7 +374,7 @@ router.post('/:id/transcode', async (req, res) => {
       return res.status(400).json({ error: 'Only videos and images can be converted' })
     }
     if (file.transcodeStatus === 'pending' || file.transcodeStatus === 'processing') {
-      return res.json(serializeFile(file, req)) // already queued/running
+      return res.json(serializeFile(file, req))
     }
     file.transcodeStatus = 'pending'
     await file.save()
@@ -462,9 +400,6 @@ router.post('/:id/unlock', async (req, res) => {
   }
 })
 
-// Authenticated, range-capable byte streaming. The bucket is private, so ALL
-// object bytes flow through here: canView is required, and for a password-
-// protected file (its own OR its folder's) a valid unlock token (?t=) is too.
 router.get('/:id/raw', async (req, res) => {
   try {
     const file = await File.findById(req.params.id)
@@ -473,7 +408,7 @@ router.get('/:id/raw', async (req, res) => {
     const lock = await resolveLock(file)
     if (lock) {
       let ok = false
-      try { ok = jwt.verify(String(req.query.t || ''), AUTH_SECRET)?.fid === String(file._id) } catch { /* bad/expired */ }
+      try { ok = jwt.verify(String(req.query.t || ''), AUTH_SECRET)?.fid === String(file._id) } catch {}
       if (!ok) return res.status(403).json({ error: 'Locked' })
     }
 
@@ -499,9 +434,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const file = await loadEditable(req, res)
     if (!file) return
-    // Remove the object first (DeleteObject is idempotent): if it fails we keep
-    // the DB record so the file stays intact and the delete can be retried,
-    // rather than dropping the record and orphaning the object.
+    // Delete the object before the record so a failed delete stays retryable.
     await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: file.objectKey }))
     await File.findByIdAndDelete(file._id)
     res.json({ ok: true })

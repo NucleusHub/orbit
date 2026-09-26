@@ -1,13 +1,3 @@
-// In-process background queue for media normalisation (video AND images).
-// Orbit has no external job runner, so the File document itself is the durable
-// job record: a file with transcodeStatus 'pending'/'processing' is work to be
-// done. The in-memory queue below just schedules that work; resumePending()
-// re-arms it on boot so a restart mid-encode doesn't strand a file.
-//
-// A job: download the object from MinIO → decide (planVideo/planImage) →
-// produce a browser-friendly output (H.264/AAC MP4 for video, JPEG for HEIC/
-// HEIF/TIFF images) → upload the new object, repoint the File doc, delete the
-// old object. On failure the original is left untouched.
 import fs from 'node:fs'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
@@ -18,25 +8,18 @@ import { s3, BUCKET, md5Base64 } from './routes/files.js'
 import { planVideo, transcodeToMp4, remuxToMp4 } from './utils/transcode.js'
 import { planImage, convertToJpeg } from './utils/image.js'
 
-// Transcoding is CPU-heavy; default to one job at a time so it doesn't starve
-// the request handlers on a shared host. Tunable via env.
 const MAX_CONCURRENT = Number(process.env.ORBIT_TRANSCODE_CONCURRENCY) || 1
 const WORK_DIR = '/tmp/orbit-transcode'
 
-const queued = []          // fileIds waiting for a slot
-const inFlight = new Set() // fileIds currently downloading/encoding
+const queued = []
+const inFlight = new Set()
 let active = 0
 
-// Live encode progress for in-flight files: fileId -> { percent, eta }.
-// In-memory (single process); merged into the file listing by serializeFile so
-// the client can show a % and ETA. Cleared when the job ends.
 const progress = new Map()
 export function getProgress(fileId) {
   return progress.get(String(fileId)) || null
 }
 
-// Schedule a file for (re)processing. Idempotent — a file already queued or in
-// flight is ignored.
 export function enqueue(fileId) {
   const id = String(fileId)
   if (inFlight.has(id) || queued.includes(id)) return
@@ -70,8 +53,6 @@ async function markStatus(fileId, status) {
 async function processFile(fileId) {
   const file = await File.findById(fileId)
   if (!file) return
-  // Only act on files still awaiting work (guards against double-enqueue and
-  // against a file that was deleted/replaced between enqueue and run).
   if (file.transcodeStatus !== 'pending' && file.transcodeStatus !== 'processing') return
 
   await markStatus(fileId, 'processing')
@@ -80,30 +61,28 @@ async function processFile(fileId) {
   const srcPath = path.join(WORK_DIR, `${randomUUID()}${path.extname(file.filename) || ''}`)
   let outPath = null
   try {
-    // Pull the current object down to disk.
     const obj = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: file.objectKey }))
     await pipeline(obj.Body, fs.createWriteStream(srcPath))
 
     const isVideo = file.mimeType?.startsWith('video/')
     const isImage = file.mimeType?.startsWith('image/')
 
-    // Decide + produce the normalised output. `outExt`/`outMime` describe it.
     let outExt, outMime
     if (isVideo) {
       const plan = await planVideo(srcPath, file.filename)
-      if (plan === 'skip') { await markStatus(fileId, 'done'); return } // already playable
+      if (plan === 'skip') { await markStatus(fileId, 'done'); return }
       outExt = '.mp4'; outMime = 'video/mp4'
       outPath = `${srcPath}.mp4`
       if (plan === 'remux') await remuxToMp4(srcPath, outPath)
       else await transcodeToMp4(srcPath, outPath, { onProgress: (p) => progress.set(String(fileId), p) })
     } else if (isImage) {
       const plan = planImage(file.filename, file.mimeType)
-      if (plan === 'skip') { await markStatus(fileId, 'done'); return } // already displayable
+      if (plan === 'skip') { await markStatus(fileId, 'done'); return }
       outExt = '.jpg'; outMime = 'image/jpeg'
       outPath = `${srcPath}.jpg`
       await convertToJpeg(srcPath, outPath)
     } else {
-      await markStatus(fileId, 'done') // not a media type we handle
+      await markStatus(fileId, 'done')
       return
     }
 
@@ -122,11 +101,8 @@ async function processFile(fileId) {
       ContentMD5: contentMD5,
     }))
 
-    // Repoint the doc atomically-ish: re-load to avoid clobbering a concurrent
-    // rename/move, then swap in the new object.
     const fresh = await File.findById(fileId)
     if (!fresh) {
-      // File was deleted while we encoded — drop the object we just made.
       await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: newKey })).catch(() => {})
       return
     }
@@ -151,8 +127,6 @@ async function processFile(fileId) {
   }
 }
 
-// Re-arm jobs left behind by a restart: anything still 'pending', plus
-// 'processing' files whose worker died (reset them to pending first).
 export async function resumePending() {
   try {
     await File.updateMany({ transcodeStatus: 'processing' }, { transcodeStatus: 'pending' })

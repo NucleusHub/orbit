@@ -22,9 +22,6 @@ const convertImages = ref(true)
 const convertingAll = ref(false)
 const bulkMsg = ref('')
 
-// Queue every existing video / unsupported image for conversion (server decides
-// what actually needs work). Independent of the toggles above — an explicit
-// "convert my whole library" action.
 async function convertAll() {
   bulkMsg.value = ''
   convertingAll.value = true
@@ -57,7 +54,6 @@ async function load() {
   }
 }
 
-// (Re)load each time the modal opens.
 watch(() => props.show, (v) => { if (v) load() }, { immediate: true })
 
 async function save() {
@@ -93,7 +89,6 @@ async function save() {
     <div v-else class="flex flex-col gap-4">
       <p class="text-sm text-slate-500 dark:text-slate-400">{{ t('orbit.settings.subtitle') }}</p>
 
-      <!-- Transcode videos toggle -->
       <button
         type="button"
         role="switch"
@@ -109,7 +104,6 @@ async function save() {
             <span class="font-semibold text-slate-900 dark:text-white">{{ t('orbit.settings.transcodeTitle') }}</span>
             <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{{ t('orbit.settings.transcodeDesc') }}</p>
           </div>
-          <!-- Switch -->
           <span
             :class="['relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors mt-0.5',
               transcodeVideos ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600']"
@@ -122,7 +116,6 @@ async function save() {
         </div>
       </button>
 
-      <!-- Convert images toggle -->
       <button
         type="button"
         role="switch"
@@ -138,7 +131,6 @@ async function save() {
             <span class="font-semibold text-slate-900 dark:text-white">{{ t('orbit.settings.convertImagesTitle') }}</span>
             <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{{ t('orbit.settings.convertImagesDesc') }}</p>
           </div>
-          <!-- Switch -->
           <span
             :class="['relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors mt-0.5',
               convertImages ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600']"
@@ -151,7 +143,6 @@ async function save() {
         </div>
       </button>
 
-      <!-- Convert existing library -->
       <div class="rounded-xl border border-black/10 dark:border-white/10 bg-white/40 dark:bg-white/[0.04] p-4 flex items-start gap-3">
         <div class="min-w-0 flex-1">
           <span class="font-semibold text-slate-900 dark:text-white">{{ t('orbit.settings.convertAllTitle') }}</span>
@@ -167,7 +158,6 @@ async function save() {
         </button>
       </div>
 
-      <!-- Actions -->
       <div class="flex items-center gap-3 pt-1">
         <button
           @click="save"

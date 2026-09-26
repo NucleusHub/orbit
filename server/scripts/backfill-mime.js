@@ -1,17 +1,3 @@
-// One-off backfill: fix Content-Type on existing objects so already-uploaded
-// files (esp. MP4s stored as application/octet-stream) start previewing.
-//
-// It checks the ACTUAL Content-Type stored on the MinIO object (HeadObject),
-// not just the Mongo mimeType field — the two can disagree, and it's MinIO's
-// value the browser sees. When either is wrong it rewrites the object metadata
-// in place via an in-bucket CopyObject (MetadataDirective: REPLACE) and syncs
-// the Mongo record.
-//
-//   node scripts/backfill-mime.js          # apply changes
-//   node scripts/backfill-mime.js --dry    # report only, change nothing
-//
-// Run from apps/orbit/server with the same env the server uses (MONGODB_URI,
-// MINIO_* vars). Re-runnable and idempotent.
 import 'dotenv/config'
 import mongoose from 'mongoose'
 import { CopyObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3'
@@ -21,7 +7,6 @@ import { mimeFor } from '../utils/mime.js'
 
 const DRY = process.argv.includes('--dry')
 
-// Encode a key for the CopySource header while keeping path separators.
 const encodeKey = (key) => `${BUCKET}/${key}`.split('/').map(encodeURIComponent).join('/')
 
 async function main() {

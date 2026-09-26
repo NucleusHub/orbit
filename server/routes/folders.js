@@ -14,8 +14,6 @@ import {
 const router = express.Router()
 router.use(requireAuth)
 
-// Propagate a scope change (groupId / ownerId / profileId) to every descendant
-// of a moved folder, keeping the whole subtree consistent with its new home.
 async function rescopeTree(folderId, own) {
   await File.updateMany({ folderId }, { $set: own })
   const subfolders = await Folder.find({ parentId: folderId }).select('_id')
@@ -25,7 +23,6 @@ async function rescopeTree(folderId, own) {
   }
 }
 
-// Load the caller's group membership once per request (req.groups / req.gset).
 router.use(async (req, _res, next) => {
   try {
     req.groups = await myGroups(req.profile.profileId)
@@ -43,13 +40,11 @@ function serializeFolder(f, req) {
     ...rest,
     protected: !!passwordHash,
     shared: !!obj.groupId,
-    locked: !!obj.isGroupRoot,                 // immutable shared root
+    locked: !!obj.isGroupRoot,
     canEdit: canEdit(obj, req.profile.profileId, req.gset),
   }
 }
 
-// `folderUnlocked` = the containing folder's password was satisfied for this
-// request, so folder-locked files get a streaming token.
 function serializeFile(f, req, folderUnlocked = false) {
   const obj = f.toObject ? f.toObject() : { ...f }
   const { passwordHash, ...rest } = obj
@@ -61,7 +56,7 @@ function serializeFile(f, req, folderUnlocked = false) {
     transcodeStatus: obj.transcodeStatus || 'none',
     ...(prog ? { transcodeProgress: prog.percent, transcodeEta: prog.eta } : {}),
   }
-  if (passwordHash) return { ...base, protected: true } // own password → separate unlock
+  if (passwordHash) return { ...base, protected: true }
   if (folderUnlocked) return { ...base, url: rawUrl(obj._id, signFileToken(obj._id)) }
   return { ...base, url: rawUrl(obj._id) }
 }
@@ -78,7 +73,6 @@ async function buildBreadcrumbs(folderId) {
   return crumbs
 }
 
-// Mongo filter matching everything the user is allowed to see (personal + groups).
 function visibleFilter(req) {
   const ids = req.groups.map(g => g._id)
   return { $or: [{ profileId: req.profile.profileId, groupId: null }, { groupId: { $in: ids } }] }
@@ -115,8 +109,6 @@ router.get('/browse', async (req, res) => {
       }
     }
 
-    // Children scope: a group folder shows every member's items; the personal
-    // root shows only the caller's personal items.
     const scope = parent ? childScope(parent, pid) : { profileId: pid, groupId: null }
     const [folders, rawFiles, breadcrumbs] = await Promise.all([
       Folder.find({ parentId: folderId, ...scope }).sort({ name: 1 }),
@@ -126,14 +118,12 @@ router.get('/browse', async (req, res) => {
 
     let folderList = folders
     if (!parent) {
-      // Top level: surface an immutable "Group - {name}" folder per shared group.
       const roots = await Promise.all(req.groups.filter(g => g.sharedOrbit).map(ensureGroupRoot))
       folderList = [...roots, ...folders]
     }
 
     res.json({
       folders: folderList.map(f => serializeFolder(f, req)),
-      // The folder's password (if any) was verified above, so its files may stream.
       files: rawFiles.map(f => serializeFile(f, req, !!parent?.passwordHash)),
       breadcrumbs,
     })
@@ -174,7 +164,6 @@ router.post('/', async (req, res) => {
     let parent = null
     if (parentId) {
       parent = await Folder.findById(parentId)
-      // Any member can add inside a group folder; canView covers membership.
       if (!canView(parent, pid, req.gset)) return res.status(404).json({ error: 'Not found' })
     }
     const folder = await Folder.create({
@@ -188,8 +177,6 @@ router.post('/', async (req, res) => {
   }
 })
 
-// Resolve a folder and enforce view/edit permission. Returns the doc, or null
-// after sending the appropriate error response.
 async function loadEditable(req, res) {
   const pid = req.profile.profileId
   const folder = await Folder.findById(req.params.id)
@@ -246,8 +233,6 @@ router.patch('/:id/move', async (req, res) => {
       }
     }
 
-    // Adopt the destination's storage scope, so the folder can cross between
-    // personal storage and a group's shared directory (and vice-versa).
     const oldGroup = folder.groupId ? String(folder.groupId) : null
     const own = childOwnership(targetFolder, pid)
     const newGroup = own.groupId ? String(own.groupId) : null
@@ -258,8 +243,6 @@ router.patch('/:id/move', async (req, res) => {
     folder.profileId = own.profileId
     await folder.save()
 
-    // When the group scope changes the whole subtree must follow it, otherwise
-    // its contents would no longer match the destination's listing query.
     if (oldGroup !== newGroup) await rescopeTree(folder._id, own)
 
     res.json(serializeFolder(folder, req))
@@ -279,11 +262,8 @@ router.delete('/:id', async (req, res) => {
   }
 })
 
-// Best-effort removal of stored objects in batches of up to 1000 (the S3
-// DeleteObjects limit). Failures are logged but don't abort the delete — a
-// stranded object is a storage leak, not data loss, and shouldn't leave the
-// folder tree half-removed.
 async function deleteObjects(keys) {
+  // S3 DeleteObjects accepts at most 1000 keys.
   for (let i = 0; i < keys.length; i += 1000) {
     const chunk = keys.slice(i, i + 1000)
     try {
@@ -297,10 +277,6 @@ async function deleteObjects(keys) {
   }
 }
 
-// Removes a folder and everything beneath it. For group folders the subtree is
-// scoped by groupId (so it clears every member's items inside); for personal
-// folders by profileId. Stored objects are removed alongside the DB records so
-// MinIO doesn't accumulate orphans.
 async function deleteFolderRecursive(folder) {
   const scope = folder.groupId ? { groupId: folder.groupId } : { profileId: folder.profileId }
   const subfolders = await Folder.find({ parentId: folder._id, ...scope })

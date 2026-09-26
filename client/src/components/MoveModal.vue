@@ -9,13 +9,13 @@ const { t } = useI18n()
 
 const props = defineProps({
   show: { type: Boolean, default: false },
-  item: { type: Object, default: null }, // { _id, filename|name, type: 'file'|'folder' }
+  item: { type: Object, default: null },
   currentFolderId: { type: String, default: null },
 })
 const emit = defineEmits(['move', 'cancel'])
 
 const folders = ref([])
-const selected = ref(undefined) // undefined = not yet chosen; null = root
+const selected = ref(undefined)
 const collapsed = ref(new Set())
 const loading = ref(false)
 const error = ref(null)
@@ -38,12 +38,10 @@ watch(() => props.show, async (val) => {
   }
 })
 
-// Flat list with depth, excluding the moving folder and its descendants
 const flatTree = computed(() => {
   const excludeId = props.item?.type === 'folder' ? String(props.item._id) : null
   const excluded = new Set()
   if (excludeId) {
-    // Collect all descendants to exclude
     const collect = (id) => {
       excluded.add(id)
       folders.value.filter(f => String(f.parentId || null) === id).forEach(f => collect(String(f._id)))
@@ -107,7 +105,6 @@ function submit() {
     <div v-else-if="error" class="px-5 py-4 text-sm text-red-500">{{ t('orbit.move.loadError') }} {{ error }}</div>
 
     <template v-else>
-      <!-- Root option -->
       <button
         class="w-full flex items-center gap-2 px-4 py-2 text-sm transition-colors cursor-pointer"
         :class="selected === null
@@ -120,14 +117,12 @@ function submit() {
         <span v-if="currentFolderId === null" class="ml-auto text-xs text-slate-400 dark:text-slate-500">{{ t('orbit.move.current') }}</span>
       </button>
 
-      <!-- Folder rows -->
       <div
         v-for="folder in flatTree"
         :key="folder._id"
         class="flex items-center gap-1 pr-4 py-0.5"
         :style="{ paddingLeft: `${(folder.depth + 1) * 16 + 4}px` }"
       >
-        <!-- Collapse toggle -->
         <button
           v-if="folder.hasChildren"
           class="cursor-pointer p-0.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 shrink-0"
@@ -137,7 +132,6 @@ function submit() {
         </button>
         <span v-else class="w-4 shrink-0" />
 
-        <!-- Folder row button -->
         <button
           class="flex-1 flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors cursor-pointer text-left"
           :class="String(selected) === String(folder._id)

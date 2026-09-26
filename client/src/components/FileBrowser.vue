@@ -26,7 +26,6 @@ const selectionKeys = computed(() => new Set(props.selection.map(s => `${s.type}
 const selectionSize = computed(() => props.selection.length)
 const isSelected = (type, id) => selectionKeys.value.has(`${type}:${id}`)
 
-// Drag onto the ".." tile to move an item up to the parent folder.
 const { dragging } = useDnd()
 const upDropActive = ref(false)
 function onUpDragOver(e) {
@@ -46,16 +45,13 @@ function onUpDrop(e) {
 
 <template>
   <div class="flex flex-col gap-8">
-    <!-- Folders section -->
     <section v-if="folders.length || parentFolderId !== undefined">
       <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ t('orbit.browser.folders') }}</h2>
-      <!-- Grid -->
       <div
         v-if="viewMode === 'grid'"
         class="grid gap-2 nuc-stagger"
         style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); --nuc-step: 32ms"
       >
-        <!-- .. up one level -->
         <div
           v-if="parentFolderId !== undefined"
           class="group flex flex-col items-center gap-2.5 p-4 rounded-2xl border transition-all cursor-pointer select-none"
@@ -93,9 +89,7 @@ function onUpDrop(e) {
           @open-selection-ctx="(x, y) => $emit('open-selection-ctx', x, y)"
         />
       </div>
-      <!-- List -->
       <div v-else class="flex flex-col nuc-stagger" style="--nuc-step: 28ms">
-        <!-- .. up one level -->
         <div
           v-if="parentFolderId !== undefined"
           class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors cursor-pointer select-none"
@@ -135,18 +129,15 @@ function onUpDrop(e) {
       </div>
     </section>
 
-    <!-- Files section -->
     <section v-if="files.length || uploadable">
       <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ t('orbit.browser.files') }}</h2>
 
-      <!-- Upload zone when no files -->
       <UploadZone
         v-if="!files.length && uploadable"
         @files="$emit('upload', $event)"
       />
 
       <template v-else-if="files.length">
-        <!-- Grid -->
         <div
           v-if="viewMode === 'grid'"
           class="grid gap-3 nuc-stagger"
@@ -173,9 +164,7 @@ function onUpDrop(e) {
             @open-selection-ctx="(x, y) => $emit('open-selection-ctx', x, y)"
           />
         </div>
-        <!-- List -->
         <div v-else class="flex flex-col nuc-stagger" style="--nuc-step: 28ms">
-          <!-- Header row -->
           <div class="flex items-center gap-3 px-4 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/8 mb-1">
             <div class="w-8 shrink-0" />
             <span class="flex-1">{{ t('orbit.browser.name') }}</span>

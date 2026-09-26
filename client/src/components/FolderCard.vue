@@ -16,11 +16,8 @@ const props = defineProps({
 })
 const emit = defineEmits(['open', 'rename', 'delete', 'set-password', 'move', 'move-to', 'rename-request', 'toggle-select', 'open-selection-ctx'])
 
-// Only owner-editable folders can be multi-selected — locked group roots and
-// others' shared folders can't (their bulk actions are owner-only anyway).
 const canSelect = computed(() => props.folder.canEdit !== false)
 
-// A tap opens the folder normally, but toggles selection while in select mode.
 function onOpen() {
   if (editing.value) return
   if (props.selectActive && canSelect.value) { emit('toggle-select'); return }
@@ -31,16 +28,13 @@ const editing = ref(false)
 const editName = ref('')
 const editInput = ref(null)
 
-// ── Drag & drop ───────────────────────────────────────────────────────────────
-// A folder can be dragged (unless it's an immutable group root) and is always a
-// drop target — drop a file/folder onto it to move the item inside.
 const { dragging, startDrag, endDrag } = useDnd()
 const dropActive = ref(false)
 const canDrag = computed(() => props.folder.canEdit !== false && !props.folder.isGroupRoot)
 const isValidDrop = computed(() => {
   const d = dragging.value
   if (!d) return false
-  return !(d.type === 'folder' && d.id === props.folder._id) // not onto itself
+  return !(d.type === 'folder' && d.id === props.folder._id)
 })
 function onDragStart(e) {
   if (!canDrag.value) { e.preventDefault(); return }
@@ -73,8 +67,6 @@ const ICONS = {
   move: 'M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5',
 }
 
-// Group roots are immutable and shared items are owner-only, so the server
-// flags what the caller may change via `canEdit`. Show only Open otherwise.
 const ctxItems = computed(() => {
   const items = [{ label: t('orbit.action.open'), icon: ICONS.open, action: () => emit('open', props.folder._id) }]
   if (props.folder.canEdit !== false) {
@@ -130,7 +122,6 @@ function cancelEdit() {
 </script>
 
 <template>
-  <!-- List mode -->
   <div
     v-if="viewMode === 'list'"
     :draggable="canDrag && !editing"
@@ -148,9 +139,7 @@ function cancelEdit() {
     @dragleave="dropActive = false"
     @drop="onDrop"
   >
-    <!-- Icon / Checkbox -->
     <div class="relative w-8 h-8 shrink-0" @click.stop="canSelect && $emit('toggle-select')">
-      <!-- Icon layer -->
       <div
         class="absolute inset-0 rounded-lg flex items-center justify-center transition-opacity"
         :class="[canSelect ? ((selectActive || selectionSize > 0) ? 'opacity-0' : 'group-hover:opacity-0') : '', folder.shared ? 'bg-violet-500/10 dark:bg-violet-500/20' : 'bg-indigo-500/10 dark:bg-indigo-500/20']"
@@ -159,7 +148,6 @@ function cancelEdit() {
         <Icon name="users" v-if="folder.shared" class="absolute -bottom-1 -left-1 w-3.5 h-3.5 text-violet-600 dark:text-violet-300 bg-white dark:bg-slate-900 rounded-full p-0.5" fill />
         <Icon name="lock" v-if="folder.protected" class="absolute -bottom-1 -right-1 w-3.5 h-3.5 text-amber-500 bg-white dark:bg-slate-900 rounded-full p-0.5" :sw="2.5" />
       </div>
-      <!-- Checkbox layer -->
       <div
         v-if="canSelect"
         class="absolute inset-0 flex items-center justify-center transition-opacity"
@@ -195,7 +183,6 @@ function cancelEdit() {
     </div>
   </div>
 
-  <!-- Grid mode -->
   <div
     v-else
     :draggable="canDrag && !editing"
@@ -215,7 +202,6 @@ function cancelEdit() {
     @dragleave="dropActive = false"
     @drop="onDrop"
   >
-    <!-- Checkbox top-left. Shown in select mode / when selecting, else on hover. -->
     <div
       v-if="canSelect"
       class="absolute top-2 left-2 z-10 transition-opacity"
@@ -230,7 +216,6 @@ function cancelEdit() {
       </div>
     </div>
 
-    <!-- Actions -->
     <div class="absolute top-2.5 right-2.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100" @click.stop>
       <button
         @click="openCtxFromBtn"
@@ -240,14 +225,12 @@ function cancelEdit() {
       </button>
     </div>
 
-    <!-- Folder icon (shared group folders are tinted violet + carry a group badge) -->
     <div class="relative w-14 h-14 rounded-2xl flex items-center justify-center" :class="folder.shared ? 'bg-violet-500/10 dark:bg-violet-500/20' : 'bg-indigo-500/10 dark:bg-indigo-500/20'">
       <Icon name="folder" class="w-7 h-7" :class="folder.shared ? 'text-violet-500' : 'text-indigo-500'" :sw="1.5" />
       <Icon name="users" v-if="folder.shared" class="absolute -bottom-1 -left-1 w-4.5 h-4.5 text-violet-600 dark:text-violet-300 bg-white dark:bg-slate-900 rounded-full p-0.5" fill />
       <Icon name="lock" v-if="folder.protected" class="absolute -bottom-1 -right-1 w-4.5 h-4.5 text-amber-500 bg-white dark:bg-slate-900 rounded-full p-0.5" :sw="2.5" />
     </div>
 
-    <!-- Name -->
     <input
       v-if="editing"
       ref="editInput"

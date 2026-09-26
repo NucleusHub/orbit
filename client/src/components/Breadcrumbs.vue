@@ -6,7 +6,6 @@ defineEmits(['navigate'])
 
 <template>
   <div class="flex items-center gap-2 px-4 md:px-6 py-3 text-sm border-b border-slate-200 dark:border-white/8">
-    <!-- Crumbs scroll on their own; the actions slot stays pinned to the right. -->
     <div class="flex items-center gap-1 min-w-0 flex-1 overflow-x-auto">
       <button
         @click="$emit('navigate', null)"

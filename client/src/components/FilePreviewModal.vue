@@ -10,7 +10,6 @@ const { t } = useI18n()
 const props = defineProps({ file: { type: Object, default: null } })
 const emit = defineEmits(['close', 'transcode'])
 
-// Background media normalisation state (see server transcodeQueue.js).
 const converting = computed(() => ['pending', 'processing'].includes(props.file?.transcodeStatus))
 const canConvert = computed(() => canConvertMedia(props.file))
 const convertText = computed(() => {
@@ -25,9 +24,6 @@ const convertText = computed(() => {
 const textContent = ref(null)
 const textLoading = ref(false)
 const textError = ref(false)
-// Set when an <img>/<video>/<audio> element fails to load or decode the file
-// (e.g. a phone/Messenger video the browser can't play even though the type is
-// correct). When true we fall back to the download view instead of a broken player.
 const mediaError = ref(false)
 
 const previewType = computed(() => {
@@ -47,7 +43,6 @@ const previewType = computed(() => {
   return 'other'
 })
 
-// What we actually render: a failed media load collapses to the download view.
 const view = computed(() => (mediaError.value ? 'other' : previewType.value))
 
 const typeInfo = computed(() => getFileTypeInfo(props.file?.mimeType))
@@ -80,8 +75,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
   <Teleport to="body">
     <Transition name="preview-fade">
       <div v-if="file" class="fixed inset-0 z-50 flex flex-col bg-black/85 backdrop-blur-sm">
-
-        <!-- Top bar -->
         <div class="flex items-center gap-3 px-4 h-14 bg-black/40 border-b border-white/10 shrink-0">
           <button
             @click="$emit('close')"
@@ -93,7 +86,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
 
           <span class="flex-1 text-sm font-medium text-white truncate">{{ file.filename }}</span>
 
-          <!-- Transcode status / trigger (videos only) -->
           <span
             v-if="converting"
             class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/80 bg-white/10 rounded-xl shrink-0"
@@ -123,10 +115,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
           </a>
         </div>
 
-        <!-- Content -->
         <div class="flex-1 overflow-hidden flex items-center justify-center p-4" @click.self="$emit('close')">
-
-          <!-- Image -->
           <img
             v-if="view === 'image'"
             :src="file.url"
@@ -136,7 +125,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
             @click.stop
           />
 
-          <!-- Video -->
           <video
             v-else-if="view === 'video'"
             :src="file.url"
@@ -147,7 +135,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
             @click.stop
           />
 
-          <!-- Audio -->
           <div v-else-if="view === 'audio'" class="flex flex-col items-center gap-6 w-full max-w-md" @click.stop>
             <div class="w-24 h-24 rounded-2xl flex items-center justify-center" :class="typeInfo.bg">
               <svg class="w-12 h-12" :class="typeInfo.color" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -158,7 +145,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
             <audio :src="file.url" controls autoplay class="w-full" @error="mediaError = true" />
           </div>
 
-          <!-- PDF -->
           <iframe
             v-else-if="view === 'pdf'"
             :src="file.url"
@@ -166,7 +152,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
             @click.stop
           />
 
-          <!-- Text / Code -->
           <div v-else-if="view === 'text'" class="w-full h-full flex flex-col rounded-lg overflow-hidden shadow-2xl" @click.stop>
             <div class="flex items-center gap-2 px-4 py-2.5 bg-slate-800 border-b border-white/10 shrink-0">
               <span class="text-xs font-mono text-slate-400">{{ file.filename }}</span>
@@ -180,7 +165,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
             </div>
           </div>
 
-          <!-- Other / unsupported -->
           <div v-else class="flex flex-col items-center gap-5 text-center" @click.stop>
             <div class="w-24 h-24 rounded-2xl flex items-center justify-center" :class="typeInfo.bg">
               <svg class="w-12 h-12" :class="typeInfo.color" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -209,7 +193,6 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
     </Transition>
   </Teleport>
 </template>
-
 <style scoped>
 .preview-fade-enter-active, .preview-fade-leave-active { transition: opacity 0.15s ease; }
 .preview-fade-enter-from, .preview-fade-leave-to { opacity: 0; }

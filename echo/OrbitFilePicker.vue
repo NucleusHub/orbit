@@ -4,11 +4,6 @@ import TemplateModal from '@core/TemplateModal.vue'
 import FileTreeNode from './FileTreeNode.vue'
 import { Spinner } from '@core/icons'
 
-// Orbit's own composer picker, contributed to Echo via integration.echo.js.
-// Built on the core TemplateModal; the body is a full Orbit drive tree (folders
-// lazy-load their children). Typing in the search box switches to flat results
-// from /api/orbit/folders/search; clearing it returns to the tree. Emits
-// `select` with the chosen file node — Echo turns it into the message to send.
 const props = defineProps({
   show: { type: Boolean, default: false },
 })
@@ -19,7 +14,6 @@ const results = ref([])
 const loading = ref(false)
 const search = ref('')
 
-// Provided down the recursive tree so any file leaf can trigger the share.
 provide('pickFile', file => emit('select', file))
 
 const mapFile = f => ({ type: 'file', id: f._id, name: f.filename, mimeType: f.mimeType, size: f.size, url: f.url })
@@ -58,8 +52,6 @@ watch(search, q => {
   searchTimer = setTimeout(() => runSearch(term), 250)
 })
 
-// `immediate` so the tree loads even when the picker is mounted already-open
-// (Echo renders it on demand with :show=true), not only on a false→true toggle.
 watch(() => props.show, val => {
   if (val) { search.value = ''; results.value = []; loadRoot() }
 }, { immediate: true })
@@ -82,13 +74,11 @@ onUnmounted(() => clearTimeout(searchTimer))
       <Spinner class="w-6 h-6 text-indigo-500 animate-spin" />
     </div>
 
-    <!-- Search results (flat) -->
     <template v-else-if="search.trim()">
       <FileTreeNode v-for="n in results" :key="n.id" :node="n" :depth="0" />
       <p v-if="!results.length" class="py-12 text-center text-sm text-slate-400 dark:text-slate-500">No matching files</p>
     </template>
 
-    <!-- Full drive tree -->
     <template v-else>
       <FileTreeNode v-for="n in roots" :key="n.type + n.id" :node="n" :depth="0" />
       <p v-if="!roots.length" class="py-12 text-center text-sm text-slate-400 dark:text-slate-500">No files yet</p>

@@ -39,14 +39,12 @@ function fmtSpeed(bps) {
           :key="u.id"
           class="flex items-center gap-3 px-4 py-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-xl shadow-lg shadow-black/10"
         >
-          <!-- Status icon -->
           <div class="shrink-0">
             <Icon name="check" v-if="u.status === 'done'" class="w-4 h-4 text-emerald-500" :sw="2.5" />
             <Icon name="infoDot" v-else-if="u.status === 'error'" class="w-4 h-4 text-red-500" :sw="2.5" />
             <Spinner v-else class="w-4 h-4 text-indigo-500 animate-spin" />
           </div>
 
-          <!-- File name + progress -->
           <div class="flex-1 min-w-0">
             <p class="text-xs font-medium text-slate-900 dark:text-white truncate">{{ u.filename }}</p>
             <div v-if="u.status === 'uploading'" class="mt-1.5">
@@ -65,7 +63,6 @@ function fmtSpeed(bps) {
             <p v-else class="mt-0.5 text-xs text-emerald-500">{{ t('orbit.upload.complete') }}</p>
           </div>
 
-          <!-- Dismiss -->
           <button
             v-if="u.status !== 'uploading'"
             @click="$emit('dismiss', u.id)"
@@ -78,7 +75,6 @@ function fmtSpeed(bps) {
     </Transition>
   </Teleport>
 </template>
-
 <style scoped>
 .slide-up-enter-active, .slide-up-leave-active { transition: all 0.2s ease; }
 .slide-up-enter-from, .slide-up-leave-to { opacity: 0; transform: translateY(8px); }

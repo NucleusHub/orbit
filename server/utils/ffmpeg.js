@@ -1,7 +1,3 @@
-// Thin wrappers around the ffmpeg/ffprobe binaries (installed in the Docker
-// image via `apk add ffmpeg`). We shell out rather than depend on a bindings
-// package — fewer native build headaches, and the CLI is stable. Paths are
-// overridable via env for non-container dev.
 import { execFile, spawn } from 'node:child_process'
 
 const FFPROBE = process.env.FFPROBE_PATH || 'ffprobe'
@@ -27,9 +23,6 @@ export function ffmpeg(args, opts) {
   return run(FFMPEG, args, opts)
 }
 
-// Streaming ffmpeg for long encodes: spawn (not execFile, so stdout isn't
-// buffered) and hand each stdout line to `onLine`. Pair with `-progress pipe:1
-// -nostats` so ffmpeg emits key=value progress blocks we can parse for % + ETA.
 export function ffmpegProgress(args, { timeout, onLine } = {}) {
   return new Promise((resolve, reject) => {
     const proc = spawn(FFMPEG, args, { stdio: ['ignore', 'pipe', 'pipe'] })
@@ -45,7 +38,7 @@ export function ffmpegProgress(args, { timeout, onLine } = {}) {
       while ((nl = buf.indexOf('\n')) !== -1) {
         const line = buf.slice(0, nl)
         buf = buf.slice(nl + 1)
-        try { onLine?.(line) } catch { /* progress parsing must never kill the encode */ }
+        try { onLine?.(line) } catch {}
       }
     })
     proc.stderr.on('data', (d) => { stderr += d.toString() })

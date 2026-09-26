@@ -2,11 +2,8 @@
 import { ref, inject } from 'vue'
 import { Icon } from '@core/icons'
 
-// One row in the Orbit file tree. Folders expand/collapse and lazy-load their
-// children via /api/orbit/folders/browse; files are clickable leaves that get
-// shared. Recurses into itself for nested folders.
 const props = defineProps({
-  node: { type: Object, required: true }, // { type:'folder'|'file', id, name, mimeType, size, url }
+  node: { type: Object, required: true },
   depth: { type: Number, default: 0 },
 })
 
@@ -41,7 +38,7 @@ async function toggle() {
         ...d.files.map(f => ({ type: 'file', id: f._id, name: f.filename, mimeType: f.mimeType, size: f.size, url: f.url })),
       ]
     }
-  } catch { /* leave empty */ } finally {
+  } catch {} finally {
     loading.value = false
     loaded.value = true
   }
@@ -49,7 +46,6 @@ async function toggle() {
 </script>
 
 <template>
-  <!-- Folder -->
   <template v-if="node.type === 'folder'">
     <button
       class="cursor-pointer w-full flex items-center gap-2 py-1.5 pr-2 rounded-lg text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/6 transition-colors text-left"
@@ -67,7 +63,6 @@ async function toggle() {
     </template>
   </template>
 
-  <!-- File -->
   <button
     v-else
     class="cursor-pointer w-full flex items-center gap-2 py-1.5 pr-2 rounded-lg text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/6 transition-colors text-left"
@@ -75,9 +70,7 @@ async function toggle() {
     :title="node.name"
     @click="pickFile(node)"
   >
-    <!-- image file -->
     <Icon name="image" v-if="isImage()" class="w-4 h-4 shrink-0 text-emerald-400" :sw="1.6" />
-    <!-- generic file -->
     <Icon name="document" v-else class="w-4 h-4 shrink-0 text-slate-400 dark:text-slate-500" :sw="1.6" />
     <span class="truncate flex-1">{{ node.name }}</span>
     <span class="shrink-0 text-xs text-slate-400 dark:text-slate-500">{{ prettySize(node.size) }}</span>

@@ -1,22 +1,3 @@
-// Stable, service-to-service "public" API that sibling Nucleus apps consume to
-// read Orbit's media WITHOUT importing Orbit's code or touching its database.
-// Prism's OrbitSource (apps/prism/server/sources/OrbitSource.js) is the first
-// (and today only) consumer: it lists media here and streams bytes here to build
-// its own photo index.
-//
-// Auth is a shared-secret header, NOT the per-user `nucleus_token` cookie: these
-// calls originate from another *service* (prism-server), not a browser session.
-// The secret is the platform-wide JWT_SECRET both containers already share, sent
-// as `X-Prism-Key`. Because it's service-scoped, this router is mounted BEFORE
-// the per-user requireAppEnabled gate in index.js.
-//
-// Contract (must stay stable — Prism is coded against it):
-//   GET /api/orbit/public/media?shared=0|1
-//     -> [{ id, path, filename, mimeType, size, mtimeMs, folderId }]
-//     shared=1 restricts to files in shared-group storage; shared=0 = everything.
-//     `path` is the S3 object key — feed it back to /stream.
-//   GET /api/orbit/public/stream?path=<objectKey>   (Range-capable)
-//     -> the raw object bytes.
 import { Router } from 'express'
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { timingSafeEqual } from 'node:crypto'
@@ -30,13 +11,8 @@ const router = Router()
 
 const PRISM_KEY = process.env.JWT_SECRET || 'nucleus-jwt-secret'
 
-// Media Prism understands — mirrors apps/prism/server/utils/formats.js. Kept as a
-// filename-extension test (reliable) rather than trusting the stored mimeType,
-// which can be a generic application/octet-stream for some uploads.
 const MEDIA_EXT = /\.(jpe?g|png|webp|gif|heic|heif|avif|mp4|mov|mkv|webm|avi|m4v)$/i
 
-// Shared-secret gate. Constant-time compare so the endpoint can't be probed for
-// the key by timing; any request without the exact key is a flat 401.
 function requirePrismKey(req, res, next) {
   const got = Buffer.from(req.get('X-Prism-Key') || '')
   const want = Buffer.from(PRISM_KEY)
@@ -45,15 +21,10 @@ function requirePrismKey(req, res, next) {
 }
 router.use(requirePrismKey)
 
-// ── List media — SCOPED TO ONE USER ──────────────────────────────────────────
-// The shared secret only proves the caller is Prism; it says nothing about WHOM
-// the request is for. Prism forwards the signed-in user's `nucleus_token`, and we
-// return only that user's own files plus files in the shared groups they belong
-// to — never the whole store. Password-protected files are always excluded.
-// Each item carries ownerId/groupId so Prism can enforce the same scope on read.
+// The shared secret only identifies Prism; results are scoped to the forwarded user token.
 router.get('/media', async (req, res, next) => {
   try {
-    const profile = verifyProfile(req) // forwarded nucleus_token cookie
+    const profile = verifyProfile(req)
     if (!profile) return res.status(401).json({ error: 'A user token is required' })
     const pid = profile.profileId
 
@@ -63,8 +34,8 @@ router.get('/media', async (req, res, next) => {
     const filter = {
       filename: MEDIA_EXT,
       $or: [
-        { profileId: pid, groupId: null },        // the user's personal files
-        { groupId: { $in: sharedGroupIds } },     // files in their shared groups
+        { profileId: pid, groupId: null },
+        { groupId: { $in: sharedGroupIds } },
       ],
     }
 
@@ -72,10 +43,6 @@ router.get('/media', async (req, res, next) => {
       .select('_id objectKey filename mimeType size folderId groupId ownerId profileId passwordHash updatedAt')
       .lean()
 
-    // Load every folder in the caller's scope so we can (a) detect password
-    // protection ANYWHERE up a file's folder chain — not just its direct parent,
-    // which previously let files in a locked *sub*folder leak — and (b) map group
-    // files to the top-level shared folder they live under.
     const folderDocs = await Folder.find({
       $or: [
         { profileId: pid, groupId: null },
@@ -90,7 +57,6 @@ router.get('/media', async (req, res, next) => {
         isGroupRoot: !!f.isGroupRoot,
       }])
     )
-    // A file is protected if it, or ANY ancestor folder, is password-protected.
     const chainLocked = (folderId) => {
       let id = folderId ? String(folderId) : null
       for (let guard = 0; id && guard < 100; guard++) {
@@ -101,10 +67,6 @@ router.get('/media', async (req, res, next) => {
       }
       return false
     }
-    // The shared folder a group file belongs to = the ancestor sitting directly
-    // under the group root. Nested subfolders flatten into that folder, so Prism
-    // shows one shared album per top-level shared folder. Null if the file sits
-    // directly in the group root.
     const shareFolder = (folderId) => {
       let id = folderId ? String(folderId) : null
       let top = null
@@ -141,10 +103,6 @@ router.get('/media', async (req, res, next) => {
   }
 })
 
-// True if the file is password-protected, or lives under any locked folder
-// (walks the whole ancestor chain). The stream boundary must refuse locked bytes
-// regardless of caller — this is what actually stops a locked file's content
-// (thumbnails, playback) from ever reaching Prism.
 async function isLocked(file) {
   if (file.passwordHash) return true
   let id = file.folderId ? String(file.folderId) : null
@@ -157,13 +115,10 @@ async function isLocked(file) {
   return false
 }
 
-// ── Stream one object (Range-capable) ────────────────────────────────────────
 router.get('/stream', async (req, res) => {
   const key = String(req.query.path || '')
   if (!key) return res.status(400).json({ error: 'path required' })
 
-  // Only stream keys that map to a real, non-protected Orbit file — this scopes
-  // access to known objects and gives us the authoritative Content-Type.
   const file = await File.findOne({ objectKey: key }).select('mimeType passwordHash folderId').lean()
   if (!file) return res.status(404).end()
   if (await isLocked(file)) return res.status(403).end()
@@ -182,7 +137,7 @@ router.get('/stream', async (req, res) => {
       res.set('Content-Range', out.ContentRange)
     }
 
-    const body = out.Body // Node Readable in a Node runtime
+    const body = out.Body
     body.on('error', () => (res.headersSent ? res.destroy() : res.status(502).end()))
     res.on('close', () => body.destroy?.())
     body.pipe(res)

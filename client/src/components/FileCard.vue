@@ -17,8 +17,6 @@ const props = defineProps({
   highlightId: { type: String, default: null },
 })
 
-// Deep-link highlight: when this card is the targeted file, flash it and
-// scroll it into view once mounted (see FilesView's ?highlight= handling).
 const rootEl = ref(null)
 const isHighlighted = computed(() => props.highlightId && props.file._id === props.highlightId)
 onMounted(() => {
@@ -28,10 +26,8 @@ onMounted(() => {
 })
 const emit = defineEmits(['rename', 'delete', 'preview', 'unlock', 'set-password', 'move', 'rename-request', 'transcode', 'toggle-select', 'open-selection-ctx'])
 
-// Only owner-editable files can be multi-selected (bulk actions are owner-only).
 const canSelect = computed(() => props.file.canEdit !== false)
 
-// A tap opens/previews normally, but toggles selection while in select mode.
 function onOpen() {
   if (editing.value) return
   if (props.selectActive && canSelect.value) { emit('toggle-select'); return }
@@ -42,8 +38,6 @@ const editing = ref(false)
 const editName = ref('')
 const editInput = ref(null)
 const imgError = ref(false)
-// The card instance is reused across refreshes (keyed by _id), so clear a prior
-// load failure when the URL changes — e.g. a HEIC that just became a JPEG.
 watch(() => props.file.url, () => { imgError.value = false })
 
 const { startDrag, endDrag } = useDnd()
@@ -59,11 +53,8 @@ const typeInfo = computed(() => getFileTypeInfo(props.file.mimeType))
 const isImage = computed(() => props.file.mimeType?.startsWith('image/'))
 const showThumb = computed(() => isImage.value && !imgError.value && props.file.url)
 
-// Background media normalisation (see server transcodeQueue.js).
 const converting = computed(() => ['pending', 'processing'].includes(props.file.transcodeStatus))
-// Offer manual conversion for videos / unsupported images not already done.
 const canConvert = computed(() => canConvertMedia(props.file))
-// "Queued" / "42% · 30s" / "Converting" depending on what the server reports.
 const badgeText = computed(() => {
   if (props.file.transcodeStatus === 'pending') return t('orbit.transcode.queued')
   const p = props.file.transcodeProgress
@@ -84,8 +75,6 @@ const ICONS = {
 
 const isLocked = computed(() => props.file.protected && !props.file.url)
 
-// In a shared group folder only the file's owner may modify it; the server
-// reports this via `canEdit`. Everyone keeps preview/download.
 const ctxItems = computed(() => {
   const items = [
     isLocked.value
@@ -149,7 +138,6 @@ function cancelEdit() {
 </script>
 
 <template>
-  <!-- List mode -->
   <div
     v-if="viewMode === 'list'"
     ref="rootEl"
@@ -161,9 +149,7 @@ function cancelEdit() {
     @dragstart="onDragStart"
     @dragend="endDrag"
   >
-    <!-- Icon / Checkbox -->
     <div class="relative w-8 h-8 shrink-0" @click.stop="canSelect && $emit('toggle-select')">
-      <!-- Icon layer -->
       <div
         class="absolute inset-0 rounded-lg overflow-hidden flex items-center justify-center transition-opacity"
         :class="[
@@ -177,7 +163,6 @@ function cancelEdit() {
           <path stroke-linecap="round" stroke-linejoin="round" :d="typeInfo.icon" />
         </svg>
       </div>
-      <!-- Checkbox layer -->
       <div
         v-if="canSelect"
         class="absolute inset-0 flex items-center justify-center transition-opacity"
@@ -192,7 +177,6 @@ function cancelEdit() {
       </div>
     </div>
 
-    <!-- Name -->
     <input
       v-if="editing"
       ref="editInput"
@@ -205,17 +189,14 @@ function cancelEdit() {
     />
     <span v-else class="flex-1 text-sm font-medium text-slate-900 dark:text-white truncate">{{ file.filename }}</span>
 
-    <!-- Converting indicator -->
     <span v-if="converting" class="flex items-center gap-1 shrink-0 text-[11px] font-medium text-indigo-500 dark:text-indigo-400" :title="t('orbit.transcode.tooltip')">
       <Spinner class="w-3 h-3 animate-spin" />
       <span class="hidden sm:inline">{{ badgeText }}</span>
     </span>
 
-    <!-- Meta -->
     <span class="hidden sm:block text-xs text-slate-400 dark:text-slate-500 shrink-0 w-16 text-right">{{ formatSize(file.size) }}</span>
     <span class="hidden md:block text-xs text-slate-400 dark:text-slate-500 shrink-0 w-20 text-right">{{ formatRelativeDate(file.createdAt) }}</span>
 
-    <!-- Actions -->
     <div class="shrink-0" @click.stop>
       <button
         @click="openCtxFromBtn"
@@ -226,7 +207,6 @@ function cancelEdit() {
     </div>
   </div>
 
-  <!-- Grid mode -->
   <div
     v-else
     ref="rootEl"
@@ -240,7 +220,6 @@ function cancelEdit() {
     @dragstart="onDragStart"
     @dragend="endDrag"
   >
-    <!-- Checkbox top-left. Shown in select mode / when selecting, else on hover. -->
     <div
       v-if="canSelect"
       class="absolute top-2 left-2 z-10 transition-opacity"
@@ -255,7 +234,6 @@ function cancelEdit() {
       </div>
     </div>
 
-    <!-- Thumbnail / icon area -->
     <div class="relative aspect-square w-full overflow-hidden flex items-center justify-center rounded-t-2xl" :class="isLocked ? 'bg-slate-100 dark:bg-white/6' : (!showThumb ? typeInfo.bg : '')">
       <Icon name="lock" v-if="isLocked" class="w-10 h-10 text-slate-300 dark:text-slate-600" :sw="1.5" />
       <img
@@ -270,14 +248,12 @@ function cancelEdit() {
         <path stroke-linecap="round" stroke-linejoin="round" :d="typeInfo.icon" />
       </svg>
 
-      <!-- Converting badge -->
       <div v-if="converting" class="absolute bottom-1.5 left-1.5 right-1.5 flex items-center gap-1.5 px-1.5 py-1 rounded-lg bg-black/65 text-white text-[10px] font-medium backdrop-blur-sm" :title="t('orbit.transcode.tooltip')">
         <Spinner class="w-3 h-3 animate-spin shrink-0" />
         <span class="truncate">{{ badgeText }}</span>
       </div>
     </div>
 
-    <!-- Footer -->
     <div class="px-3 pt-2 pb-3 flex flex-col gap-0.5">
       <input
         v-if="editing"
@@ -292,7 +268,6 @@ function cancelEdit() {
       <span class="text-xs text-slate-400 dark:text-slate-500">{{ formatSize(file.size) }}</span>
     </div>
 
-    <!-- Actions button top-right -->
     <div class="absolute top-2 right-2 transition-opacity sm:opacity-0 sm:group-hover:opacity-100" @click.stop>
       <button
         @click="openCtxFromBtn"
@@ -305,9 +280,7 @@ function cancelEdit() {
 
   <ContextMenu :show="ctxOpen" :x="ctxX" :y="ctxY" :items="ctxItems" @close="ctxOpen = false" />
 </template>
-
 <style scoped>
-/* Deep-link highlight: a one-shot indigo ring + tint that fades out. */
 .orbit-highlight {
   animation: orbit-hl 2.6s ease-out 1;
 }

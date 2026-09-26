@@ -38,9 +38,6 @@ export function useFiles() {
     }
   }
 
-  // Re-fetch the current folder without toggling `loading` (no spinner flicker).
-  // Used by the transcode poller to pick up files as they finish converting;
-  // preserves in-session unlocked URLs the same way browse() does.
   async function silentRefresh() {
     try {
       const fid = currentFolderId.value
@@ -55,7 +52,6 @@ export function useFiles() {
         return f
       })
     } catch {
-      // Best-effort background refresh — ignore transient failures.
     }
   }
 
@@ -66,7 +62,6 @@ export function useFiles() {
   }
 
   function cancelFolderUnlock() {
-    // Revert to the parent — breadcrumbs still reflect the last successful browse
     const parentId = breadcrumbs.value[breadcrumbs.value.length - 1]?._id ?? null
     lockedFolderId.value = null
     currentFolderId.value = parentId

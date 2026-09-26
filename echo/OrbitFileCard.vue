@@ -4,17 +4,10 @@ import EchoEmbedContainer from '@core/echo/EchoEmbedContainer.vue'
 import EchoAddButton from '@core/echo/EchoAddButton.vue'
 import DocumentIcon from './icons/document.svg?component'
 
-// Renderer for "orbit.file" messages. Lives in Orbit (next to its
-// manifest.echo.json) and is auto-registered into Echo via this app's
-// integration.echo.js — Echo core knows nothing about it. Renders inside the
-// core-owned EchoEmbedContainer, so the chrome stays consistent.
-// payload = { fileId, name, mimeType, size, url, folderId }.
 const props = defineProps({
   payload: { type: Object, required: true },
 })
 
-// "Save" → copy the shared file into the caller's own Orbit drive (Orbit's API
-// copies the underlying object and records the new file).
 async function saveToDrive() {
   const res = await fetch(`/api/orbit/files/${props.payload.fileId}/save`, {
     method: 'POST',

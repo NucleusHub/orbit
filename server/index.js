@@ -20,10 +20,7 @@ app.use(express.json())
 app.use(cookieParser())
 
 app.get('/api/orbit/health', (req, res) => res.json({ status: 'ok' }))
-// Service-to-service media API for sibling apps (e.g. Prism). Shared-secret
-// (X-Prism-Key) auth, so it sits BEFORE the per-user cookie/app-access gate.
 app.use('/api/orbit/public', publicRouter)
-// Refuse all Orbit API access for users who have Orbit disabled (admin override).
 app.use('/api/orbit', requireAppEnabled('orbit'))
 app.use('/api/orbit/files', filesRouter)
 app.use('/api/orbit/folders', foldersRouter)
@@ -36,7 +33,6 @@ mongoose
   .then(() => {
     console.log('Connected to MongoDB')
     app.listen(PORT, () => console.log(`Orbit server on port ${PORT}`))
-    // Re-arm any transcode jobs interrupted by a restart.
     resumePending()
   })
   .catch(err => {

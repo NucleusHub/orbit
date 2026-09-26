@@ -13,16 +13,10 @@ function requireAdmin(req, res, next) {
   next()
 }
 
-// Called by the admin panel when a user is deleted, to wipe that user's PERSONAL
-// Orbit storage (objects in MinIO + their File/Folder docs). Group-shared files
-// are left untouched — they belong to the group and are handled by the group
-// teardown. No-op (still 200) if the user never stored anything.
-//   POST /api/orbit/profiles/:profileId/teardown
 router.post('/:profileId/teardown', requireAdmin, async (req, res) => {
   try {
     const { profileId } = req.params
 
-    // Personal scope = owned by this profile and not part of a shared group dir.
     const scope = { profileId, groupId: null }
     const files = await File.find(scope).select('objectKey')
 

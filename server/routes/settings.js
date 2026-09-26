@@ -5,7 +5,6 @@ import { getUserSettings, saveUserSettings } from '../settings.js'
 const router = express.Router()
 router.use(requireAuth)
 
-// GET /api/orbit/settings — the caller's own settings (defaults if never saved).
 router.get('/', async (req, res) => {
   try {
     res.json(await getUserSettings(req.profile.profileId))
@@ -14,7 +13,6 @@ router.get('/', async (req, res) => {
   }
 })
 
-// PUT /api/orbit/settings — update the caller's settings; returns the saved view.
 router.put('/', async (req, res) => {
   try {
     const saved = await saveUserSettings(req.profile.profileId, req.body || {})

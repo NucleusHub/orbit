@@ -39,15 +39,12 @@ watch(viewMode, v => localStorage.setItem('orbit:viewMode', v))
 const search = ref('')
 const dragOver = ref(false)
 const showCreateFolder = ref(false)
-const confirmTarget = ref(null) // { type, id, name } or { bulk: true, count, items }
+const confirmTarget = ref(null)
 const previewFile = ref(null)
 const fileInput = ref(null)
 const folderInput = ref(null)
 
-// Multi-select. `selectMode` is an explicit, touch-friendly selection mode
-// entered via the toolbar's Select button — it reveals the checkboxes and makes
-// a tap on a card toggle it (rather than open it), without ever hiding previews.
-const selection = ref([]) // [{ type: 'file'|'folder', item }]
+const selection = ref([])
 const selectMode = ref(false)
 
 function toggleSelectMode() {
@@ -56,10 +53,6 @@ function toggleSelectMode() {
 }
 
 function toggleSelect(type, item) {
-  // Only selectable if the caller may act on it — the bulk toolbar's actions
-  // (move / password / delete) are all owner-only, so shared items you don't own
-  // (and locked group roots) can never enter the selection. Mirrors the per-item
-  // menu, which hides those actions, and the server, which enforces canEdit.
   if (item?.canEdit === false) return
   const idx = selection.value.findIndex(s => s.type === type && s.item._id === item._id)
   if (idx === -1) selection.value = [...selection.value, { type, item }]
@@ -71,7 +64,6 @@ function clearSelection() {
   selectMode.value = false
 }
 
-// Selection context menu (right-click on selected item when 2+ selected)
 const selCtxOpen = ref(false)
 const selCtxX = ref(0)
 const selCtxY = ref(0)
@@ -92,7 +84,6 @@ const selCtxItems = computed(() => {
   ]
 })
 
-// Actions for the shared @core/SelectionToolbar.
 const selectionActions = computed(() => [
   { key: 'move', label: t('orbit.selection.move'), icon: ICONS_SEL.move },
   { key: 'password', label: t('orbit.selection.password'), icon: ICONS_SEL.lock },
@@ -104,8 +95,6 @@ function onSelectionAction(key) {
   else if (key === 'delete') promptDeleteSelection()
 }
 
-// Overflow (⋮) menu — view mode + settings, kept out of the main toolbar so it
-// stays uncluttered (only sidebar · search · select · new folder · upload show).
 const TOOLBAR_ICONS = {
   grid: 'M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25zM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25z',
   list: 'M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z',
@@ -133,7 +122,6 @@ function openSelCtx(x, y) {
   selCtxOpen.value = true
 }
 
-// Bulk move
 const movingSelection = ref(false)
 async function handleMoveSelection(targetFolderId) {
   try {
@@ -149,7 +137,6 @@ async function handleMoveSelection(targetFolderId) {
   }
 }
 
-// Bulk password
 const settingPasswordForSelection = ref(false)
 async function onSetPasswordForSelection(password) {
   try {
@@ -166,12 +153,10 @@ async function onSetPasswordForSelection(password) {
   }
 }
 
-// Bulk delete
 function promptDeleteSelection() {
   confirmTarget.value = { bulk: true, count: selection.value.length, items: [...selection.value] }
 }
 
-// Background context menu
 const bgCtxOpen = ref(false)
 const bgCtxX = ref(0)
 const bgCtxY = ref(0)
@@ -220,8 +205,6 @@ const {
   createFolder, renameFolder, deleteFolder, renameFile, deleteFile,
 } = useFiles()
 
-// Video conversion: kick off a background transcode, then let the poller below
-// pick up the result. Works for any already-uploaded video — no re-upload.
 async function onTranscode(file) {
   try {
     const updated = await api.transcodeFile(file._id)
@@ -234,8 +217,6 @@ async function onTranscode(file) {
   }
 }
 
-// While any file is converting, quietly re-poll the listing so the "converting"
-// indicator clears and the swapped-in MP4 (new url/filename) appears on its own.
 const anyConverting = computed(() => files.value.some(f => f.transcodeStatus === 'pending' || f.transcodeStatus === 'processing'))
 let transcodePoll = null
 watch(anyConverting, (v) => {
@@ -248,9 +229,6 @@ watch(anyConverting, (v) => {
 })
 onUnmounted(() => { if (transcodePoll) clearInterval(transcodePoll) })
 
-// Keep an open preview in sync as its file changes underneath us (e.g. it just
-// finished converting: new url/filename/status). Preserve the in-session URL for
-// protected files, which don't carry a url in the listing.
 watch(files, (list) => {
   if (!previewFile.value) return
   const fresh = list.find(f => f._id === previewFile.value._id)
@@ -266,7 +244,6 @@ watch(files, (list) => {
   }
 })
 
-// Password prompt for locked folders
 const folderPwdError = ref(null)
 async function onFolderUnlock(password) {
   folderPwdError.value = null
@@ -277,7 +254,6 @@ async function onFolderUnlock(password) {
   }
 }
 
-// File unlock
 const unlockingFile = ref(null)
 const filePwdError = ref(null)
 async function onFileUnlock(password) {
@@ -291,8 +267,7 @@ async function onFileUnlock(password) {
   }
 }
 
-// Move
-const movingItem = ref(null) // { type: 'file'|'folder', item }
+const movingItem = ref(null)
 async function handleMove(targetFolderId) {
   const { type, item } = movingItem.value
   try {
@@ -306,8 +281,6 @@ async function handleMove(targetFolderId) {
   }
 }
 
-// Drag & drop move: dropping a file/folder onto another folder (or the ".." tile)
-// moves it there. The server adopts the destination's scope (personal ⇆ group).
 async function handleDrop({ type, id, targetId }) {
   try {
     if (type === 'file') await api.moveFile(id, targetId)
@@ -319,8 +292,7 @@ async function handleDrop({ type, id, targetId }) {
   }
 }
 
-// Set password
-const settingPasswordFor = ref(null) // { type: 'file'|'folder', item }
+const settingPasswordFor = ref(null)
 async function onSetPassword(password) {
   const { type, item } = settingPasswordFor.value
   try {
@@ -337,10 +309,9 @@ async function onSetPassword(password) {
   }
 }
 
-// Action auth gate — verifies password before executing sensitive actions on protected items
-const pendingAuth = ref(null) // { type: 'file'|'folder', item, action }
+const pendingAuth = ref(null)
 const pendingAuthError = ref(null)
-const renamingItem = ref(null) // { type, item } — rename modal shown after auth
+const renamingItem = ref(null)
 
 function withAuth(type, item, action) {
   const verified = type === 'file'
@@ -379,16 +350,11 @@ async function onRenameSubmit(newName) {
 
 const { uploads, uploadFiles, dismiss } = useUpload(onUploadDone)
 
-// Deep-link support (e.g. from the Orbit dashboard widget or Prism's "Show in
-// Orbit"): /orbit/?folder=<id>&highlight=<fileId> opens that folder and flags the
-// file so its card flashes + scrolls into view once the listing loads.
 const router = useRouter()
 const highlightId = ref(null)
 
-// Wait for the router's initial navigation to resolve before reading the query —
-// on a fresh deep-link load (?folder=&highlight=) the query can still be empty at
-// mount time otherwise, which made non-root folders fall back to the drive root.
 onMounted(async () => {
+  // On a fresh deep-link load the query can still be empty before the initial navigation resolves.
   await router.isReady()
   const q = router.currentRoute.value.query
   highlightId.value = q.highlight ? String(q.highlight) : null
@@ -431,14 +397,14 @@ const parentFolderId = computed(() => {
 function navigate(folderId) {
   search.value = ''
   clearSelection()
-  highlightId.value = null // stop highlighting once the user navigates
+  highlightId.value = null
   browse(folderId)
 }
 
 watch(search, () => { if (selection.value.length) clearSelection() })
 
 function onDragover(e) {
-  if (isDragging.value) return // internal item move, not an external file upload
+  if (isDragging.value) return
   e.preventDefault()
   dragOver.value = true
 }
@@ -446,13 +412,10 @@ function onDragleave(e) {
   if (!e.currentTarget.contains(e.relatedTarget)) dragOver.value = false
 }
 async function onDrop(e) {
-  if (isDragging.value) return // handled by the folder / ".." drop targets
+  if (isDragging.value) return
   e.preventDefault()
   dragOver.value = false
   if (e.target.closest('[data-upload-zone]')) return
-  // Read the dropped entries synchronously (readDataTransferEntries grabs the
-  // entry list before awaiting) so folders are recursed, not dropped as 0-byte
-  // stubs the way dataTransfer.files would give them.
   const entries = await readDataTransferEntries(e.dataTransfer)
   if (entries.length) uploadFiles(entries, currentFolderId.value)
 }
@@ -515,7 +478,6 @@ async function executeDelete() {
     <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileInput" />
     <input ref="folderInput" type="file" webkitdirectory multiple class="hidden" @change="handleFolderInput" />
 
-    <!-- Header -->
     <AppHeader @contextmenu.stop>
       <template #left>
         <button
@@ -527,10 +489,8 @@ async function executeDelete() {
         </button>
       </template>
       <template #right>
-        <!-- Search -->
         <SearchBar v-model="search" />
 
-        <!-- View toggle (desktop; on phone it lives in the ⋮ menu) -->
         <div class="hidden sm:flex gap-0.5 bg-black/5 dark:bg-white/8 rounded-lg p-0.5">
           <button
             @click="viewMode = 'grid'"
@@ -552,7 +512,6 @@ async function executeDelete() {
           </button>
         </div>
 
-        <!-- New folder -->
         <button
           @click="showCreateFolder = true"
           class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-black/5 dark:bg-white/8 hover:bg-black/8 dark:hover:bg-white/12 rounded-xl transition-colors"
@@ -561,7 +520,6 @@ async function executeDelete() {
           <span class="hidden sm:inline">{{ t('orbit.toolbar.newFolder') }}</span>
         </button>
 
-        <!-- Upload -->
         <button
           @click="fileInput.click()"
           class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-colors"
@@ -570,7 +528,6 @@ async function executeDelete() {
           <span class="hidden sm:inline">{{ t('orbit.toolbar.upload') }}</span>
         </button>
 
-        <!-- View mode (phone only; desktop shows the toggle inline) -->
         <button
           @click="openOverflow"
           class="sm:hidden cursor-pointer p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
@@ -580,7 +537,6 @@ async function executeDelete() {
           <Icon name="kebab" class="w-5 h-5" />
         </button>
 
-        <!-- Settings — last in the header on desktop; on phone it's in the ⋮ menu -->
         <button
           @click="openSettings"
           class="group hidden sm:inline-flex cursor-pointer p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
@@ -595,7 +551,6 @@ async function executeDelete() {
       </template>
     </AppHeader>
 
-    <!-- Breadcrumbs (+ Select toggle, kept out of the crowded header) -->
     <Breadcrumbs :crumbs="breadcrumbs" @navigate="navigate" @contextmenu.stop>
       <template #actions>
         <button
@@ -610,21 +565,17 @@ async function executeDelete() {
       </template>
     </Breadcrumbs>
 
-    <!-- Main content -->
     <main class="px-4 md:px-6 pt-6 pb-24">
-      <!-- Loading -->
       <div v-if="loading || searchLoading" class="flex items-center justify-center py-20">
         <Spinner class="w-8 h-8 text-indigo-500 animate-spin" />
       </div>
 
-      <!-- Error -->
       <div v-else-if="error" class="flex flex-col items-center justify-center py-20 gap-3 text-center">
         <Icon name="infoDot" class="w-12 h-12 text-red-400" :sw="1.5" />
         <p class="text-sm text-slate-500 dark:text-slate-400">{{ error }}</p>
         <button @click="browse(currentFolderId)" class="cursor-pointer text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{{ t('orbit.error.tryAgain') }}</button>
       </div>
 
-      <!-- Empty state + upload zone -->
       <div v-else-if="isEmpty && !search">
         <div class="max-w-lg mx-auto pt-12">
           <UploadZone @files="files => uploadFiles(files, currentFolderId)" />
@@ -639,14 +590,12 @@ async function executeDelete() {
         </div>
       </div>
 
-      <!-- Search empty state -->
       <div v-else-if="isEmpty && search" class="flex flex-col items-center justify-center py-20 gap-3 text-center">
         <Icon name="search" class="w-12 h-12 text-slate-300 dark:text-slate-600" :sw="1.5" />
         <p class="text-sm text-slate-500 dark:text-slate-400">{{ t('orbit.search.noResultsFor') }} "<strong>{{ search }}</strong>"</p>
         <button @click="search = ''" class="cursor-pointer text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{{ t('orbit.search.clear') }}</button>
       </div>
 
-      <!-- File browser -->
       <FileBrowser
         v-else
         :folders="filteredFolders"
@@ -678,7 +627,6 @@ async function executeDelete() {
       />
     </main>
 
-    <!-- Drop overlay -->
     <Transition name="fade">
       <div v-if="dragOver" class="fixed inset-0 z-40 pointer-events-none">
         <div class="absolute inset-4 rounded-2xl border-2 border-dashed border-indigo-500 bg-indigo-500/8 dark:bg-indigo-500/12 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
@@ -688,7 +636,6 @@ async function executeDelete() {
       </div>
     </Transition>
 
-    <!-- Selection toolbar (shared @core component) -->
     <SelectionToolbar
       :show="selection.length > 0"
       :count="selection.length"
@@ -699,13 +646,10 @@ async function executeDelete() {
       @clear="clearSelection"
     />
 
-    <!-- Toolbar overflow (⋮): view mode + settings -->
     <ContextMenu :show="overflowOpen" :x="overflowX" :y="overflowY" :items="overflowItems" @close="overflowOpen = false" />
 
-    <!-- Upload progress -->
     <UploadProgress :uploads="uploads" @dismiss="dismiss" />
 
-    <!-- Modals -->
     <CreateFolderModal
       :show="showCreateFolder"
       :title="t('orbit.folder.newTitle')"
@@ -786,7 +730,6 @@ async function executeDelete() {
     <ContextMenu :show="selCtxOpen" :x="selCtxX" :y="selCtxY" :items="selCtxItems" @close="selCtxOpen = false" />
   </div>
 </template>
-
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
