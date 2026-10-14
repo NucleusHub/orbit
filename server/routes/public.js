@@ -24,7 +24,7 @@ router.use(requirePrismKey)
 // The shared secret only identifies Prism; results are scoped to the forwarded user token.
 router.get('/media', async (req, res, next) => {
   try {
-    const profile = verifyProfile(req)
+    const profile = await verifyProfile(req)
     if (!profile) return res.status(401).json({ error: 'A user token is required' })
     const pid = profile.profileId
 
