@@ -1,0 +1,2997 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ will be used for signing in." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ se použije pro přihlášení."
+          }
+        }
+      }
+    },
+    "%lld" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld"
+          }
+        }
+      }
+    },
+    "%lld items" : {
+      "localizations" : {
+        "cs" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld položky"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld položek"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld položka"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld položek"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld item"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld items"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld of %lld" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld z %lld"
+          }
+        }
+      }
+    },
+    "%lld selected" : {
+      "localizations" : {
+        "cs" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Vybrány %lld"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Vybráno %lld"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Vybrána %lld"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Vybráno %lld"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld uploads failed" : {
+      "localizations" : {
+        "cs" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld nahrání selhala"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld nahrání selhalo"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld nahrání selhalo"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld nahrání selhalo"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld upload failed"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld uploads failed"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lldd ago" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "před %lld d"
+          }
+        }
+      }
+    },
+    "%lldh ago" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "před %lld h"
+          }
+        }
+      }
+    },
+    "%lldm ago" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "před %lld min"
+          }
+        }
+      }
+    },
+    "443" : {},
+    "80" : {},
+    "A domain, an IP address or a Tailscale name." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doména, IP adresa nebo název v Tailscale."
+          }
+        }
+      }
+    },
+    "A link or file from your administrator" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odkaz nebo soubor od správce"
+          }
+        }
+      }
+    },
+    "About" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplikaci"
+          }
+        }
+      }
+    },
+    "Account" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Účet"
+          }
+        }
+      }
+    },
+    "Account theme" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Motiv účtu"
+          }
+        }
+      }
+    },
+    "Add" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přidat"
+          }
+        }
+      }
+    },
+    "Advanced" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokročilé"
+          }
+        }
+      }
+    },
+    "Anyone opening it will need this password. Folders protect what's directly inside them." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kdo to bude chtít otevřít, bude potřebovat toto heslo. Složka chrání to, co je přímo v ní."
+          }
+        }
+      }
+    },
+    "Appearance" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vzhled"
+          }
+        }
+      }
+    },
+    "Applies to new uploads, so they play on every device." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Platí pro nová nahrání, aby se přehrála na každém zařízení."
+          }
+        }
+      }
+    },
+    "Approve" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Potvrdit"
+          }
+        }
+      }
+    },
+    "Approve on the website…" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Potvrďte to na webu…"
+          }
+        }
+      }
+    },
+    "Apps you sign in to from now on start with it." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace, do kterých se od teď přihlásíte, s ním začnou."
+          }
+        }
+      }
+    },
+    "Apps you sign in to from now on start with this theme either way." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace, do kterých se od teď přihlásíte, s tímto motivem začnou tak jako tak."
+          }
+        }
+      }
+    },
+    "Apps you sign in to start with this theme. You can push it to the ones you already use too." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace, do kterých se přihlásíte, začnou s tímto motivem. Můžete ho poslat i do těch, které už používáte."
+          }
+        }
+      }
+    },
+    "Back" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zpět"
+          }
+        }
+      }
+    },
+    "Browse, search and preview every file and folder you keep in Orbit." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procházejte, hledejte a prohlížejte všechny soubory a složky, které v Orbitu máte."
+          }
+        }
+      }
+    },
+    "Browsing" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procházení"
+          }
+        }
+      }
+    },
+    "Can't play this file here. Share it to open it elsewhere." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tento soubor tu nejde přehrát. Nasdílejte ho a otevřete jinde."
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušit"
+          }
+        }
+      }
+    },
+    "Change in all apps" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Změnit ve všech aplikacích"
+          }
+        }
+      }
+    },
+    "Change password" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Změnit heslo"
+          }
+        }
+      }
+    },
+    "Change the theme in your apps too?" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Změnit motiv i ve vašich aplikacích?"
+          }
+        }
+      }
+    },
+    "Checking…" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ověřuji…"
+          }
+        }
+      }
+    },
+    "Clear" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vymazat"
+          }
+        }
+      }
+    },
+    "Close" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zavřít"
+          }
+        }
+      }
+    },
+    "Collapse" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sbalit"
+          }
+        }
+      }
+    },
+    "Confirm it's you" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Potvrďte, že jste to vy"
+          }
+        }
+      }
+    },
+    "Confirm password" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Potvrďte heslo"
+          }
+        }
+      }
+    },
+    "Confirm signing in Orbit where you showed the QR code." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přihlášení Orbitu potvrďte tam, kde jste zobrazili QR kód."
+          }
+        }
+      }
+    },
+    "Connect to your server" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Připojte se ke svému serveru"
+          }
+        }
+      }
+    },
+    "Connected apps" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Připojené aplikace"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokračovat"
+          }
+        }
+      }
+    },
+    "Conversion" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Převod"
+          }
+        }
+      }
+    },
+    "Conversion queued" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zařazeno k převodu"
+          }
+        }
+      }
+    },
+    "Convert" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Převést"
+          }
+        }
+      }
+    },
+    "Convert HEIC photos to JPEG" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Převádět fotky HEIC do JPEG"
+          }
+        }
+      }
+    },
+    "Convert existing files" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Převést stávající soubory"
+          }
+        }
+      }
+    },
+    "Convert videos to MP4" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Převádět videa do MP4"
+          }
+        }
+      }
+    },
+    "Converting" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Převádí se"
+          }
+        }
+      }
+    },
+    "Couldn't check this folder's Face ID lock. %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zámek Face ID této složky se nepodařilo ověřit. %@"
+          }
+        }
+      }
+    },
+    "Couldn't load folders" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nepodařilo se načíst složky"
+          }
+        }
+      }
+    },
+    "Couldn't load this folder" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Složku se nepodařilo načíst"
+          }
+        }
+      }
+    },
+    "Couldn't reach Nucleus ID. Check your connection." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nucleus ID je nedostupné. Zkontrolujte připojení."
+          }
+        }
+      }
+    },
+    "Couldn't reach this server." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "K serveru se nepodařilo připojit."
+          }
+        }
+      }
+    },
+    "Couldn't reach your Nucleus server." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nepodařilo se spojit s vaším serverem Nucleus."
+          }
+        }
+      }
+    },
+    "Couldn't save the theme to your account." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Motiv se nepodařilo uložit do účtu."
+          }
+        }
+      }
+    },
+    "Couldn't send it (%lld)." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nepodařilo se odeslat (%lld)."
+          }
+        }
+      }
+    },
+    "Couldn't sign in. Try again." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přihlášení se nezdařilo. Zkuste to znovu."
+          }
+        }
+      }
+    },
+    "Create" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vytvořit"
+          }
+        }
+      }
+    },
+    "Current" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aktuální"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smazat"
+          }
+        }
+      }
+    },
+    "Delete %lld items?" : {
+      "localizations" : {
+        "cs" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Smazat %lld položky?"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Smazat %lld položek?"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Smazat %lld položku?"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Smazat %lld položek?"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Delete %lld item?"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Delete %lld items?"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Delete Nucleus ID account" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smazat účet Nucleus ID"
+          }
+        }
+      }
+    },
+    "Delete “%@”?" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smazat „%@“?"
+          }
+        }
+      }
+    },
+    "Deny" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamítnout"
+          }
+        }
+      }
+    },
+    "Discard" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zahodit"
+          }
+        }
+      }
+    },
+    "Discard this report?" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zahodit toto hlášení?"
+          }
+        }
+      }
+    },
+    "Discovery path" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cesta k metadatům"
+          }
+        }
+      }
+    },
+    "Dismiss" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zavřít"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hotovo"
+          }
+        }
+      }
+    },
+    "Email" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E-mail"
+          }
+        }
+      }
+    },
+    "Email (optional)" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E-mail (nepovinné)"
+          }
+        }
+      }
+    },
+    "Enter a server address." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zadejte adresu serveru."
+          }
+        }
+      }
+    },
+    "Enter the password to see what's inside." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zadejte heslo a uvidíte, co je uvnitř."
+          }
+        }
+      }
+    },
+    "Everything in one place" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Všechno na jednom místě"
+          }
+        }
+      }
+    },
+    "Everything inside goes too." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smaže se i vše uvnitř."
+          }
+        }
+      }
+    },
+    "Expand" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozbalit"
+          }
+        }
+      }
+    },
+    "Face ID didn't recognize you." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Face ID vás nerozpoznalo."
+          }
+        }
+      }
+    },
+    "Face ID is locked after too many tries. Unlock your iPhone with its passcode, then try again." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Face ID je po příliš mnoha pokusech zamčené. Odemkněte iPhone kódem a zkuste to znovu."
+          }
+        }
+      }
+    },
+    "Face ID isn't available, so this can't be opened here." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Face ID není k dispozici, takže to tu nejde otevřít."
+          }
+        }
+      }
+    },
+    "Face ID isn't set up on this iPhone, so this can't be opened here." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Face ID na tomto iPhonu není nastavené, takže to tu nejde otevřít."
+          }
+        }
+      }
+    },
+    "Face ID lock" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zámek Face ID"
+          }
+        }
+      }
+    },
+    "Face ID lock removed" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zámek Face ID odebrán"
+          }
+        }
+      }
+    },
+    "Face ID only" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jen Face ID"
+          }
+        }
+      }
+    },
+    "Face ID or passcode" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Face ID nebo kód"
+          }
+        }
+      }
+    },
+    "File is protected" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soubor je chráněn heslem"
+          }
+        }
+      }
+    },
+    "Files" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soubory"
+          }
+        }
+      }
+    },
+    "Fills in the server and its code" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vyplní server i jeho kód"
+          }
+        }
+      }
+    },
+    "Find files and folders by name, in every folder you can see." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Najděte soubory a složky podle názvu ve všech složkách, které vidíte."
+          }
+        }
+      }
+    },
+    "Folder is protected" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Složka je chráněna heslem"
+          }
+        }
+      }
+    },
+    "Folders" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Složky"
+          }
+        }
+      }
+    },
+    "Get started" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Začít"
+          }
+        }
+      }
+    },
+    "Grid" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mřížka"
+          }
+        }
+      }
+    },
+    "Group folder" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Složka skupiny"
+          }
+        }
+      }
+    },
+    "Group folders show up next to your own." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Složky skupin se zobrazí vedle vašich."
+          }
+        }
+      }
+    },
+    "Help" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomoc"
+          }
+        }
+      }
+    },
+    "Hide code" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrýt kód"
+          }
+        }
+      }
+    },
+    "Home" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domů"
+          }
+        }
+      }
+    },
+    "Import setup" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importovat nastavení"
+          }
+        }
+      }
+    },
+    "It's no longer there." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Už to tam není."
+          }
+        }
+      }
+    },
+    "Just now" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Právě teď"
+          }
+        }
+      }
+    },
+    "List" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seznam"
+          }
+        }
+      }
+    },
+    "Lock with %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamykat pomocí %@"
+          }
+        }
+      }
+    },
+    "Lock with Face ID" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamknout přes Face ID"
+          }
+        }
+      }
+    },
+    "Lock “%@” with Face ID" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamknout „%@“ přes Face ID"
+          }
+        }
+      }
+    },
+    "Locked with Face ID" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamčeno přes Face ID"
+          }
+        }
+      }
+    },
+    "Locks Orbit after 30 seconds away and hides it in the app switcher." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamkne Orbit po 30 sekundách mimo aplikaci a skryje ho v přepínači aplikací."
+          }
+        }
+      }
+    },
+    "Manage your account" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spravovat účet"
+          }
+        }
+      }
+    },
+    "More" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Více"
+          }
+        }
+      }
+    },
+    "Move" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přesunout"
+          }
+        }
+      }
+    },
+    "Move %lld items to…" : {
+      "localizations" : {
+        "cs" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Přesunout %lld položky do…"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Přesunout %lld položek do…"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Přesunout %lld položku do…"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Přesunout %lld položek do…"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Move %lld item to…"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Move %lld items to…"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Move here" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přesunout sem"
+          }
+        }
+      }
+    },
+    "Move “%@” to…" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přesunout „%@“ do…"
+          }
+        }
+      }
+    },
+    "Moved" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přesunuto"
+          }
+        }
+      }
+    },
+    "Moved %lld items" : {
+      "localizations" : {
+        "cs" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Přesunuty %lld položky"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Přesunuto %lld položek"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Přesunuta %lld položka"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Přesunuto %lld položek"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Moved %lld item"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Moved %lld items"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Moved “%@” to %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ přesunuto do: %@"
+          }
+        }
+      }
+    },
+    "Name" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Název"
+          }
+        }
+      }
+    },
+    "New folder" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nová složka"
+          }
+        }
+      }
+    },
+    "No preview available" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Náhled není k dispozici"
+          }
+        }
+      }
+    },
+    "No results" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Žádné výsledky"
+          }
+        }
+      }
+    },
+    "Not now" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teď ne"
+          }
+        }
+      }
+    },
+    "Nothing matches “%@”." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nic neodpovídá „%@“."
+          }
+        }
+      }
+    },
+    "Nothing to convert" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Není co převádět"
+          }
+        }
+      }
+    },
+    "Nucleus ID" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nucleus ID"
+          }
+        }
+      }
+    },
+    "Only approve if you're signing in on a device in front of you right now." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Potvrďte jen tehdy, když se právě přihlašujete na zařízení, které máte před sebou."
+          }
+        }
+      }
+    },
+    "Only new apps" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jen nové aplikace"
+          }
+        }
+      }
+    },
+    "Open" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otevřené"
+          }
+        }
+      }
+    },
+    "Open “%@”" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otevřít „%@“"
+          }
+        }
+      }
+    },
+    "Opens %@ in your browser." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otevře %@ v prohlížeči."
+          }
+        }
+      }
+    },
+    "Orbit" : {},
+    "Orbit is locked" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orbit je zamčený"
+          }
+        }
+      }
+    },
+    "Passcode" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kód"
+          }
+        }
+      }
+    },
+    "Password" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heslo"
+          }
+        }
+      }
+    },
+    "Password removed" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heslo odebráno"
+          }
+        }
+      }
+    },
+    "Password set" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heslo nastaveno"
+          }
+        }
+      }
+    },
+    "Passwords don't match" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hesla se neshodují"
+          }
+        }
+      }
+    },
+    "Pause" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pozastavit"
+          }
+        }
+      }
+    },
+    "Photo" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotka"
+          }
+        }
+      }
+    },
+    "Photos in, converted" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotky rovnou převedené"
+          }
+        }
+      }
+    },
+    "Play" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přehrát"
+          }
+        }
+      }
+    },
+    "Point the camera at the QR code from your server's administrator." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Namiřte fotoaparát na QR kód od správce serveru."
+          }
+        }
+      }
+    },
+    "Point the camera at the QR code on the sign-in page." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Namiřte fotoaparát na QR kód na přihlašovací stránce."
+          }
+        }
+      }
+    },
+    "Port" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Port"
+          }
+        }
+      }
+    },
+    "Preparing upload…" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Připravuji nahrávání…"
+          }
+        }
+      }
+    },
+    "Preview" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Náhled"
+          }
+        }
+      }
+    },
+    "Privacy" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soukromí"
+          }
+        }
+      }
+    },
+    "Privacy policy" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zásady ochrany soukromí"
+          }
+        }
+      }
+    },
+    "Private folders" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soukromé složky"
+          }
+        }
+      }
+    },
+    "Profile" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil"
+          }
+        }
+      }
+    },
+    "Profile, %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil, %@"
+          }
+        }
+      }
+    },
+    "Protected" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chráněno heslem"
+          }
+        }
+      }
+    },
+    "Protocol" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Protokol"
+          }
+        }
+      }
+    },
+    "Protocol, port and path" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Protokol, port a cesta"
+          }
+        }
+      }
+    },
+    "Put a password on a folder or a single file." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamkněte heslem složku nebo jednotlivý soubor."
+          }
+        }
+      }
+    },
+    "Queued" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ve frontě"
+          }
+        }
+      }
+    },
+    "Queued %lld files" : {
+      "localizations" : {
+        "cs" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "K převodu zařazeny %lld soubory"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "K převodu zařazeno %lld souborů"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "K převodu zařazen %lld soubor"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "K převodu zařazeno %lld souborů"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Queued %lld file"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Queued %lld files"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Refresh" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnovit"
+          }
+        }
+      }
+    },
+    "Reload everything from your server" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znovu načíst vše ze serveru"
+          }
+        }
+      }
+    },
+    "Remove Face ID lock" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odebrat zámek Face ID"
+          }
+        }
+      }
+    },
+    "Remove password" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odebrat heslo"
+          }
+        }
+      }
+    },
+    "Remove the Face ID lock" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odebrat zámek Face ID"
+          }
+        }
+      }
+    },
+    "Rename" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přejmenovat"
+          }
+        }
+      }
+    },
+    "Reply to" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odpověď na"
+          }
+        }
+      }
+    },
+    "Report a problem" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahlásit problém"
+          }
+        }
+      }
+    },
+    "Requested at %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vyžádáno v %@"
+          }
+        }
+      }
+    },
+    "Reset to defaults" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnovit výchozí"
+          }
+        }
+      }
+    },
+    "Save" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uložit"
+          }
+        }
+      }
+    },
+    "Scan QR code" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naskenovat QR kód"
+          }
+        }
+      }
+    },
+    "Scan the QR code on a Nucleus sign-in page, then approve it here." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naskenujte QR kód na přihlašovací stránce Nucleus a pak přihlášení potvrďte tady."
+          }
+        }
+      }
+    },
+    "Screenshots" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snímky obrazovky"
+          }
+        }
+      }
+    },
+    "Search" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hledat"
+          }
+        }
+      }
+    },
+    "Search Orbit" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hledat v Orbitu"
+          }
+        }
+      }
+    },
+    "Search failed" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hledání selhalo"
+          }
+        }
+      }
+    },
+    "Search files and folders" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hledat soubory a složky"
+          }
+        }
+      }
+    },
+    "Select" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrat"
+          }
+        }
+      }
+    },
+    "Send" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odeslat"
+          }
+        }
+      }
+    },
+    "Sent" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odesláno"
+          }
+        }
+      }
+    },
+    "Server address" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresa serveru"
+          }
+        }
+      }
+    },
+    "Server code" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kód serveru"
+          }
+        }
+      }
+    },
+    "Set password" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavit heslo"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavení"
+          }
+        }
+      }
+    },
+    "Shake to report" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zatřesením nahlásit"
+          }
+        }
+      }
+    },
+    "Share it to open it in another app or save it to Files." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nasdílejte ho do jiné aplikace nebo ho uložte do Souborů."
+          }
+        }
+      }
+    },
+    "Share or save" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sdílet nebo uložit"
+          }
+        }
+      }
+    },
+    "Shared" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sdíleno"
+          }
+        }
+      }
+    },
+    "Shared with your groups" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sdílené se skupinami"
+          }
+        }
+      }
+    },
+    "Show code" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobrazit kód"
+          }
+        }
+      }
+    },
+    "Show files as" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobrazit soubory jako"
+          }
+        }
+      }
+    },
+    "Show the welcome again" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znovu zobrazit uvítání"
+          }
+        }
+      }
+    },
+    "Sign in on %@?" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přihlásit zařízení %@?"
+          }
+        }
+      }
+    },
+    "Sign in on another device" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přihlásit jiné zařízení"
+          }
+        }
+      }
+    },
+    "Sign in to this app first, then scan again." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nejdřív se přihlaste v této aplikaci a pak kód naskenujte znovu."
+          }
+        }
+      }
+    },
+    "Sign in with Nucleus ID" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přihlásit se přes Nucleus ID"
+          }
+        }
+      }
+    },
+    "Sign in with your Nucleus ID to reach the files on your server." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přihlaste se svým Nucleus ID a dostanete se k souborům na svém serveru."
+          }
+        }
+      }
+    },
+    "Sign in with your Nucleus ID to see the files on your server." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přihlaste se svým Nucleus ID a uvidíte soubory na svém serveru."
+          }
+        }
+      }
+    },
+    "Sign out" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odhlásit se"
+          }
+        }
+      }
+    },
+    "Sign out to switch servers." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro změnu serveru se nejdřív odhlaste."
+          }
+        }
+      }
+    },
+    "Sign out?" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odhlásit se?"
+          }
+        }
+      }
+    },
+    "Sign-in failed: %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přihlášení selhalo: %@"
+          }
+        }
+      }
+    },
+    "Signed in on %@." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zařízení %@ je přihlášené."
+          }
+        }
+      }
+    },
+    "Signed out." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odhlášeno."
+          }
+        }
+      }
+    },
+    "Steps, what you expected, what you saw" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kroky, co jste čekali a co se stalo"
+          }
+        }
+      }
+    },
+    "Sync now" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronizovat"
+          }
+        }
+      }
+    },
+    "Synced %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronizováno %@"
+          }
+        }
+      }
+    },
+    "Syncing…" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronizuji…"
+          }
+        }
+      }
+    },
+    "Thanks for letting us know." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Díky, že jste nám dali vědět."
+          }
+        }
+      }
+    },
+    "Thanks. We'll get back to you." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Díky. Ozveme se vám."
+          }
+        }
+      }
+    },
+    "That email doesn't look right." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tenhle e-mail nevypadá správně."
+          }
+        }
+      }
+    },
+    "The camera isn't available. Allow camera access in Settings." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotoaparát není k dispozici. Povolte přístup k němu v Nastavení."
+          }
+        }
+      }
+    },
+    "The file is empty." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soubor je prázdný."
+          }
+        }
+      }
+    },
+    "The file is too large for the server." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soubor je pro server příliš velký."
+          }
+        }
+      }
+    },
+    "The server didn't accept this code." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server tento kód nepřijal."
+          }
+        }
+      }
+    },
+    "The sign-in was denied." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přihlášení bylo zamítnuto."
+          }
+        }
+      }
+    },
+    "Theme" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Motiv"
+          }
+        }
+      }
+    },
+    "This PDF can't be shown here. Share it to open it elsewhere." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toto PDF tu nejde zobrazit. Nasdílejte ho a otevřete jinde."
+          }
+        }
+      }
+    },
+    "This can't be undone." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuto akci nelze vrátit zpět."
+          }
+        }
+      }
+    },
+    "This code has expired. Show a new one and scan again." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Platnost kódu vypršela. Zobrazte nový a naskenujte ho znovu."
+          }
+        }
+      }
+    },
+    "This code is for another server." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tento kód patří k jinému serveru."
+          }
+        }
+      }
+    },
+    "This code was already scanned. Show a new one and scan again." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tento kód už byl naskenován. Zobrazte nový a naskenujte ho znovu."
+          }
+        }
+      }
+    },
+    "This file is in a protected folder." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soubor je ve složce chráněné heslem."
+          }
+        }
+      }
+    },
+    "This file is too large to preview. Share it to open it elsewhere." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soubor je na náhled příliš velký. Nasdílejte ho a otevřete jinde."
+          }
+        }
+      }
+    },
+    "This folder is empty" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Složka je prázdná"
+          }
+        }
+      }
+    },
+    "This folder is protected." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Složka je chráněna heslem."
+          }
+        }
+      }
+    },
+    "This image can't be shown here. Share it to open it elsewhere." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tento obrázek tu nejde zobrazit. Nasdílejte ho a otevřete jinde."
+          }
+        }
+      }
+    },
+    "This isn't a Nucleus ID server." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tohle není server Nucleus ID."
+          }
+        }
+      }
+    },
+    "This isn't a Nucleus server code." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tohle není kód serveru Nucleus."
+          }
+        }
+      }
+    },
+    "This isn't a Nucleus server setup." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tohle není nastavení serveru Nucleus."
+          }
+        }
+      }
+    },
+    "This isn't a Nucleus sign-in code." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tohle není přihlašovací kód Nucleus."
+          }
+        }
+      }
+    },
+    "This server needs https." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tento server vyžaduje https."
+          }
+        }
+      }
+    },
+    "This server's certificate isn't trusted." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certifikát tohoto serveru není důvěryhodný."
+          }
+        }
+      }
+    },
+    "Too many reports. Try again later." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Příliš mnoho hlášení. Zkuste to později."
+          }
+        }
+      }
+    },
+    "Too many tries. Wait a minute and try again." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Příliš mnoho pokusů. Chvíli počkejte a zkuste to znovu."
+          }
+        }
+      }
+    },
+    "Try again" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zkusit znovu"
+          }
+        }
+      }
+    },
+    "Undo" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zpět"
+          }
+        }
+      }
+    },
+    "Unlock" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odemknout"
+          }
+        }
+      }
+    },
+    "Unlock Orbit" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odemknout Orbit"
+          }
+        }
+      }
+    },
+    "Unlock to see what's inside." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odemkněte a uvidíte, co je uvnitř."
+          }
+        }
+      }
+    },
+    "Unlock with %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odemknout pomocí %@"
+          }
+        }
+      }
+    },
+    "Unlock with Face ID" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odemknout přes Face ID"
+          }
+        }
+      }
+    },
+    "Up to 4." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nejvýš 4."
+          }
+        }
+      }
+    },
+    "Upload" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahrát"
+          }
+        }
+      }
+    },
+    "Upload a folder" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahrát složku"
+          }
+        }
+      }
+    },
+    "Upload files" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahrát soubory"
+          }
+        }
+      }
+    },
+    "Upload photos and videos" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahrát fotky a videa"
+          }
+        }
+      }
+    },
+    "Upload photos or files, or create a folder." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahrajte fotky nebo soubory, nebo vytvořte složku."
+          }
+        }
+      }
+    },
+    "Upload straight from Photos. Videos and HEIC photos are converted so they play everywhere." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahrávejte přímo z Fotek. Videa a fotky HEIC se převedou, aby se přehrály všude."
+          }
+        }
+      }
+    },
+    "Uploaded" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahráno"
+          }
+        }
+      }
+    },
+    "Uploading %lld files" : {
+      "localizations" : {
+        "cs" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Nahrávají se %lld soubory"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Nahrává se %lld souborů"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Nahrává se %lld soubor"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Nahrává se %lld souborů"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Uploading %lld file"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Uploading %lld files"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Use Orbit password" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Použít heslo Orbitu"
+          }
+        }
+      }
+    },
+    "Use server" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Použít server"
+          }
+        }
+      }
+    },
+    "Use server %@?" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Použít server %@?"
+          }
+        }
+      }
+    },
+    "Verification failed: %@" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ověření selhalo: %@"
+          }
+        }
+      }
+    },
+    "Version" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verze"
+          }
+        }
+      }
+    },
+    "View" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobrazení"
+          }
+        }
+      }
+    },
+    "Waiting…" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Čeká…"
+          }
+        }
+      }
+    },
+    "What happened?" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Co se stalo?"
+          }
+        }
+      }
+    },
+    "Wrong password" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nesprávné heslo"
+          }
+        }
+      }
+    },
+    "You don't have access to this." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "K tomuhle nemáte přístup."
+          }
+        }
+      }
+    },
+    "You were signed out. Sign in again to reach your files." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Byli jste odhlášeni. Přihlaste se znovu, abyste se dostali ke svým souborům."
+          }
+        }
+      }
+    },
+    "You're already signed in." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Už jste přihlášeni."
+          }
+        }
+      }
+    },
+    "You're offline. Try again when you're connected." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jste offline. Zkuste to znovu po připojení."
+          }
+        }
+      }
+    },
+    "Your account lives on a Nucleus server you or your administrator run. Enter its address to sign in." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Váš účet je na serveru Nucleus, který provozujete vy nebo váš správce. Pro přihlášení zadejte jeho adresu."
+          }
+        }
+      }
+    },
+    "Your apps switch to it the next time they open." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaše aplikace se přepnou při příštím otevření."
+          }
+        }
+      }
+    },
+    "Your files stay on your Nucleus server." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaše soubory zůstanou na vašem serveru Nucleus."
+          }
+        }
+      }
+    },
+    "Your files stay private until you unlock." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaše soubory zůstanou soukromé, dokud aplikaci neodemknete."
+          }
+        }
+      }
+    },
+    "Your files, on your own Nucleus server." : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaše soubory na vlastním serveru Nucleus."
+          }
+        }
+      }
+    },
+    "from" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "od"
+          }
+        }
+      }
+    },
+    "nucleus…home" : {
+      "localizations" : {
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nucleus…home"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}
