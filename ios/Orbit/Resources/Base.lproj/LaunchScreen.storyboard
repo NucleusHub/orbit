@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="17132" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina6_12" orientation="portrait" appearance="dark"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17105"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--The icon, the name and "from Nucleus" on the app's dark background.-->
+        <scene sceneID="EHf-IW-A2E">
+            <objects>
+                <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="Splash" translatesAutoresizingMaskIntoConstraints="NO" id="snD-IY-ifK">
+                                <rect key="frame" x="136.66666666666666" y="366" width="120" height="120"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="120" id="w1a-Sp-120"/>
+                                    <constraint firstAttribute="height" constant="120" id="h1a-Sp-120"/>
+                                </constraints>
+                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Orbit" textAlignment="center" lineBreakMode="tailTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="nm1-Lb-ttl">
+                                <rect key="frame" x="137" y="506" width="64" height="34"/>
+                                <fontDescription key="fontDescription" type="system" weight="bold" pointSize="28"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="from" textAlignment="center" lineBreakMode="tailTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="fr1-Lb-frm">
+                                <rect key="frame" x="182" y="769" width="29" height="16"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="13"/>
+                                <color key="textColor" white="1" alpha="0.45" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </label>
+                            <stackView opaque="NO" contentMode="scaleToFill" spacing="6" translatesAutoresizingMaskIntoConstraints="NO" id="nc1-St-row">
+                                <rect key="frame" x="152" y="789" width="89" height="22"/>
+                                <subviews>
+                                    <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" image="NucleusMark" translatesAutoresizingMaskIntoConstraints="NO" id="nc1-Im-mrk">
+                                        <rect key="frame" x="0.0" y="0.0" width="22" height="22"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="22" id="nc1-Im-w22"/>
+                                            <constraint firstAttribute="height" constant="22" id="nc1-Im-h22"/>
+                                        </constraints>
+                                    </imageView>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Nucleus" textAlignment="center" lineBreakMode="tailTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="nc1-Lb-nuc">
+                                        <rect key="frame" x="28" y="0.0" width="61" height="22"/>
+                                        <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="17"/>
+                                        <color key="textColor" white="1" alpha="0.9" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    </label>
+                                </subviews>
+                            </stackView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="sa1-Gd-lay"/>
+                        <color key="backgroundColor" red="0.050980392156862744" green="0.050980392156862744" blue="0.10196078431372549" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="snD-IY-ifK" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="cx1-Sp-ctr"/>
+                            <constraint firstItem="snD-IY-ifK" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="cy1-Sp-ctr"/>
+                            <constraint firstItem="nm1-Lb-ttl" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="nm1-Cx-ctr"/>
+                            <constraint firstItem="nm1-Lb-ttl" firstAttribute="top" secondItem="snD-IY-ifK" secondAttribute="bottom" constant="20" id="nm1-Tp-gap"/>
+                            <constraint firstItem="nc1-St-row" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="nc1-Cx-ctr"/>
+                            <constraint firstItem="sa1-Gd-lay" firstAttribute="bottom" secondItem="nc1-St-row" secondAttribute="bottom" constant="12" id="nc1-Bt-gap"/>
+                            <constraint firstItem="fr1-Lb-frm" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="fr1-Cx-ctr"/>
+                            <constraint firstItem="nc1-St-row" firstAttribute="top" secondItem="fr1-Lb-frm" secondAttribute="bottom" constant="4" id="fr1-Bt-gap"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="53" y="375"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="Splash" width="120" height="120"/>
+        <image name="NucleusMark" width="22" height="22"/>
+    </resources>
+</document>

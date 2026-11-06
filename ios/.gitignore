@@ -1,0 +1,14 @@
+# OS
+.DS_Store
+
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+xcuserdata/
+DerivedData/
+build/
+.swiftpm/
+
+# Fixture generator (node)
+node_modules/
+.build/
