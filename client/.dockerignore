@@ -1,6 +1,0 @@
-node_modules
-dist
-# `locales` must not be excluded: main.js imports ../locales/en-US.json through the symlink.
-core
-plugins
-widgets
