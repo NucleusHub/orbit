@@ -7,6 +7,9 @@ const settingsSchema = new mongoose.Schema(
     transcodeVideos: { type: Boolean, default: true },
 
     convertImages: { type: Boolean, default: true },
+
+    // iOS app only: item id -> { strict }. The web ignores it; strict means no passcode/password fallback.
+    faceIdLocks: { type: Map, of: new mongoose.Schema({ strict: { type: Boolean, default: false } }, { _id: false }), default: () => new Map() },
   },
   { timestamps: true }
 )
