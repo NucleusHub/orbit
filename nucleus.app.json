@@ -3,6 +3,9 @@
   "name": "Orbit",
   "description": "Files & cloud storage",
   "version": "0.3.9",
+  "nucleusId": {
+    "clientId": "orbit"
+  },
   "manifestVersion": 1,
   "compatibility": {
     "nucleus": ">=0.1.0 <1.0.0"
