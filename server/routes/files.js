@@ -25,6 +25,7 @@ import { getUserSettings } from '../settings.js'
 import { planVideo } from '../utils/transcode.js'
 import { planImage } from '../utils/image.js'
 import { enqueue, getProgress } from '../transcodeQueue.js'
+import { getObjectFor } from '../utils/s3Stream.js'
 
 const router = express.Router()
 router.use(requireAuth)
@@ -413,14 +414,14 @@ router.get('/:id/raw', async (req, res) => {
     }
 
     const range = req.headers.range
-    const out = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: file.objectKey, ...(range ? { Range: range } : {}) }))
+    const out = await getObjectFor(s3, new GetObjectCommand({ Bucket: BUCKET, Key: file.objectKey, ...(range ? { Range: range } : {}) }), res)
+    if (!out) return
     res.set('Accept-Ranges', 'bytes')
     if (file.mimeType) res.type(file.mimeType)
     if (out.ContentLength != null) res.set('Content-Length', String(out.ContentLength))
     if (out.ContentRange) { res.status(206); res.set('Content-Range', out.ContentRange) }
     const body = out.Body
     body.on('error', () => (res.headersSent ? res.destroy() : res.status(502).end()))
-    res.on('close', () => body.destroy?.())
     body.pipe(res)
   } catch (err) {
     const code = err?.$metadata?.httpStatusCode

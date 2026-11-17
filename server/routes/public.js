@@ -6,6 +6,7 @@ import Folder from '../models/Folder.js'
 import { s3, BUCKET } from './files.js'
 import { verifyProfile } from '../middleware/auth.js'
 import { myGroups } from '../utils/scope.js'
+import { getObjectFor } from '../utils/s3Stream.js'
 
 const router = Router()
 
@@ -125,9 +126,12 @@ router.get('/stream', async (req, res) => {
 
   const range = req.headers.range
   try {
-    const out = await s3.send(
-      new GetObjectCommand({ Bucket: BUCKET, Key: key, ...(range ? { Range: range } : {}) })
+    const out = await getObjectFor(
+      s3,
+      new GetObjectCommand({ Bucket: BUCKET, Key: key, ...(range ? { Range: range } : {}) }),
+      res
     )
+    if (!out) return
 
     res.set('Accept-Ranges', 'bytes')
     res.type(file.mimeType || out.ContentType || 'application/octet-stream')
@@ -139,9 +143,9 @@ router.get('/stream', async (req, res) => {
 
     const body = out.Body
     body.on('error', () => (res.headersSent ? res.destroy() : res.status(502).end()))
-    res.on('close', () => body.destroy?.())
     body.pipe(res)
   } catch (err) {
+    if (res.destroyed) return
     const code = err?.$metadata?.httpStatusCode
     if (code === 416) return res.status(416).set('Content-Range', 'bytes */*').end()
     if (code === 404 || err?.name === 'NoSuchKey') return res.status(404).end()
